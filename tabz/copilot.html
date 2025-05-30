@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-theme">
+<head>
+    <meta charset="utf-8">
+    <title>Fusion Browser</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="googlebot" content="index, follow, snippet">
+    <link id="favicon" rel="icon" type="image/png" href="tabz/favicon.ico">
+    <meta name="theme-color" content="#B48EAD">
+    <link rel="manifest" href="manifest.webmanifest"/>
+    <style>
+    /* Base Styles */
+    :root {
+        --tab-height: 36px;
+        --urlbar-height: 40px;
+        --toolbar-bg: #f1f3f4;
+        --tab-bg: #ffffff;
+        --tab-inactive-bg: #e6e8eb;
+        --tab-text: #333333;
+        --tab-active-text: #000000;
+        --urlbar-bg: #ffffff;
+        --urlbar-border: #dadce0;
+        --urlbar-focus: #1a73e8;
+        --button-hover: rgba(0, 0, 0, 0.1);
+        --dark-toolbar-bg: #202124;
+        --dark-tab-bg: #323639;
+        --dark-tab-inactive-bg: #292b2e;
+        --dark-tab-text: #9ca1a7;
+        --dark-tab-active-text: #f1f3f4;
+        --dark-urlbar-bg: #3c4043;
+        --dark-urlbar-border: #5f6368;
+        --dark-button-hover: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    html {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: var(--toolbar-bg);
+        height: 100%;
+        overflow: hidden;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    html.dark-theme {
+        background: var(--dark-toolbar-bg);
+        color: #e8eaed;
+    }
+
+    /* Browser Container */
+    .browser-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        width: 100vw;
+    }
+
+    /* Tab Bar */
+    .tab-bar {
+        display: flex;
+        height: var(--tab-height);
+        padding: 8px 8px 0;
+        background: var(--toolbar-bg);
+        position: relative;
+    }
+
+    .dark-theme .tab-bar {
+        background: var(--dark-toolbar-bg);
+    }
+
+    .tab-content {
+        position: relative;
+        flex-grow: 1;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    /* Individual Tab */
+    .tab {
+        position: absolute;
+        height: calc(var(--tab-height) - 8px);
+        width: 240px;
+        border-radius: 8px 8px 0 0;
+        background: var(--tab-inactive-bg);
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        cursor: pointer;
+        z-index: 1;
+        transform: translate3d(0, 0, 0);
+        transition: background 0.2s ease;
+    }
+
+    .dark-theme .tab {
+        background: var(--dark-tab-inactive-bg);
+    }
+
+    .tab.active {
+        background: var(--tab-bg);
+        z-index: 2;
+    }
+
+    .dark-theme .tab.active {
+        background: var(--dark-tab-bg);
+    }
+
+    .tab:hover:not(.active) {
+        background: var(--tab-inactive-bg);
+        opacity: 0.9;
+    }
+
+    .dark-theme .tab:hover:not(.active) {
+        background: var(--dark-tab-inactive-bg);
+    }
+
+    .tab-favicon {
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
+    }
+
+    .tab-title {
+        flex: 1;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--tab-text);
+    }
+
+    .dark-theme .tab-title {
+        color: var(--dark-tab-text);
+    }
+
+    .tab.active .tab-title {
+        color: var(--tab-active-text);
+        font-weight: 500;
+    }
+
+    .dark-theme .tab.active .tab-title {
+        color: var(--dark-tab-active-text);
+    }
+
+    .tab-close {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        margin-left: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path stroke='rgba(0, 0, 0, .65)' stroke-linecap='square' stroke-width='1.5' d='M0 0 L8 8 M8 0 L0 8'></path></svg>");
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+
+    .dark-theme .tab-close {
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'><path stroke='rgba(154, 160, 166, .8)' stroke-linecap='square' stroke-width='1.5' d='M0 0 L8 8 M8 0 L0 8'></path></svg>");
+    }
+
+    .tab-close:hover {
+        opacity: 1;
+        background-color: var(--button-hover);
+    }
+
+    .dark-theme .tab-close:hover {
+        background-color: var(--dark-button-hover);
+    }
+
+    /* Add Tab Button */
+    .add-tab {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: none;
+        border: none;
+        color: #5f6368;
+        cursor: pointer;
+        margin-left: 8px;
+        transition: background 0.2s ease;
+    }
+
+    .dark-theme .add-tab {
+        color: #9aa0a6;
+    }
+
+    .add-tab:hover {
+        background: var(--button-hover);
+    }
+
+    .dark-theme .add-tab:hover {
+        background: var(--dark-button-hover);
+    }
+
+    /* Toolbar */
+    .toolbar {
+        display: flex;
+        height: var(--urlbar-height);
+        padding: 8px;
+        background: var(--toolbar-bg);
+        align-items: center;
+        border-bottom: 1px solid var(--urlbar-border);
+    }
+
+    .dark-theme .toolbar {
+        background: var(--dark-toolbar-bg);
+        border-bottom-color: var(--dark-urlbar-border);
+    }
+
+    /* Navigation Buttons */
+    .nav-button {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #5f6368;
+        transition: background 0.2s ease;
+    }
+
+    .dark-theme .nav-button {
+        color: #9aa0a6;
+    }
+
+    .nav-button:hover {
+        background: var(--button-hover);
+    }
+
+    .dark-theme .nav-button:hover {
+        background: var(--dark-button-hover);
+    }
+
+    /* URL Bar */
+    .url-bar {
+        flex: 1;
+        height: 28px;
+        border-radius: 4px;
+        border: 1px solid var(--urlbar-border);
+        padding: 0 12px;
+        margin: 0 8px;
+        font-size: 13px;
+        outline: none;
+        background: var(--urlbar-bg);
+    }
+
+    .dark-theme .url-bar {
+        background: var(--dark-urlbar-bg);
+        border-color: var(--dark-urlbar-border);
+        color: #e8eaed;
+    }
+
+    .url-bar:focus {
+        border-color: var(--urlbar-focus);
+        box-shadow: 0 0 0 1px var(--urlbar-focus);
+    }
+
+    /* Browser Content */
+    .browser-content {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .browser-frame {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    /* Dropdown Menus */
+    .dropdown {
+        position: absolute;
+        background: var(--dark-tab-bg);
+        border: 1px solid var(--dark-urlbar-border);
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 100;
+        display: none;
+    }
+
+    .dropdown-item {
+        padding: 8px 16px;
+        color: var(--dark-tab-active-text);
+        cursor: pointer;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .dropdown-item:hover {
+        background: var(--dark-urlbar-bg);
+    }
+
+    /* Context Menu */
+    .context-menu {
+        position: absolute;
+        background: var(--dark-tab-bg);
+        border: 1px solid var(--dark-urlbar-border);
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 100;
+        display: none;
+    }
+
+    /* Extensions */
+    .extensions {
+        display: flex;
+        margin-left: auto;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+        .tab-title {
+            max-width: 120px;
+        }
+        
+        .url-bar {
+            font-size: 12px;
+        }
+    }
+    </style>
+</head>
+<body>
+    <div class="browser-container">
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <div class="tab-content" id="tab-content"></div>
+            <button class="add-tab" id="createTab" onclick="newTab('ht://newtab')">+</button>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button class="nav-button" id="backButton" onclick="document.getElementById(getActiveFrameId()).src = getBack(getActiveFrameId())">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+                </svg>
+            </button>
+            <button class="nav-button" id="forwardButton" onclick="document.getElementById(getActiveFrameId()).src = getForward(getActiveFrameId())">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(180deg)">
+                    <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+                </svg>
+            </button>
+            <button class="nav-button" id="reloadButton" onclick="document.getElementById(getActiveFrameId()).contentWindow.location.reload()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                </svg>
+            </button>
+            <input class="url-bar" id="urlbar" list="searchsuggestions"/>
+            <datalist id="searchsuggestions"></datalist>
+            <div class="extensions" id="extensionlist"></div>
+            <button class="nav-button" id="fullscreenButton" onclick="document.getElementById(getActiveFrameId()).requestFullscreen()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                </svg>
+            </button>
+            <button class="nav-button" id="optionsButton" onclick="openMenu('optionsdrop', 'themedrop', 'extensiondrop', 'uadrop', 'customtheme')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Browser Content -->
+        <div class="browser-content" id="browser-content"></div>
+
+        <!-- Dropdown Menus and Context Menus -->
+        <div id="ctx" class="context-menu">
+            <div class="dropdown-item" id="pin" onclick="toggleId('ctx');chromeTabs.pinTab(ctxTab)">Pin tab</div>
+            <div class="dropdown-item" onclick="toggleId('ctx');newTab('ht://newtab')">New tab</div>
+            <div class="dropdown-item" onclick="toggleId('ctx');newTab(document.getElementById(parseInt(ctxTab) + 1).contentWindow.location.href,false)">Duplicate</div>
+            <div class="dropdown-item" onclick="toggleId('ctx');AddBookmark(parseInt(ctxTab) + 1)">Bookmark</div>
+            <div class="dropdown-item" onclick="toggleId('ctx');chromeTabs.removeTab(document.querySelectorAll('[ifd=\'' + ctxTab + '\']')[0]);document.getElementById(parseInt(ctxTab) + 1).remove()">Close</div>
+            <div class="dropdown-item" onclick="toggleId('ctx');document.getElementById(parseInt(ctxTab)+1).contentWindow.location.reload()">Reload</div>
+        </div>
+
+        <div id="optionsdrop" class="dropdown">
+            <div class="dropdown-item" onclick="toggleId('optionsdrop');">Back</div>
+            <div class="dropdown-item" onclick="toggleId('optionsdrop');document.querySelector('body').requestFullscreen()">Fullscreen window</div>
+            <div class="dropdown-item" onclick="toggleId('optionsdrop');skipAd()">Skip YT AD</div>
+            <div class="dropdown-item" onclick="toggleId('optionsdrop', 'searchDrop')">Set search engine</div>
+            <div class="dropdown-item" onclick="inspect(); toggleId('optionsdrop');">Open devtools</div>
+        </div>
+
+        <div id="uadrop" class="dropdown">
+            <div class="dropdown-item" onclick="toggleId('uadrop', 'optionsdrop');">back</div>
+            <div class="dropdown-item">Set The Useragent (currently not working)</div>
+            <div class="dropdown-item"><input class="url-bar" id="ua" type="text"></div>
+            <div class="dropdown-item" onclick="document.cookie=`cua=${localStorage.getItem('ua')}`; toggleId('uadrop');">Apply</div>
+        </div>
+
+        <div id="searchDrop" class="dropdown">
+            <div class="dropdown-item" onclick="toggleId('searchDrop', 'optionsdrop');">back</div>
+            <div class="dropdown-item">Type the url plus search scheme of your engine.</div>
+            <div class="dropdown-item"><input class="url-bar" id="customSearch" type="text" placeholder="https://google.com/search?q="></div>
+            <div class="dropdown-item" onclick="localStorage.setItem('searchEngine',document.getElementById('customSearch').value);toggleId('searchDrop');searchEngine=document.getElementById('customSearch').value">Apply</div>
+        </div>
+
+        <div id="themedrop" class="dropdown">
+            <div class="dropdown-item" onclick="toggleId('themedrop', 'optionsdrop');">back</div>
+            <div class="dropdown-item" onclick="applyTheme('Dark'); toggleId('themedrop');">Dark Theme</div>
+            <div class="dropdown-item" onclick="applyTheme('Light'); toggleId('themedrop');">Light Theme</div>
+            <div class="dropdown-item" onclick="toggleId('customtheme', 'themedrop')">Custom Theme</div>
+        </div>
+
+        <div id="customtheme" class="dropdown">
+            <div class="dropdown-item" onclick="toggleId('customtheme', 'themedrop')">back</div>
+            <div class="dropdown-item">These are color values in hex.<br>To apply theme click apply.<br>NOTE: This will refresh the page.</div>
+            <div class="dropdown-item">Background <input class="url-bar" id="tabbkg" type="text"></div>
+            <div class="dropdown-item">Tab Hover <input class="url-bar" id="tabhover" type="text"></div>
+            <div class="dropdown-item">Active Tab <input class="url-bar" id="tabact" type="text"></div>
+            <div class="dropdown-item">Active Tab Title <input class="url-bar" id="tabacttit" type="text"></div>
+            <div class="dropdown-item">Inactive Tab Title <input class="url-bar" id="tabinatit" type="text"></div>
+            <div class="dropdown-item">Searchbar<input class="url-bar" id="searchbar" type="text"></div>
+            <div class="dropdown-item" onclick="applyTheme('Apply'); toggleId('customtheme');">Apply</div>
+            <div class="dropdown-item" onclick="applyTheme('Reset'); toggleId('customtheme');">Reset</div>
+        </div>
+
+        <div id="extensiondrop" class="dropdown">
+            <div class="dropdown-item" onclick="toggleId('extensiondrop', 'optionsdrop')">back</div>
+            <div class="dropdown-item" onclick="newTab('ht://extensions')">Manage extensions</div>
+            <div class="dropdown-item" onclick="newTab('ht://extensionsmarketplace')">Get extensions</div>
+        </div>
+    </div>
+
+    <!-- Scripts: moved to end of body for DOM readiness -->
+    <script src="js/xor.js"></script>
+    <script src="js/draggabilly.pkgd.min.js"></script>
+    <script src="js/chrome-tabs.js"></script>
+    <script src="internal/manager.js"></script>
+    <script src="js/js.js"></script>
+    <script src="../uv/uv.bundle.js"></script>
+    <script src="../uv/uv.config.js"></script>
+    <script src="../settings.js"></script>
+    <!-- index.js (use type="module" if it uses import/export) -->
+    <script id="proxloader" src="../index.js" type="module"></script>
+
+    <!-- Service Worker Registration: only once, not in register-sw.js -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Service worker registration
+        const stockSW = "/uv/sw.js";
+        const swAllowedHostnames = ["localhost", "127.0.0.1"];
+
+        function registerSW() {
+            if (location.protocol !== "https:" && !swAllowedHostnames.includes(location.hostname)) {
+                console.warn("Service workers cannot be registered without https.");
+                return;
+            }
+            if (!navigator.serviceWorker) {
+                console.warn("Your browser doesn't support service workers.");
+                return;
+            }
+            navigator.serviceWorker.register(stockSW, {
+                scope: "/uv/service/",
+            }).catch(console.error);
+        }
+        registerSW();
+
+        // All DOM-manipulating code should also be inside this event
+        // Example: Move your keyboard and mouse event handlers here
+        document.addEventListener('keydown', function(key) {
+            if (key.ctrlKey) {
+                const tabs = document.getElementsByClassName("tab");
+                const idx = Number(key.key) - 1;
+                if (tabs[idx]) {
+                    tabs[idx].click();
+                    chromeTabs.setCurrentTab(tabs[idx]);
+                    setInfo(tabs[idx].ifd + 1);
+                }
+            }
+        });
+
+        document.addEventListener('mousedown', function(pass) {
+            if (pass.target.parentElement && pass.target.parentElement.id !== "optionsdrop") hideId("optionsdrop");
+            if (pass.target.parentElement && pass.target.parentElement.id !== "ctx") hideId("ctx");
+            if (!pass.target.classList.contains("extenico")) {
+                const extMenu = document.querySelector(".extension_menu");
+                if (extMenu) {
+                    if (
+                        !pass.target.parentElement.classList.contains("extension_menu") && 
+                        !pass.target.parentElement.parentElement.classList.contains("extension_menu") && 
+                        !pass.target.classList.contains("extension_menu")
+                    ) {
+                        extMenu.style.display = "none";
+                    }
+                }
+            }
+        });
+
+        document.cookie = "oldsmobile=badcar";
+    });
+    </script>
+</body>
+</html>
