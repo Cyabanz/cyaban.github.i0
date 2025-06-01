@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang='en' class='dark-theme'>
+<head>
+  <meta charset='utf-8'>
+  <title>Fusion Tabs</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>
+  <meta name="googlebot" content="index, follow, snippet" />
+  <link id="favicon" rel="icon" type="image/png" href="tabz/favicon.ico">
+  <meta name="theme-color" content="#202124">
+  <link href='https://fonts.googleapis.com/icon?family=Material+Icons' rel='stylesheet'>
+  <!-- Ultraviolet Scripts -->
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.config.js"></script>
+  <link rel="manifest" href="manifest.webmanifest"/>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #202124;
+      color: #e8eaed;
+      overflow: hidden;
+    }
+
+    .surface {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mock-browser {
+      height: 100vh;
+      background: #202124;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Chrome Tab Bar */
+    .chrome-tabs-container {
+      background: #323639;
+      height: 36px;
+      position: relative;
+      border-bottom: 1px solid #5f6368;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .chrome-tabs {
+      display: flex;
+      height: 100%;
+      position: relative;
+      flex: 1;
+    }
+
+    .chrome-tab {
+      position: relative;
+      height: 36px;
+      min-width: 240px;
+      max-width: 240px;
+      background: #323639;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      margin-right: -1px;
+      transition: all 0.15s ease;
+      clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 100%, 0% 100%);
+      z-index: 1;
+    }
+
+    .chrome-tab:hover {
+      background: #3c4043;
+    }
+
+    .chrome-tab.active {
+      background: #202124;
+      z-index: 2;
+      clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 100%, 0% 100%);
+    }
+
+    .chrome-tab:first-child {
+      margin-left: 8px;
+      clip-path: polygon(0% 0%, calc(100% - 12px) 0%, 100% 100%, 0% 100%);
+    }
+
+    .chrome-tab.pinned {
+      min-width: 40px;
+      max-width: 40px;
+      padding: 0;
+      justify-content: center;
+    }
+
+    .tab-favicon {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      flex-shrink: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e8eaed"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>') center/contain no-repeat;
+    }
+
+    .chrome-tab.pinned .tab-favicon {
+      margin-right: 0;
+    }
+
+    .tab-title {
+      flex: 1;
+      font-size: 12px;
+      color: #e8eaed;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: left;
+    }
+
+    .chrome-tab.active .tab-title {
+      color: #ffffff;
+    }
+
+    .tab-close {
+      width: 20px;
+      height: 20px;
+      margin-left: 8px;
+      border: none;
+      background: transparent;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .chrome-tab:hover .tab-close,
+    .chrome-tab.active .tab-close {
+      opacity: 1;
+    }
+
+    .tab-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .tab-close::before {
+      content: '✕';
+      font-size: 12px;
+      color: #9aa0a6;
+    }
+
+    .new-tab-button {
+      width: 28px;
+      height: 28px;
+      margin: 0 8px;
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+
+    .new-tab-button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .new-tab-button::before {
+      content: '+';
+      font-size: 18px;
+      color: #9aa0a6;
+    }
+
+    /* Browser Controls */
+    .browser-controls {
+      background: #202124;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      border-bottom: 1px solid #5f6368;
+    }
+
+    .nav-button {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 8px;
+      transition: background 0.15s ease;
+    }
+
+    .nav-button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-button svg {
+      width: 20px;
+      height: 20px;
+      fill: #9aa0a6;
+    }
+
+    .nav-button:disabled svg {
+      fill: #5f6368;
+    }
+
+    .url-bar {
+      flex: 1;
+      height: 32px;
+      background: #303134;
+      border: 1px solid #5f6368;
+      border-radius: 16px;
+      padding: 0 16px;
+      color: #e8eaed;
+      font-size: 14px;
+      margin: 0 16px;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+
+    .url-bar:focus {
+      background: #ffffff;
+      color: #202124;
+      border-color: #1a73e8;
+    }
+
+    .menu-button {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+
+    .menu-button:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .menu-button::before {
+      content: '⋮';
+      font-size: 20px;
+      color: #9aa0a6;
+    }
+
+    /* Context Menu & Dropdowns */
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background: #303134;
+      min-width: 160px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      border-radius: 8px;
+      z-index: 1000;
+      border: 1px solid #5f6368;
+      padding: 8px 0;
+    }
+
+    .dropdown-content.show {
+      display: block;
+    }
+
+    .dropdown-content a {
+      color: #e8eaed;
+      padding: 8px 16px;
+      text-decoration: none;
+      display: block;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .dropdown-content a:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .dropdown-content .divider {
+      height: 1px;
+      background: #5f6368;
+      margin: 8px 0;
+    }
+
+    .dropdown-content input {
+      background: #3c4043;
+      border: 1px solid #5f6368;
+      color: #e8eaed;
+      padding: 4px 8px;
+      border-radius: 4px;
+      width: calc(100% - 32px);
+      margin: 0 16px;
+    }
+
+    /* Content Area */
+    .content-area {
+      flex: 1;
+      background: #202124;
+      position: relative;
+    }
+
+    .browser-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #ffffff;
+    }
+
+    /* Animations */
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .chrome-tab.new-tab {
+      animation: slideIn 0.2s ease;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .chrome-tab {
+        min-width: 120px;
+        max-width: 120px;
+      }
+      
+      .browser-controls {
+        padding: 0 8px;
+      }
+      
+      .url-bar {
+        margin: 0 8px;
+      }
+    }
+  </style>
+</head>
+
+<body id="alpha">
+  <div class='surface'>
+    <div class='mock-browser'>
+      <!-- Context Menu -->
+      <div id="ctx" class="dropdown-content">
+        <a class="pointer" id="pin" onclick="toggleDropdown('ctx');pinTab(ctxTab)">Pin tab</a>
+        <a class="pointer" onclick="toggleDropdown('ctx');newTab('ht://newtab')">New tab</a>
+        <a class="pointer" onclick="toggleDropdown('ctx');duplicateTab()">Duplicate</a>
+        <a class="pointer" onclick="toggleDropdown('ctx');addBookmark()">Bookmark</a>
+        <div class="divider"></div>
+        <a class="pointer" onclick="toggleDropdown('ctx');reloadTab()">Reload</a>
+        <a class="pointer" onclick="toggleDropdown('ctx');closeTab()">Close</a>
+      </div>
+
+      <!-- Tab Bar -->
+      <div class="chrome-tabs-container">
+        <div class="chrome-tabs" id="tabsContainer">
+          <!-- Tabs will be dynamically added here -->
+        </div>
+        <button class="new-tab-button" onclick="newTab('ht://newtab')"></button>
+      </div>
+
+      <!-- Browser Controls -->
+      <div class="browser-controls">
+        <button class="nav-button" onclick="goBack()" id="backBtn">
+          <svg viewBox="0 0 24 24">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+        </button>
+        <button class="nav-button" onclick="goForward()" id="forwardBtn">
+          <svg viewBox="0 0 24 24" style="transform: rotate(180deg)">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+        </button>
+        <button class="nav-button" onclick="reloadPage()">
+          <svg viewBox="0 0 24 24">
+            <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+          </svg>
+        </button>
+        
+        <input class="url-bar" id="urlbar" placeholder="Search Google or type a URL" list="searchsuggestions">
+        <datalist id="searchsuggestions"></datalist>
+        
+        <button class="nav-button" onclick="toggleFullscreen()">
+          <svg viewBox="0 0 24 24">
+            <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+          </svg>
+        </button>
+        
+        <button class="menu-button" onclick="toggleDropdown('optionsdrop')"></button>
+      </div>
+
+      <!-- Options Dropdown -->
+      <div id="optionsdrop" class="dropdown-content" style="right: 16px; top: 96px;">
+        <a onclick="toggleDropdown('optionsdrop');document.querySelector('body').requestFullscreen()">Fullscreen window</a>
+        <a onclick="toggleDropdown('optionsdrop');skipAd()">Skip YT AD</a>
+        <a onclick="toggleDropdown('optionsdrop');showSearchDrop()">Set search engine</a>
+        <a onclick="toggleDropdown('optionsdrop');showThemeDrop()">Themes</a>
+        <a onclick="toggleDropdown('optionsdrop');showExtensionDrop()">Extensions</a>
+        <div class="divider"></div>
+        <a onclick="inspect();toggleDropdown('optionsdrop')">Developer tools</a>
+      </div>
+
+      <!-- Search Engine Dropdown -->
+      <div id="searchDrop" class="dropdown-content" style="right: 16px; top: 96px;">
+        <a onclick="showMainMenu()">← Back</a>
+        <div class="divider"></div>
+        <a>Custom search engine URL:</a>
+        <input id="customSearch" type="text" placeholder="https://google.com/search?q=">
+        <a onclick="applySearchEngine()">Apply</a>
+      </div>
+
+      <!-- Theme Dropdown -->
+      <div id="themedrop" class="dropdown-content" style="right: 16px; top: 96px;">
+        <a onclick="showMainMenu()">← Back</a>
+        <div class="divider"></div>
+        <a onclick="applyTheme('Dark')">Dark Theme</a>
+        <a onclick="applyTheme('Light')">Light Theme</a>
+        <a onclick="showCustomTheme()">Custom Theme</a>
+      </div>
+
+      <!-- Extension Dropdown -->
+      <div id="extensiondrop" class="dropdown-content" style="right: 16px; top: 96px;">
+        <a onclick="showMainMenu()">← Back</a>
+        <div class="divider"></div>
+        <a onclick="newTab('ht://extensions')">Manage extensions</a>
+        <a onclick="newTab('ht://extensionsmarketplace')">Get extensions</a>
+      </div>
+
+      <!-- Content Area -->
+      <div class="content-area" id="contentArea">
+        <!-- iframes will be added here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // UV Service Worker registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        // If running on HTTP, allow localhost for development, otherwise require HTTPS
+        const swAllowedHostnames = ["localhost", "127.0.0.1"];
+        if (location.protocol === "https:" || swAllowedHostnames.includes(location.hostname)) {
+          navigator.serviceWorker.register('/uv/sw.js', {
+            scope: __uv$config.prefix
+          });
+        }
+      });
+    }
+
+    // Helper to UV-proxify a URL
+    function proxifyUrl(url) {
+      if (url.startsWith(location.origin + __uv$config.prefix)) return url;
+      return __uv$config.prefix + __uv$config.encodeUrl(url);
+    }
+
+    // Tab Management
+    let tabs = [];
+    let activeTabId = null;
+    let tabCounter = 0;
+    let ctxTab = null;
+    let searchEngine = localStorage.getItem('searchEngine') || 'https://www.google.com/search?q=';
+
+    function createTab(url = 'ht://newtab', title = 'New Tab') {
+      const tabId = `tab-${tabCounter++}`;
+      const frameId = `frame-${tabId}`;
+      
+      const tab = {
+        id: tabId,
+        url: url,
+        title: title,
+        frameId: frameId,
+        pinned: false
+      };
+      
+      tabs.push(tab);
+      
+      // Create tab element
+      const tabElement = document.createElement('div');
+      tabElement.className = 'chrome-tab new-tab';
+      tabElement.setAttribute('data-tab-id', tabId);
+      tabElement.innerHTML = `
+        <div class="tab-favicon"></div>
+        <span class="tab-title">${title}</span>
+        <button class="tab-close" onclick="closeTab('${tabId}', event)"></button>
+      `;
+      
+      // Add event listeners
+      tabElement.addEventListener('click', () => switchToTab(tabId));
+      tabElement.addEventListener('contextmenu', (e) => showContextMenu(e, tabId));
+      
+      document.getElementById('tabsContainer').appendChild(tabElement);
+      
+      // Determine if the URL should be proxied
+      let frameSrc = url;
+      if (
+        !url.startsWith('ht://') &&  // your internal tabs
+        !url.startsWith('about:') &&
+        !url.startsWith(location.origin)
+      ) {
+        frameSrc = proxifyUrl(url);
+      }
+      
+      // Create iframe
+      const iframe = document.createElement('iframe');
+      iframe.id = frameId;
+      iframe.className = 'browser-frame';
+      iframe.src = frameSrc;
+      iframe.style.display = 'none';
+      
+      document.getElementById('contentArea').appendChild(iframe);
+      
+      switchToTab(tabId);
+      return tabId;
+    }
+
+    function switchToTab(tabId) {
+      // Update tab appearances
+      document.querySelectorAll('.chrome-tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelector(`[data-tab-id="${tabId}"]`).classList.add('active');
+      
+      // Update iframe visibility
+      document.querySelectorAll('.browser-frame').forEach(frame => frame.style.display = 'none');
+      const tab = tabs.find(t => t.id === tabId);
+      document.getElementById(tab.frameId).style.display = 'block';
+      
+      activeTabId = tabId;
+      updateUrlBar();
+    }
+
+    function closeTab(tabId, event) {
+      if (event) event.stopPropagation();
+      
+      const tabIndex = tabs.findIndex(t => t.id === tabId);
+      if (tabIndex === -1) return;
+      
+      // Remove tab and iframe
+      document.querySelector(`[data-tab-id="${tabId}"]`).remove();
+      document.getElementById(tabs[tabIndex].frameId).remove();
+      tabs.splice(tabIndex, 1);
+      
+      // Switch to another tab if this was active
+      if (activeTabId === tabId) {
+        if (tabs.length > 0) {
+          const newActiveIndex = Math.min(tabIndex, tabs.length - 1);
+          switchToTab(tabs[newActiveIndex].id);
+        } else {
+          newTab('ht://newtab');
+        }
+      }
+    }
+
+    function newTab(url = 'ht://newtab') {
+      createTab(url);
+    }
+
+    function pinTab(tabId) {
+      const tab = tabs.find(t => t.id === tabId);
+      const tabElement = document.querySelector(`[data-tab-id="${tabId}"]`);
+      
+      if (tab && tabElement) {
+        tab.pinned = !tab.pinned;
+        tabElement.classList.toggle('pinned', tab.pinned);
+        
+        if (tab.pinned) {
+          tabElement.querySelector('.tab-title').style.display = 'none';
+          tabElement.querySelector('.tab-close').style.display = 'none';
+        } else {
+          tabElement.querySelector('.tab-title').style.display = 'block';
+          tabElement.querySelector('.tab-close').style.display = 'flex';
+        }
+      }
+    }
+
+    function showContextMenu(event, tabId) {
+      event.preventDefault();
+      ctxTab = tabId;
+      
+      const ctx = document.getElementById('ctx');
+      ctx.style.display = 'block';
+      ctx.style.left = event.pageX + 'px';
+      ctx.style.top = event.pageY + 'px';
+      
+      // Update pin text
+      const tab = tabs.find(t => t.id === tabId);
+      document.getElementById('pin').textContent = tab.pinned ? 'Unpin tab' : 'Pin tab';
+    }
+
+    // Navigation functions
+    function goBack() {
+      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
+      if (activeFrame && activeFrame.contentWindow.history.length > 1) {
+        activeFrame.contentWindow.history.back();
+      }
+    }
+
+    function goForward() {
+      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
+      if (activeFrame) {
+        activeFrame.contentWindow.history.forward();
+      }
+    }
+
+    function reloadPage() {
+      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
+      if (activeFrame) {
+        activeFrame.contentWindow.location.reload();
+      }
+    }
+
+    function updateUrlBar() {
+      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
+      if (activeFrame) {
+        try {
+          document.getElementById('urlbar').value = activeFrame.contentWindow.location.href;
+        } catch (e) {
+          // Cross-origin restriction
+        }
+      }
+    }
+
+    // Dropdown functions
+    function toggleDropdown(dropdownId) {
+      const dropdown = document.getElementById(dropdownId);
+      dropdown.classList.toggle('show');
+      
+      // Hide all other dropdowns
+      document.querySelectorAll('.dropdown-content').forEach(d => {
+        if (d.id !== dropdownId) d.classList.remove('show');
+      });
+    }
+
+    function showMainMenu() {
+      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+      document.getElementById('optionsdrop').classList.add('show');
+    }
+
+    function showSearchDrop() {
+      document.getElementById('optionsdrop').classList.remove('show');
+      document.getElementById('searchDrop').classList.add('show');
+    }
+
+    function showThemeDrop() {
+      document.getElementById('optionsdrop').classList.remove('show');
+      document.getElementById('themedrop').classList.add('show');
+    }
+
+    function showExtensionDrop() {
+      document.getElementById('optionsdrop').classList.remove('show');
+      document.getElementById('extensiondrop').classList.add('show');
+    }
+
+    // Utility functions
+    function applySearchEngine() {
+      const customSearch = document.getElementById('customSearch').value;
+      if (customSearch) {
+        localStorage.setItem('searchEngine', customSearch);
+        searchEngine = customSearch;
+      }
+      toggleDropdown('searchDrop');
+    }
+
+    function applyTheme(theme) {
+      // Theme switching logic would go here
+      console.log('Applying theme:', theme);
+      toggleDropdown('themedrop');
+    }
+
+    function toggleFullscreen() {
+      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
+      if (activeFrame) {
+        activeFrame.requestFullscreen();
+      }
+    }
+
+    function skipAd() {
+      // YouTube ad skipping logic
+      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
+      if (activeFrame) {
+        try {
+          const skipButton = activeFrame.contentDocument.querySelector('.ytp-ad-skip-button');
+          if (skipButton) skipButton.click();
+        } catch (e) {
+          console.log('Cannot access frame content');
+        }
+      }
+    }
+
+    function inspect() {
+      // Developer tools would be implemented here
+      console.log('Opening developer tools...');
+    }
+
+    // Event listeners
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown-content') && !e.target.closest('.menu-button')) {
+        document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key >= '1' && e.key <= '9') {
+        const tabIndex = parseInt(e.key) - 1;
+        if (tabs[tabIndex]) {
+          switchToTab(tabs[tabIndex].id);
+        }
+      }
+      
+      if (e.ctrlKey && e.key === 't') {
+        e.preventDefault();
+        newTab();
+      }
+      
+      if (e.ctrlKey && e.key === 'w') {
+        e.preventDefault();
+        if (activeTabId) closeTab(activeTabId);
+      }
+    });
+
+    // URL bar handling
+    document.getElementById('urlbar').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        let url = e.target.value.trim();
+        if (!url.includes('://')) {
+          if (url.includes('.')) {
+            url = 'https://' + url;
+          } else {
+            url = searchEngine + encodeURIComponent(url);
+          }
+        }
+
+        // Proxify external URLs
+        if (
+          !url.startsWith('ht://') &&
+          !url.startsWith('about:') &&
+          !url.startsWith(location.origin)
+        ) {
+          url = proxifyUrl(url);
+        }
+
+        const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
+        if (activeFrame) {
+          activeFrame.src = url;
+        }
+      }
+    });
+
+    // Initialize with first tab
+    document.addEventListener('DOMContentLoaded', () => {
+      newTab('ht://newtab');
+    });
+
+    // Set cookie
+    document.cookie = "oldsmobile=badcar";
+  </script>
+</body>
+</html>
