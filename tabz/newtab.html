@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <style>
-    /* (Your stylish CSS from your message) */
     * { box-sizing: border-box; }
     body {
       background: #202124;
@@ -379,6 +378,7 @@
   </form>
   <div class="bookmarks" id="nt-bookmarks"></div>
   <script>
+    // --- Default bookmarks ---
     const defaultBookmarks = [
       { url: "https://www.google.com", label: "Google", img: "https://www.google.com/favicon.ico" },
       { url: "https://www.youtube.com", label: "YouTube", img: "https://www.youtube.com/s/desktop/2e7e9e8e/img/favicon_48x48.png" },
@@ -386,8 +386,10 @@
       { url: "https://mail.google.com", label: "Gmail", img: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" },
       { url: "https://chat.openai.com", label: "ChatGPT", img: "https://chat.openai.com/favicon.ico" }
     ];
+
     const USER_BM_KEY = "uv_user_bookmarks_v1";
     const bmEl = document.getElementById('nt-bookmarks');
+
     function getUserBookmarks() {
       try {
         const arr = JSON.parse(localStorage.getItem(USER_BM_KEY));
@@ -398,6 +400,7 @@
       localStorage.setItem(USER_BM_KEY, JSON.stringify(arr));
     }
     function allBookmarks() {
+      // Merge default and user bookmarks (user bookmarks after default)
       return [...defaultBookmarks, ...getUserBookmarks()];
     }
     function renderBookmarks() {
@@ -412,8 +415,17 @@
            <div class="bookmark-label">${bm.label || bm.url}</div>`;
         a.addEventListener('click', e => {
           e.preventDefault();
+          // --- Save to search history ---
+          if (window.parent !== window) {
+            window.parent.postMessage({ addSearchHistory: { query: bm.url } }, "*");
+          } else {
+            let arr = JSON.parse(localStorage.getItem('uv_search_history') || "[]");
+            arr.push({query: bm.url, time: (new Date()).toISOString()});
+            localStorage.setItem('uv_search_history', JSON.stringify(arr));
+          }
           openUvUrl(bm.url);
         });
+        // Allow deleting user bookmarks (but not default)
         if (idx >= defaultBookmarks.length) {
           const btn = document.createElement("button");
           btn.className = "delete-bookmark-btn";
@@ -432,6 +444,8 @@
         bmEl.appendChild(a);
       });
     }
+
+    // --- Add bookmark UI logic ---
     const showAddBtn = document.getElementById("show-add-bookmark");
     const addBar = document.getElementById("add-bookmark-bar");
     showAddBtn.onclick = () => {
@@ -446,6 +460,8 @@
       document.getElementById("bm-label").value = "";
       document.getElementById("bm-img").value = "";
     };
+
+    // --- Add bookmark handler ---
     document.getElementById("bm-add").onclick = function(e) {
       e.preventDefault();
       const url = document.getElementById("bm-url").value.trim();
@@ -477,6 +493,8 @@
       showAddBtn.classList.remove('hidden');
       renderBookmarks();
     };
+
+    // --- UV Search Bar ---
     function proxifyUrl(url) {
       if (url.startsWith(location.origin + __uv$config.prefix)) return url;
       return __uv$config.prefix + __uv$config.encodeUrl(url);
@@ -491,6 +509,7 @@
     window.addEventListener('message', e => {
       if (e.data.ntNavigate) openUvUrl(e.data.ntNavigate);
     });
+
     const searchEngine = localStorage.getItem('searchEngine') || 'https://www.google.com/search?q=';
     document.getElementById('nt-search-form').addEventListener('submit', e => {
       e.preventDefault();
@@ -504,8 +523,14 @@
       // --- Add to search history in parent
       if (window.parent !== window) {
         window.parent.postMessage({ addSearchHistory: { query: q } }, "*");
+      } else {
+        let arr = JSON.parse(localStorage.getItem('uv_search_history') || "[]");
+        arr.push({query: q, time: (new Date()).toISOString()});
+        localStorage.setItem('uv_search_history', JSON.stringify(arr));
       }
     });
+
+    // --- Init ---
     renderBookmarks();
   </script>
 </body>
