@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Search History</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <style>
+    body {
+      background: #202124;
+      color: #e8eaed;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-top: 48px;
+      margin-bottom: 8px;
+      font-size: 2em;
+      color: #fff;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+    #clear-history {
+      background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 22px;
+      margin-bottom: 18px;
+      font-size: 1.07em;
+      cursor: pointer;
+      font-weight: 500;
+      box-shadow: 0 4px 15px rgba(26, 115, 232, 0.15);
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    #clear-history:hover {
+      background: #0d47a1;
+      box-shadow: 0 8px 25px rgba(26, 115, 232, 0.25);
+    }
+    .history-list {
+      width: 100%;
+      max-width: 700px;
+      background: rgba(35, 35, 54, 0.95);
+      border-radius: 16px;
+      box-shadow: 0 2px 24px #19193a44;
+      padding: 0;
+      margin-bottom: 35px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid rgba(255,255,255,0.06);
+      overflow: hidden;
+    }
+    .history-item {
+      display: flex;
+      align-items: center;
+      padding: 18px 32px;
+      border-bottom: 1px solid #313147;
+      justify-content: space-between;
+      background: transparent;
+      transition: background 0.15s;
+      position: relative;
+    }
+    .history-item:last-child {
+      border-bottom: none;
+    }
+    .history-item:hover {
+      background: rgba(41, 48, 72, 0.15);
+    }
+    .history-query {
+      flex: 1;
+      color: #d1d1f4;
+      font-size: 1.11em;
+      word-break: break-all;
+      cursor: pointer;
+      text-decoration: underline dotted rgba(66,165,245,0.13);
+      transition: color 0.13s;
+    }
+    .history-item:hover .history-query {
+      color: #90caf9;
+      text-decoration: underline solid #1a73e8;
+    }
+    .history-date {
+      color: #b0b2d0;
+      font-size: 0.97em;
+      margin-left: 20px;
+      white-space: nowrap;
+      letter-spacing: 0.2px;
+    }
+    .delete-history-btn {
+      background: none;
+      color: #fa2d2d;
+      border: none;
+      font-size: 1.25em;
+      margin-left: 22px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.1s, color 0.1s;
+      padding: 0 8px;
+      opacity: 0.7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .delete-history-btn:hover {
+      background: #4c2222;
+      color: #fff;
+      opacity: 1;
+    }
+    .empty-msg {
+      margin: 54px 6px 0 6px;
+      color: #b0b2d0;
+      font-size: 1.13em;
+      text-align: center;
+    }
+    @media (max-width: 700px) {
+      .history-list { max-width: 99vw; }
+      .history-item { padding: 14px 6vw 14px 4vw; }
+    }
+    @media (max-width: 480px) {
+      .history-list { max-width: 100vw; }
+      .history-item { padding: 10px 3vw 10px 3vw; }
+      .history-query { font-size: 0.99em; }
+      .history-date { font-size: 0.9em; margin-left: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Search History</h1>
+  <button id="clear-history"><i class='bx bx-trash'></i> Clear All</button>
+  <div class="history-list" id="history-list"></div>
+  <div class="empty-msg" id="empty-msg" style="display:none;">No search history yet.</div>
+  <script>
+    // --- STORAGE KEY ---
+    const SEARCH_HISTORY_KEY = "uv_search_history";
+    function getHistory() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY));
+        return Array.isArray(arr) ? arr : [];
+      } catch { return []; }
+    }
+    function setHistory(arr) {
+      localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(arr));
+    }
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+    function renderHistory() {
+      const list = document.getElementById("history-list");
+      const emptyMsg = document.getElementById("empty-msg");
+      const history = getHistory().reverse(); // most recent first
+      list.innerHTML = "";
+      if (!history.length) {
+        emptyMsg.style.display = "";
+        return;
+      } else {
+        emptyMsg.style.display = "none";
+      }
+      history.forEach((item, idx) => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `
+          <span class="history-query" title="Search again">${item.query}</span>
+          <span class="history-date">${formatDate(item.time)}</span>
+          <button class="delete-history-btn" title="Delete" data-idx="${idx}"><i class='bx bx-x'></i></button>
+        `;
+        // Click on query: re-searches (in parent if in iframe, else new tab)
+        div.querySelector('.history-query').onclick = () => {
+          if (window.parent !== window) {
+            window.parent.postMessage({ ntNavigate: item.query }, "*");
+          } else {
+            window.open(item.query, "_blank");
+          }
+        };
+        // Delete button
+        div.querySelector('.delete-history-btn').onclick = (ev) => {
+          ev.preventDefault();
+          let actualIdx = history.length - 1 - idx;
+          const arr = getHistory();
+          arr.splice(actualIdx, 1);
+          setHistory(arr);
+          renderHistory();
+        };
+        list.appendChild(div);
+      });
+    }
+    document.getElementById("clear-history").onclick = function() {
+      if (confirm("Clear all search history?")) {
+        setHistory([]);
+        renderHistory();
+      }
+    };
+    renderHistory();
+    // Listen for new search events (optional, if opened in a persistent way)
+    window.addEventListener("message", function(ev) {
+      if (ev.data && ev.data.addSearchHistory) {
+        let arr = getHistory();
+        arr.push({
+          query: ev.data.addSearchHistory.query,
+          time: (new Date()).toISOString()
+        });
+        setHistory(arr);
+        renderHistory();
+      }
+    });
+  </script>
+</body>
+</html>
