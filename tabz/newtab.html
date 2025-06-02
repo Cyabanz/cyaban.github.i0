@@ -62,6 +62,7 @@
       padding: 18px 8px;
       text-decoration: none;
       transition: background 0.2s;
+      position: relative;
     }
     .bookmark:hover {
       background: #35363a;
@@ -82,6 +83,28 @@
       font-size: 1em;
       color: inherit;
       word-break: break-word;
+    }
+    .delete-bookmark-btn {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      background: #28292c;
+      color: #c00;
+      border: none;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1em;
+      cursor: pointer;
+      opacity: 0.7;
+      z-index: 2;
+      transition: background 0.2s;
+    }
+    .bookmark:hover .delete-bookmark-btn {
+      opacity: 1;
     }
     #theme-switcher {
       margin-top: 36px;
@@ -126,12 +149,45 @@
       margin-bottom: 7px;
       line-height: 1.7;
     }
+    .add-bookmark-bar {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 640px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+    }
+    .add-bookmark-bar input {
+      background: #232336;
+      border: 1px solid #444;
+      color: #eee;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 1em;
+      width: 200px;
+      outline: none;
+    }
+    .add-bookmark-bar input[type="text"] { min-width: 120px; }
+    .add-bookmark-bar input[type="text"]:focus { border-color: #1a73e8; }
+    .add-bookmark-bar button {
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      padding: 7px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 1em;
+    }
+    .add-bookmark-bar button:hover {
+      background: #155ab6;
+    }
     @media (max-width: 700px) {
-      .bookmarks, .uv-features { max-width: 98vw; }
+      .bookmarks, .uv-features, .add-bookmark-bar { max-width: 98vw; }
       .search-bar { max-width: 97vw; }
     }
   </style>
-  <!-- Ultraviolet search bar support -->
   <script src="/uv/uv.bundle.js"></script>
   <script src="/uv/uv.config.js"></script>
 </head>
@@ -140,9 +196,13 @@
     <input id="nt-search" type="text" placeholder="Search or type a URL" autofocus>
     <button type="submit">→</button>
   </form>
-  <div class="bookmarks" id="nt-bookmarks">
-    <!-- Bookmarks injected here -->
+  <div class="add-bookmark-bar">
+    <input type="text" id="bm-url" placeholder="Bookmark URL (https://)">
+    <input type="text" id="bm-label" placeholder="Label (e.g. Twitter)">
+    <input type="text" id="bm-icon" placeholder="Emoji/Icon (e.g. 🐦)">
+    <button id="bm-add">Add Bookmark</button>
   </div>
+  <div class="bookmarks" id="nt-bookmarks"></div>
   <div id="theme-switcher">
     <button class="theme-btn" id="nt-theme-dark">Dark</button>
     <button class="theme-btn" id="nt-theme-light">Light</button>
@@ -160,50 +220,109 @@
     </ul>
   </div>
   <script>
-    // === Bookmarks ===
-    const bookmarks = [
+    // --- Default bookmarks ---
+    const defaultBookmarks = [
       { url: "https://www.google.com", label: "Google", icon: "🔎" },
       { url: "https://www.youtube.com", label: "YouTube", icon: "▶️" },
       { url: "https://github.com", label: "GitHub", icon: "🐙" },
       { url: "https://mail.google.com", label: "Gmail", icon: "✉️" },
       { url: "https://chat.openai.com", label: "ChatGPT", icon: "💬" }
     ];
-    const bmEl = document.getElementById('nt-bookmarks');
-    bookmarks.forEach(bm => {
-      const a = document.createElement('a');
-      a.className = 'bookmark';
-      a.href = "#"; // Prevent default navigation
-      a.innerHTML = `<div class="bookmark-icon">${bm.icon}</div>
-        <div class="bookmark-label">${bm.label}</div>`;
-      a.addEventListener('click', e => {
-        e.preventDefault();
-        openUvUrl(bm.url);
-      });
-      bmEl.appendChild(a);
-    });
 
-    // === UV Search Bar ===
+    const USER_BM_KEY = "uv_user_bookmarks_v1";
+    const bmEl = document.getElementById('nt-bookmarks');
+
+    function getUserBookmarks() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(USER_BM_KEY));
+        return Array.isArray(arr) ? arr : [];
+      } catch { return []; }
+    }
+    function setUserBookmarks(arr) {
+      localStorage.setItem(USER_BM_KEY, JSON.stringify(arr));
+    }
+    function allBookmarks() {
+      // Merge default and user bookmarks (user bookmarks after default)
+      return [...defaultBookmarks, ...getUserBookmarks()];
+    }
+    function renderBookmarks() {
+      bmEl.innerHTML = "";
+      const bookmarks = allBookmarks();
+      bookmarks.forEach((bm, idx) => {
+        const a = document.createElement('a');
+        a.className = 'bookmark';
+        a.href = "#";
+        a.innerHTML = `<div class="bookmark-icon">${bm.icon || "🔗"}</div>
+          <div class="bookmark-label">${bm.label || bm.url}</div>`;
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          openUvUrl(bm.url);
+        });
+
+        // Allow deleting user bookmarks (but not default)
+        if (idx >= defaultBookmarks.length) {
+          const btn = document.createElement("button");
+          btn.className = "delete-bookmark-btn";
+          btn.innerHTML = "✕";
+          btn.title = "Delete";
+          btn.onclick = (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const userBms = getUserBookmarks();
+            userBms.splice(idx - defaultBookmarks.length, 1);
+            setUserBookmarks(userBms);
+            renderBookmarks();
+          };
+          a.appendChild(btn);
+        }
+        bmEl.appendChild(a);
+      });
+    }
+
+    // --- Add bookmark handler ---
+    document.getElementById("bm-add").onclick = function(e) {
+      e.preventDefault();
+      const url = document.getElementById("bm-url").value.trim();
+      const label = document.getElementById("bm-label").value.trim();
+      const icon = document.getElementById("bm-icon").value.trim();
+      if (!/^https?:\/\//i.test(url)) {
+        alert("Please enter a valid URL (starts with https:// or http://)");
+        return;
+      }
+      if (!label) {
+        alert("Please enter a label for your bookmark.");
+        return;
+      }
+      const userBms = getUserBookmarks();
+      if (userBms.find(bm => bm.url === url)) {
+        alert("Bookmark already exists!");
+        return;
+      }
+      userBms.push({url, label, icon});
+      setUserBookmarks(userBms);
+      document.getElementById("bm-url").value = "";
+      document.getElementById("bm-label").value = "";
+      document.getElementById("bm-icon").value = "";
+      renderBookmarks();
+    };
+
+    // --- UV Search Bar ---
     function proxifyUrl(url) {
       if (url.startsWith(location.origin + __uv$config.prefix)) return url;
       return __uv$config.prefix + __uv$config.encodeUrl(url);
     }
     function openUvUrl(url) {
-      // Handles navigation in UV context (window.parent or self)
       if (window.parent !== window) {
-        // Send message to parent (main tab manager) to handle navigation
         window.parent.postMessage({ ntNavigate: url }, '*');
       } else {
-        // Standalone mode: navigate this window using UV
         window.location.href = proxifyUrl(url);
       }
     }
-    // Listen for parent message for navigation (if in iframe)
     window.addEventListener('message', e => {
       if (e.data.ntSetTheme) setTheme(e.data.ntSetTheme.dark, e.data.ntSetTheme.custom);
       if (e.data.ntNavigate) openUvUrl(e.data.ntNavigate);
     });
 
-    // === Search Bar ===
     const searchEngine = localStorage.getItem('searchEngine') || 'https://www.google.com/search?q=';
     document.getElementById('nt-search-form').addEventListener('submit', e => {
       e.preventDefault();
@@ -216,7 +335,7 @@
       openUvUrl(q);
     });
 
-    // === Theme Switcher ===
+    // --- Theme Switcher ---
     function setTheme(dark, custom) {
       if (custom) {
         document.body.style.setProperty('--nt-bg', custom.bg || '#202124');
@@ -247,13 +366,14 @@
     };
     document.getElementById('nt-theme-custom').onclick = () => {
       parent.postMessage({ ntThemeSelected: 'custom' }, '*');
-      // Example custom theme, expand as needed
       setTheme(false, { bg: '#2e2f50', color: '#ffd700' });
       applyThemeBtn('custom');
     };
-    // Default to dark
-    setTheme(true);
+    setTheme(true); // Default dark
     applyThemeBtn('dark');
+
+    // --- Init ---
+    renderBookmarks();
   </script>
 </body>
 </html>
