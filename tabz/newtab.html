@@ -1,559 +1,259 @@
 <!DOCTYPE html>
-<html lang='en' class='dark-theme'>
+<html lang="en">
 <head>
-  <meta charset='utf-8'>
-  <title>Fusion Tabs</title>
-  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>
-  <meta name="googlebot" content="index, follow, snippet" />
-  <link id="favicon" rel="icon" type="image/png" href="tabz/favicon.ico">
-  <meta name="theme-color" content="#202124">
-  <link href='https://fonts.googleapis.com/icon?family=Material+Icons' rel='stylesheet'>
-  <!-- Ultraviolet Scripts -->
+  <meta charset="UTF-8">
+  <title>New Tab</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body {
+      background: var(--nt-bg, #202124);
+      color: var(--nt-color, #e8eaed);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      transition: background 0.2s, color 0.2s;
+    }
+    .search-bar {
+      margin-top: 60px;
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid #444;
+      background: #303134;
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 16px;
+      border: none;
+      background: transparent;
+      color: inherit;
+      font-size: 1.2rem;
+      outline: none;
+    }
+    .search-bar button {
+      background: #444;
+      color: inherit;
+      border: none;
+      padding: 0 20px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      outline: none;
+    }
+    .bookmarks {
+      margin-top: 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 640px;
+    }
+    .bookmark {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #28292c;
+      border-radius: 12px;
+      padding: 18px 8px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .bookmark:hover {
+      background: #35363a;
+    }
+    .bookmark-icon {
+      width: 36px;
+      height: 36px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7em;
+    }
+    .bookmark-label {
+      text-align: center;
+      font-size: 1em;
+      color: inherit;
+      word-break: break-word;
+    }
+    #theme-switcher {
+      margin-top: 36px;
+      display: flex;
+      gap: 10px;
+    }
+    .theme-btn {
+      background: #444;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 16px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .theme-btn.active, .theme-btn:hover {
+      background: #1a73e8;
+      color: #fff;
+    }
+    .uv-features {
+      margin-top: 40px;
+      width: 100%;
+      max-width: 600px;
+      background: #232336;
+      border-radius: 14px;
+      padding: 18px 22px;
+      color: #d8d9fa;
+      font-size: 1.07em;
+      box-shadow: 0 2px 16px #19193a44;
+    }
+    .uv-features h3 {
+      margin: 0 0 10px 0;
+      color: #ffd700;
+      font-size: 1.19em;
+    }
+    .uv-features ul {
+      margin: 0 0 0 22px;
+      padding: 0;
+    }
+    .uv-features li {
+      margin-bottom: 7px;
+      line-height: 1.7;
+    }
+    @media (max-width: 700px) {
+      .bookmarks, .uv-features { max-width: 98vw; }
+      .search-bar { max-width: 97vw; }
+    }
+  </style>
+  <!-- Ultraviolet search bar support -->
   <script src="/uv/uv.bundle.js"></script>
   <script src="/uv/uv.config.js"></script>
-  <!-- SortableJS for draggable tabs -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <link rel="manifest" href="manifest.webmanifest"/>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #202124;
-      color: #e8eaed;
-      overflow: hidden;
-    }
-    .surface { height: 100vh; display: flex; flex-direction: column; }
-    .mock-browser { height: 100vh; background: #202124; display: flex; flex-direction: column; }
-    .chrome-tabs-container {
-      background: #323639;
-      height: 36px;
-      position: relative;
-      border-bottom: 1px solid #5f6368;
-      display: flex;
-      align-items: flex-end;
-    }
-    .chrome-tabs { display: flex; height: 100%; position: relative; flex: 1; }
-    .chrome-tab {
-      position: relative;
-      height: 36px;
-      min-width: 240px;
-      max-width: 240px;
-      background: #323639;
-      border: none;
-      cursor: grab;
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
-      margin-right: -1px;
-      transition: all 0.15s ease;
-      clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 100%, 0% 100%);
-      z-index: 1;
-      user-select: none;
-    }
-    .chrome-tab:active { cursor: grabbing; }
-    .chrome-tab:hover { background: #3c4043; }
-    .chrome-tab.active {
-      background: #202124;
-      z-index: 2;
-      clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 100%, 0% 100%);
-    }
-    .chrome-tab:first-child {
-      margin-left: 8px;
-      clip-path: polygon(0% 0%, calc(100% - 12px) 0%, 100% 100%, 0% 100%);
-    }
-    .chrome-tab.pinned {
-      min-width: 40px;
-      max-width: 40px;
-      padding: 0;
-      justify-content: center;
-    }
-    .tab-favicon {
-      width: 16px;
-      height: 16px;
-      margin-right: 8px;
-      flex-shrink: 0;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e8eaed"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>') center/contain no-repeat;
-    }
-    .chrome-tab.pinned .tab-favicon { margin-right: 0; }
-    .tab-title {
-      flex: 1;
-      font-size: 12px;
-      color: #e8eaed;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      text-align: left;
-      transition: color 0.15s;
-    }
-    .chrome-tab.active .tab-title { color: #ffffff; }
-    .tab-close {
-      width: 20px;
-      height: 20px;
-      margin-left: 8px;
-      border: none;
-      background: transparent;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: all 0.15s ease;
-      flex-shrink: 0;
-    }
-    .chrome-tab:hover .tab-close, .chrome-tab.active .tab-close { opacity: 1; }
-    .tab-close:hover { background: rgba(255, 255, 255, 0.1); }
-    .tab-close::before {
-      content: '✕';
-      font-size: 12px;
-      color: #9aa0a6;
-    }
-    .new-tab-button {
-      width: 28px;
-      height: 28px;
-      margin: 0 8px;
-      border: none;
-      background: transparent;
-      border-radius: 4px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s ease;
-    }
-    .new-tab-button:hover { background: rgba(255, 255, 255, 0.1); }
-    .new-tab-button::before { content: '+'; font-size: 18px; color: #9aa0a6; }
-    .browser-controls {
-      background: #202124;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
-      border-bottom: 1px solid #5f6368;
-    }
-    .nav-button {
-      width: 32px;
-      height: 32px;
-      border: none;
-      background: transparent;
-      border-radius: 4px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 8px;
-      transition: background 0.15s ease;
-    }
-    .nav-button:hover { background: rgba(255, 255, 255, 0.1); }
-    .nav-button svg { width: 20px; height: 20px; fill: #9aa0a6; }
-    .nav-button:disabled svg { fill: #5f6368; }
-    .url-bar {
-      flex: 1;
-      height: 32px;
-      background: #303134;
-      border: 1px solid #5f6368;
-      border-radius: 16px;
-      padding: 0 16px;
-      color: #e8eaed;
-      font-size: 14px;
-      margin: 0 16px;
-      outline: none;
-      transition: all 0.15s ease;
-    }
-    .url-bar:focus {
-      background: #ffffff;
-      color: #202124;
-      border-color: #1a73e8;
-    }
-    .menu-button {
-      width: 32px;
-      height: 32px;
-      border: none;
-      background: transparent;
-      border-radius: 4px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s ease;
-    }
-    .menu-button:hover { background: rgba(255, 255, 255, 0.1); }
-    .menu-button::before { content: '⋮'; font-size: 20px; color: #9aa0a6; }
-    .dropdown-content {
-      display: none;
-      position: absolute;
-      background: #303134;
-      min-width: 160px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-      border-radius: 8px;
-      z-index: 1000;
-      border: 1px solid #5f6368;
-      padding: 8px 0;
-    }
-    .dropdown-content.show { display: block; }
-    .dropdown-content a {
-      color: #e8eaed;
-      padding: 8px 16px;
-      text-decoration: none;
-      display: block;
-      font-size: 14px;
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-    .dropdown-content a:hover { background: rgba(255, 255, 255, 0.1); }
-    .dropdown-content .divider {
-      height: 1px;
-      background: #5f6368;
-      margin: 8px 0;
-    }
-    .dropdown-content input {
-      background: #3c4043;
-      border: 1px solid #5f6368;
-      color: #e8eaed;
-      padding: 4px 8px;
-      border-radius: 4px;
-      width: calc(100% - 32px);
-      margin: 0 16px;
-    }
-    .content-area { flex: 1; background: #202124; position: relative; }
-    .browser-frame { width: 100%; height: 100%; border: none; background: #ffffff; }
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-    .chrome-tab.new-tab { animation: slideIn 0.2s ease; }
-    @media (max-width: 768px) {
-      .chrome-tab { min-width: 120px; max-width: 120px; }
-      .browser-controls { padding: 0 8px; }
-      .url-bar { margin: 0 8px; }
-    }
-    .chrome-tab.sortable-chosen { opacity: 0.7; }
-    .chrome-tab.sortable-ghost { opacity: 0.4; }
-  </style>
 </head>
-<body id="alpha">
-  <div class='surface'>
-    <div class='mock-browser'>
-      <!-- Context Menu -->
-      <div id="ctx" class="dropdown-content">
-        <a class="pointer" id="pin" onclick="toggleDropdown('ctx');pinTab(ctxTab)">Pin tab</a>
-        <a class="pointer" onclick="toggleDropdown('ctx');newTab('ht://newtab')">New tab</a>
-        <a class="pointer" onclick="toggleDropdown('ctx');duplicateTab()">Duplicate</a>
-        <a class="pointer" onclick="toggleDropdown('ctx');addBookmark()">Bookmark</a>
-        <div class="divider"></div>
-        <a class="pointer" onclick="toggleDropdown('ctx');reloadTab()">Reload</a>
-        <a class="pointer" onclick="toggleDropdown('ctx');closeTab()">Close</a>
-      </div>
-      <!-- Tab Bar -->
-      <div class="chrome-tabs-container">
-        <div class="chrome-tabs" id="tabsContainer"></div>
-        <button class="new-tab-button" onclick="newTab('ht://newtab')"></button>
-      </div>
-      <!-- Browser Controls -->
-      <div class="browser-controls">
-        <button class="nav-button" onclick="goBack()" id="backBtn">
-          <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-        </button>
-        <button class="nav-button" onclick="goForward()" id="forwardBtn">
-          <svg viewBox="0 0 24 24" style="transform: rotate(180deg)">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-          </svg>
-        </button>
-        <button class="nav-button" onclick="reloadPage()">
-          <svg viewBox="0 0 24 24">
-            <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-          </svg>
-        </button>
-        <input class="url-bar" id="urlbar" placeholder="Search Google or type a URL" list="searchsuggestions">
-        <datalist id="searchsuggestions"></datalist>
-        <button class="nav-button" onclick="toggleFullscreen()">
-          <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-        </button>
-        <button class="menu-button" onclick="toggleDropdown('optionsdrop')"></button>
-      </div>
-      <!-- Options Dropdown -->
-      <div id="optionsdrop" class="dropdown-content" style="right: 16px; top: 96px;">
-        <a onclick="toggleDropdown('optionsdrop');document.querySelector('body').requestFullscreen()">Fullscreen window</a>
-        <a onclick="toggleDropdown('optionsdrop');skipAd()">Skip YT AD</a>
-        <a onclick="toggleDropdown('optionsdrop');showSearchDrop()">Set search engine</a>
-        <a onclick="toggleDropdown('optionsdrop');showThemeDrop()">Themes</a>
-        <a onclick="toggleDropdown('optionsdrop');showExtensionDrop()">Extensions</a>
-        <div class="divider"></div>
-        <a onclick="inspect();toggleDropdown('optionsdrop')">Developer tools</a>
-      </div>
-      <!-- Search Engine Dropdown -->
-      <div id="searchDrop" class="dropdown-content" style="right: 16px; top: 96px;">
-        <a onclick="showMainMenu()">← Back</a>
-        <div class="divider"></div>
-        <a>Custom search engine URL:</a>
-        <input id="customSearch" type="text" placeholder="https://google.com/search?q=">
-        <a onclick="applySearchEngine()">Apply</a>
-      </div>
-      <!-- Theme Dropdown -->
-      <div id="themedrop" class="dropdown-content" style="right: 16px; top: 96px;">
-        <a onclick="showMainMenu()">← Back</a>
-        <div class="divider"></div>
-        <a onclick="applyTheme('Dark')">Dark Theme</a>
-        <a onclick="applyTheme('Light')">Light Theme</a>
-        <a onclick="showCustomTheme()">Custom Theme</a>
-      </div>
-      <!-- Extension Dropdown -->
-      <div id="extensiondrop" class="dropdown-content" style="right: 16px; top: 96px;">
-        <a onclick="showMainMenu()">← Back</a>
-        <div class="divider"></div>
-        <a onclick="newTab('ht://extensions')">Manage extensions</a>
-        <a onclick="newTab('ht://extensionsmarketplace')">Get extensions</a>
-      </div>
-      <!-- Content Area -->
-      <div class="content-area" id="contentArea"></div>
-    </div>
+<body>
+  <form class="search-bar" id="nt-search-form" autocomplete="off">
+    <input id="nt-search" type="text" placeholder="Search or type a URL" autofocus>
+    <button type="submit">→</button>
+  </form>
+  <div class="bookmarks" id="nt-bookmarks">
+    <!-- Bookmarks injected here -->
+  </div>
+  <div id="theme-switcher">
+    <button class="theme-btn" id="nt-theme-dark">Dark</button>
+    <button class="theme-btn" id="nt-theme-light">Light</button>
+    <button class="theme-btn" id="nt-theme-custom">Custom</button>
+  </div>
+  <div class="uv-features">
+    <h3>Ultraviolet Features</h3>
+    <ul>
+      <li>Bypass web filters and browse the web privately.</li>
+      <li>Supports most modern websites (YouTube, Google, Discord, etc).</li>
+      <li>Customizable search engine and easy tab navigation.</li>
+      <li>Theme switching between Dark, Light, and Custom modes.</li>
+      <li>Bookmarks/shortcuts for quick access to favorite sites.</li>
+      <li>Drag-and-drop tabs, ad skipping, and more!</li>
+    </ul>
   </div>
   <script>
-    // UV Service Worker registration
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        const swAllowedHostnames = ["localhost", "127.0.0.1"];
-        if (location.protocol === "https:" || swAllowedHostnames.includes(location.hostname)) {
-          navigator.serviceWorker.register('/uv/sw.js', { scope: __uv$config.prefix });
-        }
+    // === Bookmarks ===
+    const bookmarks = [
+      { url: "https://www.google.com", label: "Google", icon: "🔎" },
+      { url: "https://www.youtube.com", label: "YouTube", icon: "▶️" },
+      { url: "https://github.com", label: "GitHub", icon: "🐙" },
+      { url: "https://mail.google.com", label: "Gmail", icon: "✉️" },
+      { url: "https://chat.openai.com", label: "ChatGPT", icon: "💬" }
+    ];
+    const bmEl = document.getElementById('nt-bookmarks');
+    bookmarks.forEach(bm => {
+      const a = document.createElement('a');
+      a.className = 'bookmark';
+      a.href = "#"; // Prevent default navigation
+      a.innerHTML = `<div class="bookmark-icon">${bm.icon}</div>
+        <div class="bookmark-label">${bm.label}</div>`;
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        openUvUrl(bm.url);
       });
-    }
+      bmEl.appendChild(a);
+    });
+
+    // === UV Search Bar ===
     function proxifyUrl(url) {
       if (url.startsWith(location.origin + __uv$config.prefix)) return url;
       return __uv$config.prefix + __uv$config.encodeUrl(url);
     }
-    let tabs = [], activeTabId = null, tabCounter = 0, ctxTab = null;
-    let searchEngine = localStorage.getItem('searchEngine') || 'https://www.google.com/search?q=';
-
-    function attachIframeLoadHandler(iframe, tabId) {
-      iframe.addEventListener('load', function() {
-        let title = 'New Tab', faviconUrl = null;
-        try {
-          const doc = iframe.contentDocument || iframe.contentWindow.document;
-          title = doc.title || title;
-          const icon = doc.querySelector('link[rel~="icon"]');
-          faviconUrl = icon ? icon.href : null;
-        } catch (err) { title = iframe.src; }
-        const tabEl = document.querySelector(`[data-tab-id="${tabId}"]`);
-        if (tabEl) {
-          tabEl.querySelector('.tab-title').textContent = title;
-          tabEl.querySelector('.tab-favicon').style.backgroundImage = faviconUrl ? `url('${faviconUrl}')` : '';
-        }
-      });
-    }
-
-    // --- NEW TAB PAGE: Use /newtab.html for "ht://newtab" ---
-    const NEWTAB_SRC = "/newtab.html";
-
-    function createTab(url = 'ht://newtab', title = 'New Tab') {
-      const tabId = `tab-${tabCounter++}`;
-      const frameId = `frame-${tabId}`;
-      const tab = { id: tabId, url: url, title: title, frameId: frameId, pinned: false };
-      tabs.push(tab);
-      const tabElement = document.createElement('div');
-      tabElement.className = 'chrome-tab new-tab';
-      tabElement.setAttribute('data-tab-id', tabId);
-      tabElement.innerHTML = `
-        <div class="tab-favicon"></div>
-        <span class="tab-title">${title}</span>
-        <button class="tab-close" onclick="closeTab('${tabId}', event)"></button>
-      `;
-      tabElement.addEventListener('click', () => switchToTab(tabId));
-      tabElement.addEventListener('contextmenu', (e) => showContextMenu(e, tabId));
-      document.getElementById('tabsContainer').appendChild(tabElement);
-
-      // If internal newtab, use our newtab.html, else UV proxy as needed
-      let frameSrc = url;
-      if (url === 'ht://newtab') frameSrc = NEWTAB_SRC;
-      else if (!url.startsWith('ht://') && !url.startsWith('about:') && !url.startsWith(location.origin)) frameSrc = proxifyUrl(url);
-
-      const iframe = document.createElement('iframe');
-      iframe.id = frameId;
-      iframe.className = 'browser-frame';
-      iframe.src = frameSrc;
-      iframe.style.display = 'none';
-      document.getElementById('contentArea').appendChild(iframe);
-      attachIframeLoadHandler(iframe, tabId);
-
-      // Communication for newtab.html (for search, bookmarks, themes)
-      iframe.addEventListener("load", () => {
-        if (frameSrc === NEWTAB_SRC) {
-          // Set theme on load
-          iframe.contentWindow.postMessage({ ntSetTheme: { dark: document.documentElement.classList.contains('dark-theme') } }, "*");
-        }
-      });
-
-      switchToTab(tabId);
-      return tabId;
-    }
-    function switchToTab(tabId) {
-      document.querySelectorAll('.chrome-tab').forEach(tab => tab.classList.remove('active'));
-      document.querySelector(`[data-tab-id="${tabId}"]`).classList.add('active');
-      document.querySelectorAll('.browser-frame').forEach(frame => frame.style.display = 'none');
-      const tab = tabs.find(t => t.id === tabId);
-      document.getElementById(tab.frameId).style.display = 'block';
-      activeTabId = tabId;
-      updateUrlBar();
-    }
-    function closeTab(tabId, event) {
-      if (event) event.stopPropagation();
-      const tabIndex = tabs.findIndex(t => t.id === tabId);
-      if (tabIndex === -1) return;
-      document.querySelector(`[data-tab-id="${tabId}"]`).remove();
-      document.getElementById(tabs[tabIndex].frameId).remove();
-      tabs.splice(tabIndex, 1);
-      if (activeTabId === tabId) {
-        if (tabs.length > 0) switchToTab(tabs[Math.min(tabIndex, tabs.length - 1)].id);
-        else newTab('ht://newtab');
+    function openUvUrl(url) {
+      // Handles navigation in UV context (window.parent or self)
+      if (window.parent !== window) {
+        // Send message to parent (main tab manager) to handle navigation
+        window.parent.postMessage({ ntNavigate: url }, '*');
+      } else {
+        // Standalone mode: navigate this window using UV
+        window.location.href = proxifyUrl(url);
       }
     }
-    function newTab(url = 'ht://newtab') { createTab(url); }
-    function pinTab(tabId) {
-      const tab = tabs.find(t => t.id === tabId);
-      const tabElement = document.querySelector(`[data-tab-id="${tabId}"]`);
-      if (tab && tabElement) {
-        tab.pinned = !tab.pinned;
-        tabElement.classList.toggle('pinned', tab.pinned);
-        tabElement.querySelector('.tab-title').style.display = tab.pinned ? 'none' : 'block';
-        tabElement.querySelector('.tab-close').style.display = tab.pinned ? 'none' : 'flex';
-      }
-    }
-    function showContextMenu(event, tabId) {
-      event.preventDefault();
-      ctxTab = tabId;
-      const ctx = document.getElementById('ctx');
-      ctx.style.display = 'block';
-      ctx.style.left = event.pageX + 'px';
-      ctx.style.top = event.pageY + 'px';
-      const tab = tabs.find(t => t.id === tabId);
-      document.getElementById('pin').textContent = tab.pinned ? 'Unpin tab' : 'Pin tab';
-    }
-    function goBack() {
-      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
-      if (activeFrame && activeFrame.contentWindow.history.length > 1) activeFrame.contentWindow.history.back();
-    }
-    function goForward() {
-      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
-      if (activeFrame) activeFrame.contentWindow.history.forward();
-    }
-    function reloadPage() {
-      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
-      if (activeFrame) activeFrame.contentWindow.location.reload();
-    }
-    function updateUrlBar() {
-      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
-      if (activeFrame) {
-        try { document.getElementById('urlbar').value = activeFrame.contentWindow.location.href; } catch (e) {}
-      }
-    }
-    function toggleDropdown(dropdownId) {
-      const dropdown = document.getElementById(dropdownId);
-      dropdown.classList.toggle('show');
-      document.querySelectorAll('.dropdown-content').forEach(d => { if (d.id !== dropdownId) d.classList.remove('show'); });
-    }
-    function showMainMenu() {
-      document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
-      document.getElementById('optionsdrop').classList.add('show');
-    }
-    function showSearchDrop() {
-      document.getElementById('optionsdrop').classList.remove('show');
-      document.getElementById('searchDrop').classList.add('show');
-    }
-    function showThemeDrop() {
-      document.getElementById('optionsdrop').classList.remove('show');
-      document.getElementById('themedrop').classList.add('show');
-    }
-    function showExtensionDrop() {
-      document.getElementById('optionsdrop').classList.remove('show');
-      document.getElementById('extensiondrop').classList.add('show');
-    }
-    function applySearchEngine() {
-      const customSearch = document.getElementById('customSearch').value;
-      if (customSearch) {
-        localStorage.setItem('searchEngine', customSearch);
-        searchEngine = customSearch;
-      }
-      toggleDropdown('searchDrop');
-    }
-    function applyTheme(theme) {
-      if (theme === "Dark") document.documentElement.classList.add('dark-theme');
-      else if (theme === "Light") document.documentElement.classList.remove('dark-theme');
-      // Optionally, send theme to newtab if open
-      const tab = tabs.find(t => t.id === activeTabId);
-      if (tab && tab.url === "ht://newtab") {
-        const frame = document.getElementById(tab.frameId);
-        frame.contentWindow.postMessage({ ntSetTheme: { dark: document.documentElement.classList.contains('dark-theme') } }, "*");
-      }
-      toggleDropdown('themedrop');
-    }
-    function toggleFullscreen() {
-      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
-      if (activeFrame) activeFrame.requestFullscreen();
-    }
-    function skipAd() {
-      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
-      if (activeFrame) {
-        try {
-          const skipButton = activeFrame.contentDocument.querySelector('.ytp-ad-skip-button');
-          if (skipButton) skipButton.click();
-        } catch (e) {}
-      }
-    }
-    function inspect() { console.log('Opening developer tools...'); }
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('.dropdown-content') && !e.target.closest('.menu-button'))
-        document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+    // Listen for parent message for navigation (if in iframe)
+    window.addEventListener('message', e => {
+      if (e.data.ntSetTheme) setTheme(e.data.ntSetTheme.dark, e.data.ntSetTheme.custom);
+      if (e.data.ntNavigate) openUvUrl(e.data.ntNavigate);
     });
-    document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key >= '1' && e.key <= '9') {
-        const tabIndex = parseInt(e.key) - 1;
-        if (tabs[tabIndex]) switchToTab(tabs[tabIndex].id);
+
+    // === Search Bar ===
+    const searchEngine = localStorage.getItem('searchEngine') || 'https://www.google.com/search?q=';
+    document.getElementById('nt-search-form').addEventListener('submit', e => {
+      e.preventDefault();
+      let q = document.getElementById('nt-search').value.trim();
+      if (!q) return;
+      if (!q.includes('://')) {
+        if (q.includes('.')) q = 'https://' + q;
+        else q = searchEngine + encodeURIComponent(q);
       }
-      if (e.ctrlKey && e.key === 't') { e.preventDefault(); newTab(); }
-      if (e.ctrlKey && e.key === 'w') { e.preventDefault(); if (activeTabId) closeTab(activeTabId); }
+      openUvUrl(q);
     });
-    document.getElementById('urlbar').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        let url = e.target.value.trim();
-        if (!url.includes('://')) {
-          if (url.includes('.')) url = 'https://' + url;
-          else url = searchEngine + encodeURIComponent(url);
-        }
-        if (!url.startsWith('ht://') && !url.startsWith('about:') && !url.startsWith(location.origin)) url = proxifyUrl(url);
-        const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
-        if (activeFrame) activeFrame.src = url;
+
+    // === Theme Switcher ===
+    function setTheme(dark, custom) {
+      if (custom) {
+        document.body.style.setProperty('--nt-bg', custom.bg || '#202124');
+        document.body.style.setProperty('--nt-color', custom.color || '#e8eaed');
+      } else if (dark) {
+        document.body.style.setProperty('--nt-bg', '#202124');
+        document.body.style.setProperty('--nt-color', '#e8eaed');
+      } else {
+        document.body.style.setProperty('--nt-bg', '#f8f9fa');
+        document.body.style.setProperty('--nt-color', '#1a1a1a');
       }
-    });
-    document.addEventListener('DOMContentLoaded', () => {
-      newTab('ht://newtab');
-      new Sortable(document.getElementById('tabsContainer'), {
-        animation: 150,
-        ghostClass: 'sortable-ghost',
-        chosenClass: 'sortable-chosen',
-        onEnd: function (evt) {
-          const newOrder = Array.from(document.getElementById('tabsContainer').children).map(tabEl => tabEl.getAttribute('data-tab-id'));
-          tabs.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
-        }
-      });
-    });
-    // Listen for navigation and theme messages from newtab.html
-    window.addEventListener("message", function(event) {
-      if (event.data.ntNavigate) {
-        // Open the requested URL in the current tab
-        const tab = tabs.find(t => t.id === activeTabId);
-        if (tab) {
-          let url = event.data.ntNavigate;
-          if (!url.startsWith('ht://') && !url.startsWith('about:') && !url.startsWith(location.origin)) url = proxifyUrl(url);
-          document.getElementById(tab.frameId).src = url;
-        }
-      }
-      if (event.data.ntThemeSelected) {
-        if (event.data.ntThemeSelected === "dark") document.documentElement.classList.add('dark-theme');
-        if (event.data.ntThemeSelected === "light") document.documentElement.classList.remove('dark-theme');
-        // Optionally handle custom themes here
-      }
-    });
-    document.cookie = "oldsmobile=badcar";
+    }
+    function applyThemeBtn(which) {
+      document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+      if (which === 'dark') document.getElementById('nt-theme-dark').classList.add('active');
+      if (which === 'light') document.getElementById('nt-theme-light').classList.add('active');
+      if (which === 'custom') document.getElementById('nt-theme-custom').classList.add('active');
+    }
+    document.getElementById('nt-theme-dark').onclick = () => {
+      parent.postMessage({ ntThemeSelected: 'dark' }, '*');
+      setTheme(true);
+      applyThemeBtn('dark');
+    };
+    document.getElementById('nt-theme-light').onclick = () => {
+      parent.postMessage({ ntThemeSelected: 'light' }, '*');
+      setTheme(false);
+      applyThemeBtn('light');
+    };
+    document.getElementById('nt-theme-custom').onclick = () => {
+      parent.postMessage({ ntThemeSelected: 'custom' }, '*');
+      // Example custom theme, expand as needed
+      setTheme(false, { bg: '#2e2f50', color: '#ffd700' });
+      applyThemeBtn('custom');
+    };
+    // Default to dark
+    setTheme(true);
+    applyThemeBtn('dark');
   </script>
 </body>
 </html>
