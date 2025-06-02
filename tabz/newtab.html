@@ -6,10 +6,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-    
+    /* (Your stylish CSS from your message) */
+    * { box-sizing: border-box; }
     body {
       background: #202124;
       color: #e8eaed;
@@ -24,21 +22,16 @@
       overflow-x: hidden;
       position: relative;
     }
-    
     body::before {
       content: '';
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0; width: 100%; height: 100%;
       background: radial-gradient(circle at 20% 50%, rgba(66, 165, 245, 0.1) 0%, transparent 50%),
                   radial-gradient(circle at 80% 20%, rgba(156, 39, 176, 0.1) 0%, transparent 50%),
                   radial-gradient(circle at 40% 80%, rgba(76, 175, 80, 0.1) 0%, transparent 50%);
       pointer-events: none;
       z-index: 0;
     }
-    
     .search-bar {
       margin-top: 120px;
       width: 100%;
@@ -55,20 +48,17 @@
       position: relative;
       z-index: 1;
     }
-    
     .search-bar:hover {
       transform: translateY(-2px);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 
                   inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
-    
     .search-bar:focus-within {
       border-color: rgba(26, 115, 232, 0.6);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 
                   0 0 0 2px rgba(26, 115, 232, 0.3),
                   inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
-    
     .search-bar input {
       flex: 1;
       padding: 18px 24px;
@@ -80,12 +70,10 @@
       font-family: inherit;
       font-weight: 400;
     }
-    
     .search-bar input::placeholder {
       color: rgba(232, 234, 237, 0.6);
       font-weight: 300;
     }
-    
     .search-bar button {
       background: rgba(26, 115, 232, 0.8);
       color: #ffffff;
@@ -98,12 +86,10 @@
       font-weight: 500;
       min-width: 60px;
     }
-    
     .search-bar button:hover {
       background: rgba(26, 115, 232, 1);
       transform: scale(1.05);
     }
-    
     .bookmarks {
       margin-top: 60px;
       display: grid;
@@ -115,7 +101,6 @@
       z-index: 1;
       position: relative;
     }
-    
     .bookmark {
       display: flex;
       flex-direction: column;
@@ -131,7 +116,6 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       overflow: hidden;
     }
-    
     .bookmark::before {
       content: '';
       position: absolute;
@@ -143,7 +127,6 @@
       opacity: 0;
       transition: opacity 0.3s ease;
     }
-    
     .bookmark:hover {
       transform: translateY(-8px) scale(1.02);
       background: rgba(53, 54, 58, 0.9);
@@ -151,11 +134,7 @@
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3),
                   0 0 20px rgba(26, 115, 232, 0.2);
     }
-    
-    .bookmark:hover::before {
-      opacity: 1;
-    }
-    
+    .bookmark:hover::before { opacity: 1; }
     .bookmark-icon-img {
       width: 56px;
       height: 56px;
@@ -167,12 +146,10 @@
       border: 2px solid rgba(255, 255, 255, 0.1);
       transition: all 0.3s ease;
     }
-    
     .bookmark:hover .bookmark-icon-img {
       transform: scale(1.1);
       border-color: rgba(26, 115, 232, 0.5);
     }
-    
     .bookmark-label {
       text-align: center;
       font-size: 14px;
@@ -186,7 +163,6 @@
       line-height: 18px;
       letter-spacing: 0.3px;
     }
-    
     .delete-bookmark-btn {
       position: absolute;
       top: 12px;
@@ -207,16 +183,13 @@
       transition: all 0.3s ease;
       backdrop-filter: blur(10px);
     }
-    
     .delete-bookmark-btn:hover {
       background: rgba(220, 53, 69, 1);
       transform: scale(1.1);
     }
-    
     .bookmark:hover .delete-bookmark-btn {
       opacity: 1;
     }
-    
     .add-bookmark-bar {
       margin-top: 40px;
       width: 100%;
@@ -234,7 +207,6 @@
       z-index: 1;
       position: relative;
     }
-    
     .add-bookmark-bar input {
       background: rgba(48, 49, 52, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -248,17 +220,14 @@
       font-family: inherit;
       backdrop-filter: blur(10px);
     }
-    
     .add-bookmark-bar input:focus {
       border-color: rgba(26, 115, 232, 0.6);
       box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
       background: rgba(48, 49, 52, 0.8);
     }
-    
     .add-bookmark-bar input::placeholder {
       color: rgba(232, 234, 237, 0.6);
     }
-    
     .add-bookmark-bar button {
       background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%);
       color: #ffffff;
@@ -274,29 +243,19 @@
       letter-spacing: 0.5px;
       box-shadow: 0 4px 15px rgba(26, 115, 232, 0.3);
     }
-    
     .add-bookmark-bar button:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(26, 115, 232, 0.4);
     }
-    
     .add-bookmark-bar button[style*="background:#444"] {
       background: linear-gradient(135deg, #5f6368 0%, #3c4043 100%) !important;
       box-shadow: 0 4px 15px rgba(95, 99, 104, 0.3);
     }
-    
     .add-bookmark-bar button[style*="background:#444"]:hover {
       box-shadow: 0 8px 25px rgba(95, 99, 104, 0.4);
     }
-    
-    .show {
-      display: flex !important;
-    }
-    
-    .hidden {
-      display: none !important;
-    }
-    
+    .show { display: flex !important; }
+    .hidden { display: none !important; }
     .make-bookmark-btn {
       margin: 40px 0 0 0;
       padding: 16px;
@@ -318,7 +277,6 @@
       justify-content: center;
       font-size: 24px;
     }
-    
     .make-bookmark-btn::before {
       content: '';
       position: absolute;
@@ -329,16 +287,13 @@
       background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
       transition: left 0.5s;
     }
-    
     .make-bookmark-btn:hover {
       transform: translateY(-3px) scale(1.05);
       box-shadow: 0 15px 40px rgba(26, 115, 232, 0.5);
     }
-    
     .make-bookmark-btn:hover::before {
       left: 100%;
     }
-    
     @media (max-width: 768px) {
       .search-bar {
         margin-top: 80px;
@@ -346,7 +301,6 @@
         margin-left: 16px;
         margin-right: 16px;
       }
-      
       .bookmarks {
         max-width: calc(100vw - 32px);
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -354,7 +308,6 @@
         margin-top: 40px;
         padding: 0 16px;
       }
-      
       .add-bookmark-bar {
         max-width: calc(100vw - 32px);
         margin-left: 16px;
@@ -362,53 +315,43 @@
         flex-direction: column;
         gap: 12px;
       }
-      
       .add-bookmark-bar input {
         width: 100%;
         max-width: 300px;
         min-width: auto;
       }
-      
       .bookmark {
         padding: 20px 12px 16px;
       }
-      
       .bookmark-icon-img {
         width: 48px;
         height: 48px;
       }
-      
       .make-bookmark-btn {
         width: 56px;
         height: 56px;
         font-size: 20px;
       }
     }
-    
     @media (max-width: 480px) {
       .bookmarks {
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
       }
-      
       .bookmark-icon-img {
         width: 44px;
         height: 44px;
       }
-      
       .bookmark-label {
         font-size: 12px;
         max-width: 80px;
       }
-      
       .search-bar input {
         padding: 16px 20px;
         font-size: 15px;
       }
-      
       .search-bar button {
         padding: 16px 20px;
       }
-      
       .make-bookmark-btn {
         width: 52px;
         height: 52px;
@@ -436,7 +379,6 @@
   </form>
   <div class="bookmarks" id="nt-bookmarks"></div>
   <script>
-    // --- Default bookmarks ---
     const defaultBookmarks = [
       { url: "https://www.google.com", label: "Google", img: "https://www.google.com/favicon.ico" },
       { url: "https://www.youtube.com", label: "YouTube", img: "https://www.youtube.com/s/desktop/2e7e9e8e/img/favicon_48x48.png" },
@@ -444,10 +386,8 @@
       { url: "https://mail.google.com", label: "Gmail", img: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" },
       { url: "https://chat.openai.com", label: "ChatGPT", img: "https://chat.openai.com/favicon.ico" }
     ];
-
     const USER_BM_KEY = "uv_user_bookmarks_v1";
     const bmEl = document.getElementById('nt-bookmarks');
-
     function getUserBookmarks() {
       try {
         const arr = JSON.parse(localStorage.getItem(USER_BM_KEY));
@@ -458,7 +398,6 @@
       localStorage.setItem(USER_BM_KEY, JSON.stringify(arr));
     }
     function allBookmarks() {
-      // Merge default and user bookmarks (user bookmarks after default)
       return [...defaultBookmarks, ...getUserBookmarks()];
     }
     function renderBookmarks() {
@@ -475,8 +414,6 @@
           e.preventDefault();
           openUvUrl(bm.url);
         });
-
-        // Allow deleting user bookmarks (but not default)
         if (idx >= defaultBookmarks.length) {
           const btn = document.createElement("button");
           btn.className = "delete-bookmark-btn";
@@ -495,8 +432,6 @@
         bmEl.appendChild(a);
       });
     }
-
-    // --- Add bookmark UI logic ---
     const showAddBtn = document.getElementById("show-add-bookmark");
     const addBar = document.getElementById("add-bookmark-bar");
     showAddBtn.onclick = () => {
@@ -511,8 +446,6 @@
       document.getElementById("bm-label").value = "";
       document.getElementById("bm-img").value = "";
     };
-
-    // --- Add bookmark handler ---
     document.getElementById("bm-add").onclick = function(e) {
       e.preventDefault();
       const url = document.getElementById("bm-url").value.trim();
@@ -544,8 +477,6 @@
       showAddBtn.classList.remove('hidden');
       renderBookmarks();
     };
-
-    // --- UV Search Bar ---
     function proxifyUrl(url) {
       if (url.startsWith(location.origin + __uv$config.prefix)) return url;
       return __uv$config.prefix + __uv$config.encodeUrl(url);
@@ -560,7 +491,6 @@
     window.addEventListener('message', e => {
       if (e.data.ntNavigate) openUvUrl(e.data.ntNavigate);
     });
-
     const searchEngine = localStorage.getItem('searchEngine') || 'https://www.google.com/search?q=';
     document.getElementById('nt-search-form').addEventListener('submit', e => {
       e.preventDefault();
@@ -571,9 +501,11 @@
         else q = searchEngine + encodeURIComponent(q);
       }
       openUvUrl(q);
+      // --- Add to search history in parent
+      if (window.parent !== window) {
+        window.parent.postMessage({ addSearchHistory: { query: q } }, "*");
+      }
     });
-
-    // --- Init ---
     renderBookmarks();
   </script>
 </body>
