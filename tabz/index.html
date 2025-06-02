@@ -500,6 +500,8 @@
       if (e.ctrlKey && e.key === 't') { e.preventDefault(); newTab(); }
       if (e.ctrlKey && e.key === 'w') { e.preventDefault(); if (activeTabId) closeTab(activeTabId); }
     });
+
+    // --- Search History Integration for url-bar ---
     document.getElementById('urlbar').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         let url = e.target.value.trim();
@@ -510,8 +512,31 @@
         if (!url.startsWith('ht://') && !url.startsWith('about:') && !url.startsWith(location.origin)) url = proxifyUrl(url);
         const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
         if (activeFrame) activeFrame.src = url;
+
+        // --- Save to search history
+        let arr = JSON.parse(localStorage.getItem('uv_search_history') || "[]");
+        arr.push({query: e.target.value.trim(), time: (new Date()).toISOString()});
+        localStorage.setItem('uv_search_history', JSON.stringify(arr));
       }
     });
+
+    // --- Save history from newtab, bookmarks, etc. ---
+    window.addEventListener("message", function(event) {
+      if (event.data && event.data.addSearchHistory) {
+        let arr = JSON.parse(localStorage.getItem('uv_search_history') || "[]");
+        arr.push({query: event.data.addSearchHistory.query, time: (new Date()).toISOString()});
+        localStorage.setItem('uv_search_history', JSON.stringify(arr));
+      }
+      if (event.data && event.data.ntNavigate) {
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (tab) {
+          let url = event.data.ntNavigate;
+          if (!url.startsWith('ht://') && !url.startsWith('about:') && !url.startsWith(location.origin)) url = proxifyUrl(url);
+          document.getElementById(tab.frameId).src = url;
+        }
+      }
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
       newTab('ht://newtab');
       new Sortable(document.getElementById('tabsContainer'), {
@@ -524,26 +549,7 @@
         }
       });
     });
-    window.addEventListener("message", function(event) {
-      if (event.data.ntNavigate) {
-        const tab = tabs.find(t => t.id === activeTabId);
-        if (tab) {
-          let url = event.data.ntNavigate;
-          if (!url.startsWith('ht://') && !url.startsWith('about:') && !url.startsWith(location.origin)) url = proxifyUrl(url);
-          document.getElementById(tab.frameId).src = url;
-        }
-      }
-      if (event.data.ntThemeSelected) {
-        if (event.data.ntThemeSelected === "dark") document.documentElement.classList.add('dark-theme');
-        if (event.data.ntThemeSelected === "light") document.documentElement.classList.remove('dark-theme');
-      }
-      // --- Search History Integration ---
-      if (event.data && event.data.addSearchHistory) {
-        let arr = JSON.parse(localStorage.getItem('uv_search_history') || "[]");
-        arr.push({query: event.data.addSearchHistory.query, time: (new Date()).toISOString()});
-        localStorage.setItem('uv_search_history', JSON.stringify(arr));
-      }
-    });
+
     document.cookie = "oldsmobile=badcar";
   </script>
 </body>
