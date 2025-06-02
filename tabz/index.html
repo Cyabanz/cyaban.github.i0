@@ -273,7 +273,7 @@
       width: 100%;
       height: 100%;
       border: 0;
-      pointer-events: none;
+      pointer-events: none !important;
       filter: grayscale(0.2) blur(1.5px) brightness(0.85) contrast(0.88);
       transform: scale(0.32);
       transform-origin: top left;
@@ -647,22 +647,44 @@
             // Set iframe src to the tab's current frame
             const frame = document.getElementById(tabObj.frameId);
             if (frame) {
-              if (previewIframe.src !== frame.src) previewIframe.src = frame.src;
+              // Use a clone of the iframe to avoid reloading and sandbox issues
+              // Only for same-origin "newtab" tabs: show content; for others, just show the URL
+              if (
+                frame.src === window.location.origin + '/' + NEWTAB_SRC ||
+                frame.src.endsWith(NEWTAB_SRC)
+              ) {
+                try {
+                  let doc = frame.contentDocument || frame.contentWindow.document;
+                  let blob = new Blob([doc.documentElement.outerHTML], {type:'text/html'});
+                  let url = URL.createObjectURL(blob);
+                  previewIframe.src = url;
+                } catch(e) {
+                  previewIframe.src = frame.src;
+                }
+              } else {
+                previewIframe.src = frame.src;
+              }
             } else {
               previewIframe.src = '';
             }
             // Position popup
             const rect = tab.getBoundingClientRect();
-            popup.style.left = Math.max(rect.left, 12) + 'px';
+            let left = Math.max(rect.left, 12);
+            if (left + 320 > window.innerWidth) left = window.innerWidth - 332;
+            popup.style.left = left + 'px';
             popup.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
             popup.classList.add('active');
           }, 220); // short delay
         });
         tab.addEventListener('mouseleave', function() {
           clearTimeout(previewTimeout);
-          popup.classList.remove('active');
-          previewIframe.src = '';
-          previewTitle.textContent = '';
+          setTimeout(() => {
+            if (!popup.matches(':hover')) {
+              popup.classList.remove('active');
+              previewIframe.src = '';
+              previewTitle.textContent = '';
+            }
+          }, 120);
         });
       });
       // Hide preview if mouse leaves the popup itself
@@ -670,6 +692,10 @@
         popup.classList.remove('active');
         previewIframe.src = '';
         previewTitle.textContent = '';
+      });
+      // When mouse enters popup, do not hide it
+      popup.addEventListener('mouseenter', () => {
+        clearTimeout(previewTimeout);
       });
     }
   </script>
