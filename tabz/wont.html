@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang='en' class='dark-theme'>
+<head>
+  <meta charset='utf-8'>
+  <title>Fusion Tabs</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>
+  <meta name="theme-color" content="#202124">
+  <link id="favicon" rel="icon" type="image/png" href="tabz/favicon.ico">
+  <link href='https://fonts.googleapis.com/icon?family=Material+Icons' rel='stylesheet'>
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <style>
+    body, html { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #202124; color: #e8eaed; }
+    .surface { height: 100vh; display: flex; flex-direction: column; }
+    .mock-browser { height: 100vh; background: #202124; display: flex; flex-direction: column; }
+    .chrome-tabs-container {
+      background: #323639;
+      height: 36px;
+      position: relative;
+      border-bottom: 1px solid #5f6368;
+      display: flex;
+      align-items: flex-end;
+    }
+    .chrome-tabs { display: flex; height: 100%; position: relative; flex: 1; }
+    .chrome-tab {
+      position: relative;
+      height: 36px;
+      min-width: 180px; max-width: 240px;
+      background: #323639;
+      border: none;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      margin-right: -1px;
+      transition: all 0.15s ease;
+      z-index: 1;
+      user-select: none;
+    }
+    .chrome-tab:active { cursor: grabbing; }
+    .chrome-tab:hover { background: #3c4043; }
+    .chrome-tab.active {
+      background: #202124;
+      z-index: 2;
+    }
+    .chrome-tab .tab-favicon {
+      width: 16px; height: 16px;
+      margin-right: 8px; flex-shrink: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23e8eaed"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>') center/contain no-repeat;
+    }
+    .tab-title {
+      flex: 1;
+      font-size: 12px;
+      color: #e8eaed;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: left;
+      transition: color 0.15s;
+    }
+    .chrome-tab.active .tab-title { color: #fff; }
+    .tab-close {
+      width: 20px; height: 20px; margin-left: 8px;
+      border: none; background: transparent; border-radius: 50%;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: all 0.15s ease; flex-shrink: 0;
+    }
+    .chrome-tab:hover .tab-close, .chrome-tab.active .tab-close { opacity: 1; }
+    .tab-close:hover { background: rgba(255,255,255,0.1); }
+    .tab-close::before { content: '✕'; font-size: 12px; color: #9aa0a6; }
+    .new-tab-button {
+      width: 28px; height: 28px; margin: 0 8px;
+      border: none; background: transparent; border-radius: 4px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s ease;
+    }
+    .new-tab-button:hover { background: rgba(255,255,255,0.1); }
+    .new-tab-button::before { content: '+'; font-size: 18px; color: #9aa0a6; }
+    .browser-controls {
+      background: #202124;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      border-bottom: 1px solid #5f6368;
+    }
+    .nav-button {
+      width: 32px; height: 32px; border: none; background: transparent; border-radius: 4px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      margin-right: 8px; transition: background 0.15s;
+    }
+    .nav-button:hover { background: rgba(255,255,255,0.1); }
+    .nav-button svg { width: 20px; height: 20px; fill: #9aa0a6; }
+    .url-bar {
+      flex: 1;
+      height: 32px;
+      background: #303134;
+      border: 1px solid #5f6368;
+      border-radius: 16px;
+      padding: 0 16px;
+      color: #e8eaed;
+      font-size: 14px;
+      margin: 0 16px;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+    .url-bar:focus { background: #fff; color: #202124; border-color: #1a73e8; }
+    .content-area { flex: 1; background: #202124; position: relative; }
+    .browser-frame { width: 100%; height: 100%; border: none; background: #fff; display: none; position: absolute; left: 0; top: 0; }
+    .browser-frame.active { display: block; z-index: 1; }
+    /* Tab Preview Styles */
+    .tab-preview-popup {
+      position: absolute; z-index: 99; width: 320px; height: 200px;
+      background: #23242b; border-radius: 10px; box-shadow: 0 6px 32px #0008;
+      display: none; flex-direction: column; overflow: hidden; border: 1px solid #444;
+      transition: opacity 0.16s; pointer-events: none;
+    }
+    .tab-preview-popup.active {
+      display: flex; pointer-events: auto; opacity: 1;
+    }
+    .tab-preview-titlebar {
+      background: #2d3038; color: #fff; font-size: 14px; padding: 7px 16px;
+      font-weight: 500; border-bottom: 1px solid #383b45;
+      letter-spacing: 0.02em; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+    }
+    .tab-preview-content { flex: 1; background: #1a1b20; position: relative; overflow: hidden; }
+    .tab-preview-iframe {
+      width: 100%; height: 100%; border: 0; pointer-events: none;
+      filter: grayscale(0.2) blur(1.5px) brightness(0.85) contrast(0.88);
+      transform: scale(0.32); transform-origin: top left;
+    }
+  </style>
+</head>
+<body>
+  <div class='surface'>
+    <div class='mock-browser'>
+      <div class="chrome-tabs-container">
+        <div class="chrome-tabs" id="tabsContainer"></div>
+        <button class="new-tab-button" id="newTabBtn"></button>
+      </div>
+      <div id="tabPreviewPopup" class="tab-preview-popup">
+        <div class="tab-preview-titlebar" id="tabPreviewTitle"></div>
+        <div class="tab-preview-content">
+          <iframe class="tab-preview-iframe" id="tabPreviewIframe" sandbox="allow-scripts allow-forms"></iframe>
+        </div>
+      </div>
+      <div class="browser-controls">
+        <button class="nav-button" onclick="navBack()">
+          <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+        </button>
+        <button class="nav-button" onclick="navForward()">
+          <svg viewBox="0 0 24 24" style="transform: rotate(180deg)">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+        </button>
+        <button class="nav-button" onclick="navReload()">
+          <svg viewBox="0 0 24 24">
+            <path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+          </svg>
+        </button>
+        <input class="url-bar" id="urlbar" placeholder="Search Google or type a URL">
+      </div>
+      <div class="content-area" id="contentArea"></div>
+    </div>
+  </div>
+  <script>
+    // --- Tab Data ---
+    let tabs = [], tabCounter = 0, activeTabId = null;
+    const NEWTAB_URL = "https://www.google.com";
+    const contentArea = document.getElementById('contentArea');
+
+    // --- Tab Functions ---
+    function isInternalLink(url) {
+      return url.startsWith('/') && !url.startsWith('//');
+    }
+    function createTab(url = NEWTAB_URL, title = 'New Tab') {
+      const tabId = `tab-${++tabCounter}`;
+      const frameId = `frame-${tabId}`;
+      const tabObj = { id: tabId, url, title, frameId };
+      tabs.push(tabObj);
+
+      // Tab element
+      const tabEl = document.createElement('div');
+      tabEl.className = 'chrome-tab';
+      tabEl.setAttribute('data-tab-id', tabId);
+      tabEl.innerHTML = `
+        <div class="tab-favicon"></div>
+        <span class="tab-title">${title}</span>
+        <button class="tab-close"></button>
+      `;
+      tabEl.addEventListener('click', () => switchToTab(tabId));
+      tabEl.querySelector('.tab-close').addEventListener('click', e => { e.stopPropagation(); closeTab(tabId); });
+      document.getElementById('tabsContainer').appendChild(tabEl);
+
+      // Iframe
+      const iframe = document.createElement('iframe');
+      iframe.id = frameId;
+      iframe.className = 'browser-frame';
+      iframe.src = url;
+      contentArea.appendChild(iframe);
+
+      switchToTab(tabId);
+      enableTabPreviews();
+      return tabId;
+    }
+    function switchToTab(tabId) {
+      activeTabId = tabId;
+      document.querySelectorAll('.chrome-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-tab-id') === tabId));
+      document.querySelectorAll('.browser-frame').forEach(f => f.classList.remove('active'));
+      const tab = tabs.find(t => t.id === tabId);
+      if (tab) {
+        document.getElementById(tab.frameId).classList.add('active');
+        document.getElementById('urlbar').value = tab.url;
+      }
+    }
+    function closeTab(tabId) {
+      const idx = tabs.findIndex(t => t.id === tabId);
+      if (idx === -1) return;
+      document.querySelector(`.chrome-tab[data-tab-id="${tabId}"]`)?.remove();
+      document.getElementById(tabs[idx].frameId)?.remove();
+      tabs.splice(idx, 1);
+      if (tabs.length) switchToTab(tabs[Math.max(0, idx - 1)].id);
+    }
+
+    // --- Navigation ---
+    function navBack() {
+      const tab = tabs.find(t => t.id === activeTabId);
+      if (tab) document.getElementById(tab.frameId).contentWindow.history.back();
+    }
+    function navForward() {
+      const tab = tabs.find(t => t.id === activeTabId);
+      if (tab) document.getElementById(tab.frameId).contentWindow.history.forward();
+    }
+    function navReload() {
+      const tab = tabs.find(t => t.id === activeTabId);
+      if (tab) document.getElementById(tab.frameId).contentWindow.location.reload();
+    }
+
+    // --- URL Bar ---
+    document.getElementById('urlbar').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        let url = this.value.trim();
+        if (!/^https?:\/\//.test(url) && !isInternalLink(url)) {
+          url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
+        }
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (tab) {
+          tab.url = url;
+          document.getElementById(tab.frameId).src = url;
+        }
+      }
+    });
+
+    // --- New Tab Button ---
+    document.getElementById('newTabBtn').addEventListener('click', () => createTab());
+
+    // --- Tab Previews ---
+    function enableTabPreviews() {
+      const tabsContainer = document.getElementById('tabsContainer');
+      const popup = document.getElementById('tabPreviewPopup');
+      const previewTitle = document.getElementById('tabPreviewTitle');
+      const previewIframe = document.getElementById('tabPreviewIframe');
+      let previewTimeout = null;
+
+      tabsContainer.querySelectorAll('.chrome-tab').forEach(tab => {
+        tab.onmouseenter = null;
+        tab.onmouseleave = null;
+      });
+
+      tabsContainer.querySelectorAll('.chrome-tab').forEach(tab => {
+        tab.addEventListener('mouseenter', function() {
+          clearTimeout(previewTimeout);
+          previewTimeout = setTimeout(() => {
+            const tabId = tab.getAttribute('data-tab-id');
+            const tabObj = tabs.find(t => t.id === tabId);
+            if (!tabObj || tab.classList.contains('active')) return;
+            previewTitle.textContent = tab.querySelector('.tab-title').textContent;
+            const frame = document.getElementById(tabObj.frameId);
+            previewIframe.src = frame ? frame.src : '';
+            const rect = tab.getBoundingClientRect();
+            popup.style.left = Math.max(rect.left, 12) + 'px';
+            popup.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
+            popup.classList.add('active');
+          }, 220);
+        });
+        tab.addEventListener('mouseleave', function() {
+          clearTimeout(previewTimeout);
+          document.getElementById('tabPreviewPopup').classList.remove('active');
+          previewIframe.src = '';
+          previewTitle.textContent = '';
+        });
+      });
+      popup.addEventListener('mouseleave', () => {
+        popup.classList.remove('active');
+        previewIframe.src = '';
+        previewTitle.textContent = '';
+      });
+    }
+
+    // --- INIT ---
+    document.addEventListener('DOMContentLoaded', () => {
+      createTab();
+    });
+  </script>
+</body>
+</html>
