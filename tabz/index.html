@@ -229,6 +229,55 @@
     }
     .chrome-tab.sortable-chosen { opacity: 0.7; }
     .chrome-tab.sortable-ghost { opacity: 0.4; }
+
+    /* Tab Preview Styles */
+    .tab-preview-popup {
+      position: absolute;
+      z-index: 99;
+      width: 320px;
+      height: 200px;
+      background: #23242b;
+      border-radius: 10px;
+      box-shadow: 0 6px 32px #0008;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      border: 1px solid #444;
+      transition: opacity 0.16s;
+      pointer-events: none;
+    }
+    .tab-preview-popup.active {
+      display: flex;
+      pointer-events: auto;
+      opacity: 1;
+    }
+    .tab-preview-titlebar {
+      background: #2d3038;
+      color: #fff;
+      font-size: 14px;
+      padding: 7px 16px;
+      font-weight: 500;
+      border-bottom: 1px solid #383b45;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    .tab-preview-content {
+      flex: 1;
+      background: #1a1b20;
+      position: relative;
+      overflow: hidden;
+    }
+    .tab-preview-iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      pointer-events: none;
+      filter: grayscale(0.2) blur(1.5px) brightness(0.85) contrast(0.88);
+      transform: scale(0.32);
+      transform-origin: top left;
+    }
   </style>
 </head>
 <body id="alpha">
@@ -248,6 +297,13 @@
       <div class="chrome-tabs-container">
         <div class="chrome-tabs" id="tabsContainer"></div>
         <button class="new-tab-button" onclick="newTab('ht://newtab')"></button>
+      </div>
+      <!-- Tab Preview Popup -->
+      <div id="tabPreviewPopup" class="tab-preview-popup">
+        <div class="tab-preview-titlebar" id="tabPreviewTitle"></div>
+        <div class="tab-preview-content">
+          <iframe class="tab-preview-iframe" id="tabPreviewIframe" sandbox="allow-scripts allow-forms"></iframe>
+        </div>
       </div>
       <!-- Browser Controls -->
       <div class="browser-controls">
@@ -299,18 +355,19 @@
         <a onclick="showCustomTheme()">Custom Theme</a>
       </div>
      <!-- Extension Dropdown -->
-<div id="extensiondrop" class="dropdown-content" style="right: 16px; top: 96px;">
-  <a onclick="showMainMenu()">← Back</a>
-  <div class="divider"></div>
-  <a onclick="newTab('ht://extensions')">Manage extensions</a>
-  <a onclick="newTab('ht://extensionsmarketplace')">Get extensions</a>
-  <a onclick="newTab(proxifyUrl('/search-history.html'))">Search History</a>
-</div>
+      <div id="extensiondrop" class="dropdown-content" style="right: 16px; top: 96px;">
+        <a onclick="showMainMenu()">← Back</a>
+        <div class="divider"></div>
+        <a onclick="newTab('ht://extensions')">Manage extensions</a>
+        <a onclick="newTab('ht://extensionsmarketplace')">Get extensions</a>
+        <a onclick="newTab(proxifyUrl('/search-history.html'))">Search History</a>
+      </div>
       <!-- Content Area -->
       <div class="content-area" id="contentArea"></div>
     </div>
   </div>
   <script>
+    // Service Worker registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
         const swAllowedHostnames = ["localhost", "127.0.0.1"];
@@ -342,6 +399,10 @@
         }
       });
     }
+    // Helper for internal link detection
+    function isInternalLink(url) {
+      return url.startsWith('/') && !url.startsWith('//');
+    }
     const NEWTAB_SRC = "newtab.html";
     function createTab(url = 'ht://newtab', title = 'New Tab') {
       const tabId = `tab-${tabCounter++}`;
@@ -359,6 +420,7 @@
       document.getElementById('tabsContainer').appendChild(tabElement);
       let frameSrc = url;
       if (url === 'ht://newtab') frameSrc = NEWTAB_SRC;
+      else if (isInternalLink(url)) frameSrc = url;
       else if (!url.startsWith('ht://') && !url.startsWith('about:') && !url.startsWith(location.origin)) frameSrc = proxifyUrl(url);
       const iframe = document.createElement('iframe');
       iframe.id = frameId;
@@ -373,6 +435,8 @@
         }
       });
       switchToTab(tabId);
+      // Enable previews after adding a tab
+      enableTabPreviews();
       return tabId;
     }
     function switchToTab(tabId) {
@@ -395,6 +459,7 @@
         if (tabs.length > 0) switchToTab(tabs[Math.min(tabIndex, tabs.length - 1)].id);
         else newTab('ht://newtab');
       }
+      enableTabPreviews();
     }
     function newTab(url = 'ht://newtab') { createTab(url); }
     function openSearchHistoryTab() { newTab('/search-history.html'); }
@@ -549,9 +614,64 @@
           tabs.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
         }
       });
+      enableTabPreviews();
     });
 
     document.cookie = "oldsmobile=badcar";
+
+    // --- Tab Preview Logic ---
+    function enableTabPreviews() {
+      const tabsContainer = document.getElementById('tabsContainer');
+      const popup = document.getElementById('tabPreviewPopup');
+      const previewTitle = document.getElementById('tabPreviewTitle');
+      const previewIframe = document.getElementById('tabPreviewIframe');
+      let previewTimeout = null;
+
+      // Remove previous listeners to avoid stacking
+      tabsContainer.querySelectorAll('.chrome-tab').forEach(tab => {
+        tab.onmouseenter = null;
+        tab.onmouseleave = null;
+      });
+
+      tabsContainer.querySelectorAll('.chrome-tab').forEach(tab => {
+        tab.addEventListener('mouseenter', function(e) {
+          clearTimeout(previewTimeout);
+          previewTimeout = setTimeout(() => {
+            const tabId = tab.getAttribute('data-tab-id');
+            const tabObj = tabs.find(t => t.id === tabId);
+            if (!tabObj) return;
+            if (tab.classList.contains('active')) return; // Don't preview active tab
+            // Set preview title
+            const titleEl = tab.querySelector('.tab-title');
+            previewTitle.textContent = titleEl ? titleEl.textContent : 'Tab Preview';
+            // Set iframe src to the tab's current frame
+            const frame = document.getElementById(tabObj.frameId);
+            if (frame) {
+              if (previewIframe.src !== frame.src) previewIframe.src = frame.src;
+            } else {
+              previewIframe.src = '';
+            }
+            // Position popup
+            const rect = tab.getBoundingClientRect();
+            popup.style.left = Math.max(rect.left, 12) + 'px';
+            popup.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
+            popup.classList.add('active');
+          }, 220); // short delay
+        });
+        tab.addEventListener('mouseleave', function() {
+          clearTimeout(previewTimeout);
+          popup.classList.remove('active');
+          previewIframe.src = '';
+          previewTitle.textContent = '';
+        });
+      });
+      // Hide preview if mouse leaves the popup itself
+      popup.addEventListener('mouseleave', () => {
+        popup.classList.remove('active');
+        previewIframe.src = '';
+        previewTitle.textContent = '';
+      });
+    }
   </script>
 </body>
 </html>
