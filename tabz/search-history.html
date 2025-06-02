@@ -147,6 +147,8 @@
       .history-favicon { width: 18px; height: 18px; min-width: 18px; min-height: 18px; }
     }
   </style>
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.config.js"></script>
 </head>
 <body>
   <h1>Search History</h1>
@@ -154,7 +156,7 @@
   <div class="history-list" id="history-list"></div>
   <div class="empty-msg" id="empty-msg" style="display:none;">No search history yet.</div>
   <script>
-    // --- STORAGE KEY ---
+    // --- Storage Key ---
     const SEARCH_HISTORY_KEY = "uv_search_history";
     function getHistory() {
       try {
@@ -181,6 +183,13 @@
         return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f50d.png";
       }
     }
+    // --- Proxy Helper ---
+    function proxifyUrl(url) {
+      if (typeof __uv$config === "undefined" || typeof __uv$config.prefix === "undefined" || typeof __uv$config.encodeUrl !== "function")
+        return url;
+      if (url.startsWith(location.origin + __uv$config.prefix)) return url;
+      return __uv$config.prefix + __uv$config.encodeUrl(url);
+    }
     function renderHistory() {
       const list = document.getElementById("history-list");
       const emptyMsg = document.getElementById("empty-msg");
@@ -196,20 +205,29 @@
         const div = document.createElement("div");
         div.className = "history-item";
         const faviconUrl = getFaviconFromUrl(item.query);
+
         div.innerHTML = `
-          <span class="history-query" title="Search again">
+          <span class="history-query" title="Open in browser">
             <img class="history-favicon" src="${faviconUrl}" onerror="this.src='https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f50d.png'" alt="icon">
             <span style="margin-left:6px;">${item.query}</span>
           </span>
           <span class="history-date">${formatDate(item.time)}</span>
           <button class="delete-history-btn" title="Delete" data-idx="${idx}"><i class='bx bx-x'></i></button>
         `;
-        // Click on query: re-searches (in parent if in iframe, else new tab)
+
+        // Click on query: always proxies the URL (even if it's a search)
         div.querySelector('.history-query').onclick = () => {
+          let url = item.query;
+          // If not a full url, treat as search
+          if (!/^https?:\/\//.test(url)) {
+            const searchEngine = localStorage.getItem('searchEngine') || 'https://www.google.com/search?q=';
+            url = searchEngine + encodeURIComponent(url);
+          }
+          url = proxifyUrl(url);
           if (window.parent !== window) {
-            window.parent.postMessage({ ntNavigate: item.query }, "*");
+            window.parent.postMessage({ ntNavigate: url }, "*");
           } else {
-            window.open(item.query, "_blank");
+            window.open(url, "_blank");
           }
         };
         // Delete button
