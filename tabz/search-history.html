@@ -171,10 +171,9 @@
       return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
     function getFaviconFromUrl(url) {
-      // Try to extract main domain and build favicon URL
       try {
-        // If user searched a raw string, not a URL, fallback
-        if (!/^https?:\/\//.test(url)) return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f50d.png";
+        if (!/^https?:\/\//.test(url)) 
+          return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f50d.png";
         const a = document.createElement("a");
         a.href = url;
         return a.protocol + "//" + a.hostname + "/favicon.ico";
