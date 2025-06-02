@@ -71,6 +71,22 @@
     .history-item:hover {
       background: rgba(41, 48, 72, 0.15);
     }
+    .history-favicon {
+      width: 22px;
+      height: 22px;
+      min-width: 22px;
+      min-height: 22px;
+      max-width: 22px;
+      max-height: 22px;
+      border-radius: 6px;
+      margin-right: 20px;
+      object-fit: contain;
+      background: #28292c;
+      box-shadow: 0 1px 4px #0002;
+      border: 1px solid #313147;
+      vertical-align: middle;
+      display: inline-block;
+    }
     .history-query {
       flex: 1;
       color: #d1d1f4;
@@ -79,6 +95,8 @@
       cursor: pointer;
       text-decoration: underline dotted rgba(66,165,245,0.13);
       transition: color 0.13s;
+      display: flex;
+      align-items: center;
     }
     .history-item:hover .history-query {
       color: #90caf9;
@@ -126,6 +144,7 @@
       .history-item { padding: 10px 3vw 10px 3vw; }
       .history-query { font-size: 0.99em; }
       .history-date { font-size: 0.9em; margin-left: 10px; }
+      .history-favicon { width: 18px; height: 18px; min-width: 18px; min-height: 18px; }
     }
   </style>
 </head>
@@ -151,6 +170,18 @@
       if (isNaN(d.getTime())) return '';
       return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
+    function getFaviconFromUrl(url) {
+      // Try to extract main domain and build favicon URL
+      try {
+        // If user searched a raw string, not a URL, fallback
+        if (!/^https?:\/\//.test(url)) return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f50d.png";
+        const a = document.createElement("a");
+        a.href = url;
+        return a.protocol + "//" + a.hostname + "/favicon.ico";
+      } catch {
+        return "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f50d.png";
+      }
+    }
     function renderHistory() {
       const list = document.getElementById("history-list");
       const emptyMsg = document.getElementById("empty-msg");
@@ -165,8 +196,12 @@
       history.forEach((item, idx) => {
         const div = document.createElement("div");
         div.className = "history-item";
+        const faviconUrl = getFaviconFromUrl(item.query);
         div.innerHTML = `
-          <span class="history-query" title="Search again">${item.query}</span>
+          <span class="history-query" title="Search again">
+            <img class="history-favicon" src="${faviconUrl}" onerror="this.src='https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f50d.png'" alt="icon">
+            <span style="margin-left:6px;">${item.query}</span>
+          </span>
           <span class="history-date">${formatDate(item.time)}</span>
           <button class="delete-history-btn" title="Delete" data-idx="${idx}"><i class='bx bx-x'></i></button>
         `;
