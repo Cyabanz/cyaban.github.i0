@@ -8,8 +8,8 @@
   <style>
     * { box-sizing: border-box; }
     body {
-      background: #202124;
-      color: #e8eaed;
+      background: var(--bg, #202124);
+      color: var(--fg, #e8eaed);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       margin: 0;
       min-height: 100vh;
@@ -63,7 +63,7 @@
       padding: 18px 24px;
       border: none;
       background: transparent;
-      color: #e8eaed;
+      color: var(--fg, #e8eaed);
       font-size: 16px;
       outline: none;
       font-family: inherit;
@@ -152,7 +152,7 @@
     .bookmark-label {
       text-align: center;
       font-size: 14px;
-      color: #e8eaed;
+      color: var(--fg, #e8eaed);
       font-weight: 500;
       word-break: break-word;
       max-width: 100px;
@@ -209,7 +209,7 @@
     .add-bookmark-bar input {
       background: rgba(48, 49, 52, 0.6);
       border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #e8eaed;
+      color: var(--fg, #e8eaed);
       border-radius: 12px;
       padding: 12px 16px;
       font-size: 14px;
@@ -378,6 +378,57 @@
   </form>
   <div class="bookmarks" id="nt-bookmarks"></div>
   <script>
+    // --- THEME SYNC ---
+    // Listen for theme updates from parent
+    function applyThemeVars(style) {
+      document.body.style.setProperty('--bg', style.bg || "#202124");
+      document.body.style.setProperty('--fg', style.fg || "#e8eaed");
+      document.body.style.setProperty('--section-bg', style.section_bg || "#23242b");
+      document.body.style.background = style.bg || "#202124";
+      document.body.style.color = style.fg || "#e8eaed";
+    }
+    function getThemeStyle() {
+      let theme = localStorage.getItem('theme') || 'dark';
+      let customTheme = {};
+      try { customTheme = JSON.parse(localStorage.getItem('customTheme') || '{}'); } catch(e){}
+      let vars = {
+        dark:   { bg: "#202124", fg: "#e8eaed", section_bg: "#23242b" },
+        light:  { bg: "#f4f5fa", fg: "#181818", section_bg: "#ffffff" },
+        purple: { bg: "#2a183b", fg: "#f9d7ff", section_bg: "#391a53" }
+      };
+      let style = vars[theme] || vars.dark;
+      if (theme === 'custom' && customTheme.bg && customTheme.fg && customTheme.section_bg) {
+        style = customTheme;
+      }
+      return style;
+    }
+    function applyThemeFromParentOrStorage() {
+      if (window.parent !== window) {
+        // Ask parent for theme
+        window.parent.postMessage({ ntThemeRequest: true }, '*');
+      } else {
+        // Standalone: use localStorage
+        applyThemeVars(getThemeStyle());
+      }
+    }
+    // Handle parent theme response
+    window.addEventListener('message', e => {
+      if (e.data && e.data.ntSetTheme && typeof e.data.ntSetTheme === "object") {
+        // e.data.ntSetTheme should be an object with .bg, .fg, .section_bg
+        applyThemeVars(e.data.ntSetTheme);
+      }
+      // --- Keep UV open-in-tab working ---
+      if (e.data.ntNavigate) openUvUrl(e.data.ntNavigate);
+    });
+    // Also react to localStorage theme changes (if open as standalone)
+    window.addEventListener('storage', function(e) {
+      if (['theme', 'customTheme'].includes(e.key)) {
+        applyThemeFromParentOrStorage();
+      }
+    });
+    // Initial theme application
+    applyThemeFromParentOrStorage();
+
     // --- Default bookmarks ---
     const defaultBookmarks = [
       { url: "https://www.google.com", label: "Google", img: "https://www.google.com/favicon.ico" },
