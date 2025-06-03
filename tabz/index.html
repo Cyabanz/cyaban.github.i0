@@ -18,12 +18,13 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #202124;
-      color: #e8eaed;
+      background: var(--bg, #202124);
+      color: var(--fg, #e8eaed);
       overflow: hidden;
+      transition: background 0.2s, color 0.2s;
     }
     .surface { height: 100vh; display: flex; flex-direction: column; }
-    .mock-browser { height: 100vh; background: #202124; display: flex; flex-direction: column; }
+    .mock-browser { height: 100vh; background: var(--bg, #202124); display: flex; flex-direction: column; }
     .chrome-tabs-container {
       background: #323639;
       height: 36px;
@@ -53,7 +54,7 @@
     .chrome-tab:active { cursor: grabbing; }
     .chrome-tab:hover { background: #3c4043; }
     .chrome-tab.active {
-      background: #202124;
+      background: var(--bg, #202124);
       z-index: 2;
       clip-path: polygon(12px 0%, calc(100% - 12px) 0%, 100% 100%, 0% 100%);
     }
@@ -78,7 +79,7 @@
     .tab-title {
       flex: 1;
       font-size: 12px;
-      color: #e8eaed;
+      color: var(--fg, #e8eaed);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -124,7 +125,7 @@
     .new-tab-button:hover { background: rgba(255, 255, 255, 0.1); }
     .new-tab-button::before { content: '+'; font-size: 18px; color: #9aa0a6; }
     .browser-controls {
-      background: #202124;
+      background: var(--bg, #202124);
       height: 48px;
       display: flex;
       align-items: center;
@@ -154,7 +155,7 @@
       border: 1px solid #5f6368;
       border-radius: 16px;
       padding: 0 16px;
-      color: #e8eaed;
+      color: var(--fg, #e8eaed);
       font-size: 14px;
       margin: 0 16px;
       outline: none;
@@ -192,7 +193,7 @@
     }
     .dropdown-content.show { display: block; }
     .dropdown-content a {
-      color: #e8eaed;
+      color: var(--fg, #e8eaed);
       padding: 8px 16px;
       text-decoration: none;
       display: block;
@@ -209,13 +210,13 @@
     .dropdown-content input {
       background: #3c4043;
       border: 1px solid #5f6368;
-      color: #e8eaed;
+      color: var(--fg, #e8eaed);
       padding: 4px 8px;
       border-radius: 4px;
       width: calc(100% - 32px);
       margin: 0 16px;
     }
-    .content-area { flex: 1; background: #202124; position: relative; }
+    .content-area { flex: 1; background: var(--bg, #202124); position: relative; }
     .browser-frame { width: 100%; height: 100%; border: none; background: #ffffff; }
     @keyframes slideIn {
       from { transform: translateX(100%); opacity: 0; }
@@ -335,6 +336,7 @@
         <a onclick="toggleDropdown('optionsdrop');showThemeDrop()">Themes</a>
         <a onclick="toggleDropdown('optionsdrop');showExtensionDrop()">Extensions</a>
         <a onclick="toggleDropdown('optionsdrop');openSearchHistoryTab()">Search History</a>
+        <a onclick="toggleDropdown('optionsdrop');window.open('settings.html','_blank')">Settings</a>
         <div class="divider"></div>
         <a onclick="inspect();toggleDropdown('optionsdrop')">Developer tools</a>
       </div>
@@ -350,11 +352,12 @@
       <div id="themedrop" class="dropdown-content" style="right: 16px; top: 96px;">
         <a onclick="showMainMenu()">← Back</a>
         <div class="divider"></div>
-        <a onclick="applyTheme('Dark')">Dark Theme</a>
-        <a onclick="applyTheme('Light')">Light Theme</a>
-        <a onclick="showCustomTheme()">Custom Theme</a>
+        <a onclick="applyThemeUI('dark')">Dark Theme</a>
+        <a onclick="applyThemeUI('light')">Light Theme</a>
+        <a onclick="applyThemeUI('purple')">Purple Theme</a>
+        <a onclick="applyThemeUI('custom')">Custom Theme</a>
       </div>
-     <!-- Extension Dropdown -->
+      <!-- Extension Dropdown -->
       <div id="extensiondrop" class="dropdown-content" style="right: 16px; top: 96px;">
         <a onclick="showMainMenu()">← Back</a>
         <div class="divider"></div>
@@ -367,6 +370,31 @@
     </div>
   </div>
   <script>
+    // --- THEME SYSTEM ---
+    function applyThemeFromStorage() {
+      let theme = localStorage.getItem('theme') || 'dark';
+      let customTheme = {};
+      try { customTheme = JSON.parse(localStorage.getItem('customTheme') || '{}'); } catch(e){}
+      let vars = {
+        dark:   { bg: "#202124", fg: "#e8eaed", section_bg: "#23242b" },
+        light:  { bg: "#f4f5fa", fg: "#181818", section_bg: "#ffffff" },
+        purple: { bg: "#2a183b", fg: "#f9d7ff", section_bg: "#391a53" }
+      };
+      let style = vars[theme] || vars.dark;
+      if (theme === 'custom' && customTheme.bg && customTheme.fg && customTheme.section_bg) {
+        style = customTheme;
+      }
+      document.documentElement.classList.toggle('dark-theme', style.bg === "#202124" || theme === "dark");
+      document.body.style.background = style.bg;
+      document.body.style.color = style.fg;
+      document.body.style.setProperty('--bg', style.bg);
+      document.body.style.setProperty('--fg', style.fg);
+      document.body.style.setProperty('--section-bg', style.section_bg);
+    }
+    function applyThemeUI(theme) {
+      localStorage.setItem('theme', theme);
+      applyThemeFromStorage();
+    }
     // Service Worker registration
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
@@ -399,7 +427,6 @@
         }
       });
     }
-    // Helper for internal link detection
     function isInternalLink(url) {
       return url.startsWith('/') && !url.startsWith('//');
     }
@@ -435,8 +462,8 @@
         }
       });
       switchToTab(tabId);
-      // Enable previews after adding a tab
       enableTabPreviews();
+      updateTabsSession();
       return tabId;
     }
     function switchToTab(tabId) {
@@ -447,6 +474,7 @@
       document.getElementById(tab.frameId).style.display = 'block';
       activeTabId = tabId;
       updateUrlBar();
+      updateTabsSession();
     }
     function closeTab(tabId, event) {
       if (event) event.stopPropagation();
@@ -460,6 +488,7 @@
         else newTab('ht://newtab');
       }
       enableTabPreviews();
+      updateTabsSession();
     }
     function newTab(url = 'ht://newtab') { createTab(url); }
     function openSearchHistoryTab() { newTab('/search-history.html'); }
@@ -472,6 +501,7 @@
         tabElement.querySelector('.tab-title').style.display = tab.pinned ? 'none' : 'block';
         tabElement.querySelector('.tab-close').style.display = tab.pinned ? 'none' : 'flex';
       }
+      updateTabsSession();
     }
     function showContextMenu(event, tabId) {
       event.preventDefault();
@@ -496,9 +526,28 @@
       if (activeFrame) activeFrame.contentWindow.location.reload();
     }
     function updateUrlBar() {
-      const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
-      if (activeFrame) {
-        try { document.getElementById('urlbar').value = activeFrame.contentWindow.location.href; } catch (e) {}
+      const tab = tabs.find(t => t.id === activeTabId);
+      const frame = document.getElementById(tab.frameId);
+      if (frame) {
+        let originalUrl = tab.url;
+        if (originalUrl === 'ht://newtab' || originalUrl === '/newtab.html') {
+          document.getElementById('urlbar').value = '';
+        } else if (
+          !originalUrl.startsWith('ht://') && !originalUrl.startsWith('about:') &&
+          !originalUrl.startsWith(location.origin)
+        ) {
+          if (originalUrl.startsWith(__uv$config.prefix)) {
+            try {
+              document.getElementById('urlbar').value = __uv$config.decodeUrl(originalUrl.slice(__uv$config.prefix.length));
+            } catch (e) {
+              document.getElementById('urlbar').value = originalUrl;
+            }
+          } else {
+            document.getElementById('urlbar').value = originalUrl;
+          }
+        } else {
+          document.getElementById('urlbar').value = originalUrl;
+        }
       }
     }
     function toggleDropdown(dropdownId) {
@@ -531,13 +580,8 @@
       toggleDropdown('searchDrop');
     }
     function applyTheme(theme) {
-      if (theme === "Dark") document.documentElement.classList.add('dark-theme');
-      else if (theme === "Light") document.documentElement.classList.remove('dark-theme');
-      const tab = tabs.find(t => t.id === activeTabId);
-      if (tab && tab.url === "ht://newtab") {
-        const frame = document.getElementById(tab.frameId);
-        frame.contentWindow.postMessage({ ntSetTheme: { dark: document.documentElement.classList.contains('dark-theme') } }, "*");
-      }
+      localStorage.setItem('theme', theme);
+      applyThemeFromStorage();
       toggleDropdown('themedrop');
     }
     function toggleFullscreen() {
@@ -570,19 +614,26 @@
     // --- Search History Integration for url-bar ---
     document.getElementById('urlbar').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
-        let url = e.target.value.trim();
+        let input = e.target.value.trim();
+        let url = input;
+        let isLikelyUrl = url.includes('.') && !url.includes(' ');
         if (!url.includes('://')) {
-          if (url.includes('.')) url = 'https://' + url;
+          if (isLikelyUrl) url = 'https://' + url;
           else url = searchEngine + encodeURIComponent(url);
         }
-        if (!url.startsWith('ht://') && !url.startsWith('about:') && !url.startsWith(location.origin)) url = proxifyUrl(url);
-        const activeFrame = document.getElementById(tabs.find(t => t.id === activeTabId).frameId);
-        if (activeFrame) activeFrame.src = url;
-
-        // --- Save to search history
+        let proxied = url;
+        if (!url.startsWith('ht://') && !url.startsWith('about:') && !url.startsWith(location.origin)) proxied = proxifyUrl(url);
+        const tab = tabs.find(t => t.id === activeTabId);
+        if (tab) {
+          tab.url = input;
+          const activeFrame = document.getElementById(tab.frameId);
+          if (activeFrame) activeFrame.src = proxied;
+        }
         let arr = JSON.parse(localStorage.getItem('uv_search_history') || "[]");
-        arr.push({query: e.target.value.trim(), time: (new Date()).toISOString()});
+        arr.push({query: input, time: (new Date()).toISOString()});
         localStorage.setItem('uv_search_history', JSON.stringify(arr));
+        updateUrlBar();
+        updateTabsSession();
       }
     });
 
@@ -599,12 +650,46 @@
           let url = event.data.ntNavigate;
           if (!url.startsWith('ht://') && !url.startsWith('about:') && !url.startsWith(location.origin)) url = proxifyUrl(url);
           document.getElementById(tab.frameId).src = url;
+          tab.url = event.data.ntNavigate;
         }
+        updateTabsSession();
       }
     });
 
+    // --- Restore Tabs/Session ---
+    function saveTabsSession() {
+      const session = {
+        tabs: tabs.map(t => ({ url: t.url, pinned: t.pinned })),
+        activeTabIdx: tabs.findIndex(t => t.id === activeTabId)
+      };
+      localStorage.setItem('tabs', JSON.stringify(session));
+    }
+    function updateTabsSession() {
+      if (localStorage.getItem('restoreTabs') === '1') saveTabsSession();
+    }
     document.addEventListener('DOMContentLoaded', () => {
-      newTab('ht://newtab');
+      applyThemeFromStorage();
+      let restored = false;
+      if (localStorage.getItem('restoreTabs') === '1') {
+        let session = null;
+        try { session = JSON.parse(localStorage.getItem('tabs') || "null"); } catch(e) {}
+        if (session && Array.isArray(session.tabs) && session.tabs.length > 0) {
+          restored = true;
+          tabs = [];
+          document.getElementById('tabsContainer').innerHTML = '';
+          document.getElementById('contentArea').innerHTML = '';
+          session.tabs.forEach((t, i) => {
+            const tabId = createTab(t.url);
+            tabs[tabs.length - 1].pinned = !!t.pinned;
+            if (t.pinned) document.querySelector(`[data-tab-id="${tabId}"]`).classList.add('pinned');
+          });
+          let idx = session.activeTabIdx || 0;
+          if (tabs[idx]) switchToTab(tabs[idx].id);
+        }
+      }
+      if (!restored) {
+        newTab('ht://newtab');
+      }
       new Sortable(document.getElementById('tabsContainer'), {
         animation: 150,
         ghostClass: 'sortable-ghost',
@@ -612,12 +697,11 @@
         onEnd: function (evt) {
           const newOrder = Array.from(document.getElementById('tabsContainer').children).map(tabEl => tabEl.getAttribute('data-tab-id'));
           tabs.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+          updateTabsSession();
         }
       });
       enableTabPreviews();
     });
-
-    document.cookie = "oldsmobile=badcar";
 
     // --- Tab Preview Logic ---
     function enableTabPreviews() {
@@ -626,13 +710,10 @@
       const previewTitle = document.getElementById('tabPreviewTitle');
       const previewIframe = document.getElementById('tabPreviewIframe');
       let previewTimeout = null;
-
-      // Remove previous listeners to avoid stacking
       tabsContainer.querySelectorAll('.chrome-tab').forEach(tab => {
         tab.onmouseenter = null;
         tab.onmouseleave = null;
       });
-
       tabsContainer.querySelectorAll('.chrome-tab').forEach(tab => {
         tab.addEventListener('mouseenter', function(e) {
           clearTimeout(previewTimeout);
@@ -640,41 +721,40 @@
             const tabId = tab.getAttribute('data-tab-id');
             const tabObj = tabs.find(t => t.id === tabId);
             if (!tabObj) return;
-            if (tab.classList.contains('active')) return; // Don't preview active tab
-            // Set preview title
+            if (tab.classList.contains('active')) return;
             const titleEl = tab.querySelector('.tab-title');
             previewTitle.textContent = titleEl ? titleEl.textContent : 'Tab Preview';
-            // Set iframe src to the tab's current frame
             const frame = document.getElementById(tabObj.frameId);
             if (frame) {
-              // Use a clone of the iframe to avoid reloading and sandbox issues
-              // Only for same-origin "newtab" tabs: show content; for others, just show the URL
-              if (
+              const isSameOriginNewTab =
                 frame.src === window.location.origin + '/' + NEWTAB_SRC ||
-                frame.src.endsWith(NEWTAB_SRC)
-              ) {
+                frame.src.endsWith(NEWTAB_SRC);
+              if (isSameOriginNewTab) {
                 try {
                   let doc = frame.contentDocument || frame.contentWindow.document;
                   let blob = new Blob([doc.documentElement.outerHTML], {type:'text/html'});
                   let url = URL.createObjectURL(blob);
                   previewIframe.src = url;
+                  previewIframe.srcdoc = '';
                 } catch(e) {
                   previewIframe.src = frame.src;
+                  previewIframe.srcdoc = '';
                 }
               } else {
-                previewIframe.src = frame.src;
+                previewIframe.src = '';
+                previewIframe.srcdoc = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#ccc;font-family:sans-serif;font-size:16px;">Preview not available</div>`;
               }
             } else {
               previewIframe.src = '';
+              previewIframe.srcdoc = '';
             }
-            // Position popup
             const rect = tab.getBoundingClientRect();
             let left = Math.max(rect.left, 12);
             if (left + 320 > window.innerWidth) left = window.innerWidth - 332;
             popup.style.left = left + 'px';
             popup.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
             popup.classList.add('active');
-          }, 220); // short delay
+          }, 220);
         });
         tab.addEventListener('mouseleave', function() {
           clearTimeout(previewTimeout);
@@ -682,18 +762,18 @@
             if (!popup.matches(':hover')) {
               popup.classList.remove('active');
               previewIframe.src = '';
+              previewIframe.srcdoc = '';
               previewTitle.textContent = '';
             }
           }, 120);
         });
       });
-      // Hide preview if mouse leaves the popup itself
       popup.addEventListener('mouseleave', () => {
         popup.classList.remove('active');
         previewIframe.src = '';
+        previewIframe.srcdoc = '';
         previewTitle.textContent = '';
       });
-      // When mouse enters popup, do not hide it
       popup.addEventListener('mouseenter', () => {
         clearTimeout(previewTimeout);
       });
