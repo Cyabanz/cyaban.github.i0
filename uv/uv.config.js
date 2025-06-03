@@ -1,79 +1,40 @@
-/*global Ultraviolet*/
+// Ultraviolet config - dynamic bare switching via localStorage (from settings.html)
+
+// Helper to get bare URL from localStorage (if enabled and set)
+function getActiveBareUrl() {
+    try {
+        if (localStorage.getItem('bareEnabled') !== '1') return null;
+        const arr = JSON.parse(localStorage.getItem('bareUrls') || "[]");
+        return arr.length ? arr[0] : null;
+    } catch {
+        return null;
+    }
+}
+
+// Default/fallback bare proxy
+let fallbackBare = 'https://tomp.app';
+
+// Try to get dynamic bare URL from settings
+let bareUrl = getActiveBareUrl();
+if (!bareUrl) bareUrl = fallbackBare;
+
+// Assign config as usual, but dynamically set .bare
 self.__uv$config = {
-    /**
-     * The prefix for UV (Ultraviolet) resources.
-     * @type {string}
-     */
     prefix: '/uv/service/',
-
-    /**
-     * The bare path.
-     * @type {string}
-     */
-    bare: [
-        "https://tomp.app"
-      ],
-
-    /**
-     * Function to encode URLs using Ultraviolet's XOR codec.
-     * @type {function}
-     * @param {string} url - The URL to encode.
-     * @returns {string} The encoded URL.
-     */
+    bare: bareUrl,
     encodeUrl: Ultraviolet.codec.xor.encode,
-
-    /**
-     * Function to decode URLs using Ultraviolet's XOR codec.
-     * @type {function}
-     * @param {string} url - The URL to decode.
-     * @returns {string} The decoded URL.
-     */
     decodeUrl: Ultraviolet.codec.xor.decode,
-
-    /**
-     * The handler path.
-     * @type {string}
-     */
     handler: '/uv/uv.handler.js',
-
-    /**
-     * The client path.
-     * @type {string}
-     */
     client: '/uv/uv.client.js',
-
-    /**
-     * The bundle path.
-     * @type {string}
-     */
     bundle: '/uv/uv.bundle.js',
-
-    /**
-     * The config path.
-     * @type {string}
-     */
     config: '/uv/uv.config.js',
-
-    /**
-     * The service worker path.
-     * @type {string}
-     */
     sw: '/uv/uv.sw.js',
-
-    /**
-     * Function to inject scripts into the doc Head
-     * @type {function}
-     * @param {URL} url - The URL for the rewrite function.
-     * @returns {string} - The script to inject.
-     */
-    inject: async (url) => {
-        if (url.host === 'discord.com') {
-            return `
-                <script src="https://raw.githubusercontent.com/Vencord/builds/main/browser.js"></script>
-                <link rel="stylesheet" href="https://raw.githubusercontent.com/Vencord/builds/main/browser.css">
-              `;
-        }
-
-        return ``;
-    },
 };
+
+// (Optional) Live update bare backend if user changes settings while app is open:
+window.addEventListener('storage', (e) => {
+    if (e.key === 'bareEnabled' || e.key === 'bareUrls') {
+        let newBare = getActiveBareUrl() || fallbackBare;
+        self.__uv$config.bare = newBare;
+    }
+});
