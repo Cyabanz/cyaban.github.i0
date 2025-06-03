@@ -335,8 +335,8 @@
         <a onclick="toggleDropdown('optionsdrop');showSearchDrop()">Set search engine</a>
         <a onclick="toggleDropdown('optionsdrop');showThemeDrop()">Themes</a>
         <a onclick="toggleDropdown('optionsdrop');showExtensionDrop()">Extensions</a>
-        <a onclick="toggleDropdown('optionsdrop');openSearchHistoryTab()">Search History</a>
-        <a onclick="toggleDropdown('optionsdrop');window.open('settings.html','_blank')">Settings</a>
+        <a onclick="toggleDropdown('optionsdrop');openSpecialTab('search-history.html','Search History')">Search History</a>
+        <a onclick="toggleDropdown('optionsdrop');openSpecialTab('settings.html','Settings')">Settings</a>
         <div class="divider"></div>
         <a onclick="inspect();toggleDropdown('optionsdrop')">Developer tools</a>
       </div>
@@ -363,7 +363,7 @@
         <div class="divider"></div>
         <a onclick="newTab('ht://extensions')">Manage extensions</a>
         <a onclick="newTab('ht://extensionsmarketplace')">Get extensions</a>
-        <a onclick="newTab(proxifyUrl('/search-history.html'))">Search History</a>
+        <a onclick="openSpecialTab('search-history.html','Search History')">Search History</a>
       </div>
       <!-- Content Area -->
       <div class="content-area" id="contentArea"></div>
@@ -491,7 +491,6 @@
       updateTabsSession();
     }
     function newTab(url = 'ht://newtab') { createTab(url); }
-    function openSearchHistoryTab() { newTab('/search-history.html'); }
     function pinTab(tabId) {
       const tab = tabs.find(t => t.id === tabId);
       const tabElement = document.querySelector(`[data-tab-id="${tabId}"]`);
@@ -777,6 +776,33 @@
       popup.addEventListener('mouseenter', () => {
         clearTimeout(previewTimeout);
       });
+    }
+
+    // --- Open Settings and Search History in Tabs ---
+    function openSpecialTab(page, tabTitle = "") {
+      let url = "/" + page;
+      let existing = tabs.find(t => t.url === url);
+      if (existing) {
+        switchToTab(existing.id);
+        return;
+      }
+      let prettyTitle =
+        tabTitle ||
+        page.replace(/\.html$/,"").replace(/-/g," ").replace(/\b\w/g, c => c.toUpperCase());
+      let tabId = createTab(url, prettyTitle);
+      setTimeout(() => {
+        let tabEl = document.querySelector(`[data-tab-id="${tabId}"] .tab-favicon`);
+        if (tabEl) {
+          if (page === "settings.html") {
+            tabEl.style.backgroundImage =
+              "url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22%23fff%22 viewBox=%220 0 24 24%22><path d=%22M19.14,12.94a1.73,1.73,0,0,0,0-1.88l2-1.55a.38.38,0,0,0,.09-.49l-1.9-3.29a.38.38,0,0,0-.48-.17l-2.35.94a6.64,6.64,0,0,0-1.62-.94L14.5,3.5a.36.36,0,0,0-.36-.28h-3.8A.36.36,0,0,0,10,3.5L9.66,6.08a6.65,6.65,0,0,0-1.62.94l-2.35-.94a.38.38,0,0,0-.48.17l-1.9,3.29a.38.38,0,0,0,.09.49l2,1.55a1.73,1.73,0,0,0,0,1.88l-2,1.55a.38.38,0,0,0-.09.49l1.9,3.29a.38.38,0,0,0,.48.17l2.35-.94a6.64,6.64,0,0,0,1.62.94L9.5,20.5a.36.36,0,0,0,.36.28h3.8a.36.36,0,0,0,.36-.28l.34-2.58a6.65,6.65,0,0,0,1.62-.94l2.35.94a.38.38,0,0,0,.48-.17l1.9-3.29a.38.38,0,0,0-.09-.49ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z%22/></svg>')";
+          }
+          if (page === "search-history.html") {
+            tabEl.style.backgroundImage =
+              "url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22%23fff%22 viewBox=%220 0 24 24%22><path d=%22M13.5,7H12V12l4.28,2.54.73-1.21-3.51-2V7ZM12,4A8,8,0,1,0,20,12h-2a6,6,0,1,1-6-6V2l3,3-3,3Z%22/></svg>')";
+          }
+        }
+      }, 50);
     }
   </script>
 </body>
