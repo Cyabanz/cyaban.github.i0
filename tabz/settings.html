@@ -5,10 +5,7 @@
   <title>Fusion Tabs - Settings</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <style>
-    * {
-      box-sizing: border-box;
-    }
-    
+    * { box-sizing: border-box; }
     body {
       font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
       background: var(--bg, #0f0f0f);
@@ -22,13 +19,11 @@
         radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 40% 80%, rgba(120, 198, 255, 0.08) 0%, transparent 50%);
     }
-    
     .container {
       max-width: 1200px;
       margin: 0 auto;
       padding: 40px 24px;
     }
-    
     h1 {
       text-align: center;
       margin-bottom: 48px;
@@ -40,14 +35,12 @@
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    
     .settings-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 32px;
       align-items: stretch;
     }
-    
     .section {
       background: var(--section-bg, rgba(255, 255, 255, 0.05));
       backdrop-filter: blur(20px);
@@ -62,7 +55,6 @@
       position: relative;
       overflow: hidden;
     }
-    
     .section::before {
       content: '';
       position: absolute;
@@ -72,52 +64,39 @@
       height: 1px;
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
     }
-    
     .section:hover {
       transform: translateY(-4px);
       box-shadow: 
         0 20px 40px rgba(0, 0, 0, 0.4),
         0 0 0 1px rgba(255, 255, 255, 0.1) inset;
     }
-    
     .section-title {
       font-size: 1.4rem;
       font-weight: 600;
       margin-bottom: 8px;
       color: var(--fg, #ffffff);
     }
-    
     .section-desc {
       font-size: 0.95rem;
       color: rgba(255, 255, 255, 0.7);
       margin-bottom: 24px;
       line-height: 1.5;
     }
-    
     .setting-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 24px;
     }
-    
-    .setting-row:last-child { 
-      margin-bottom: 0; 
-    }
-    
+    .setting-row:last-child { margin-bottom: 0; }
     .toggle-switch {
       position: relative;
       width: 54px;
       height: 30px;
       display: inline-block;
+      flex-shrink: 0;
     }
-    
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .slider {
       position: absolute;
       cursor: pointer;
@@ -127,37 +106,30 @@
       border-radius: 30px;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
-    
     .slider:before {
       position: absolute;
       content: "";
-      height: 26px; 
-      width: 26px;
-      left: 2px; 
-      bottom: 1px;
+      height: 26px; width: 26px;
+      left: 2px; bottom: 1px;
       background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
       transition: all 0.3s ease;
       border-radius: 50%;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     }
-    
     input:checked + .slider {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border-color: rgba(255, 255, 255, 0.3);
     }
-    
     input:checked + .slider:before {
       transform: translateX(24px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
-    
     .theme-buttons {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
       margin-bottom: 24px;
     }
-    
     .theme-btn {
       padding: 12px 16px;
       border-radius: 12px;
@@ -173,7 +145,6 @@
       position: relative;
       overflow: hidden;
     }
-    
     .theme-btn::before {
       content: '';
       position: absolute;
@@ -184,24 +155,18 @@
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
       transition: left 0.6s ease;
     }
-    
-    .theme-btn:hover::before {
-      left: 100%;
-    }
-    
+    .theme-btn:hover::before { left: 100%; }
     .theme-btn:hover {
       transform: translateY(-2px);
       border-color: rgba(255, 255, 255, 0.2);
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     }
-    
     .theme-btn.selected {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border-color: rgba(255, 255, 255, 0.3);
       color: #ffffff;
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
-    
     .custom-theme-fields {
       display: flex;
       flex-direction: column;
@@ -212,23 +177,19 @@
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
-    
     .color-input-group {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    
     .color-input-group label {
       font-size: 0.95rem;
       font-weight: 500;
       color: var(--fg, #ffffff);
     }
-    
     .color-input-wrapper {
       position: relative;
     }
-    
     .custom-theme-fields input[type="color"] {
       width: 44px;
       height: 44px;
@@ -238,12 +199,10 @@
       cursor: pointer;
       transition: all 0.3s ease;
     }
-    
     .custom-theme-fields input[type="color"]:hover {
       border-color: rgba(255, 255, 255, 0.3);
       transform: scale(1.05);
     }
-    
     .save-btn {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #ffffff;
@@ -259,7 +218,6 @@
       overflow: hidden;
       width: 100%;
     }
-    
     .save-btn::before {
       content: '';
       position: absolute;
@@ -270,79 +228,331 @@
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
       transition: left 0.6s ease;
     }
-    
-    .save-btn:hover::before {
-      left: 100%;
-    }
-    
+    .save-btn:hover::before { left: 100%; }
     .save-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
     }
-    
-    .save-btn:active { 
-      transform: translateY(0);
+    .save-btn:active { transform: translateY(0); }
+    .form-input {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--fg, #ffffff);
+      font-size: 0.95rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      outline: none;
+      backdrop-filter: blur(10px);
+      position: relative;
+      margin-bottom: 16px;
     }
-    
+    .form-input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+      transition: all 0.3s ease;
+    }
+    .form-input:focus {
+      border-color: #667eea;
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 
+        0 0 0 3px rgba(102, 126, 234, 0.15),
+        0 8px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+    }
+    .form-input:focus::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+      transform: translateY(-2px);
+    }
+    .custom-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      margin-bottom: 24px;
+    }
+    .custom-select-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      object-fit: contain;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .form-select {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--fg, #ffffff);
+      font-size: 0.95rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      outline: none;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 12px center;
+      background-repeat: no-repeat;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+    .form-select:focus {
+      border-color: #667eea;
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 
+        0 0 0 3px rgba(102, 126, 234, 0.15),
+        0 8px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+    }
+    .form-select:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .form-select option {
+      color: #222;
+      background: #fafafa;
+      padding: 8px 12px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .toggle-label {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--fg, #ffffff);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .toggle-label::after {
+      content: 'Control proxy routing for enhanced privacy';
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 400;
+    }
+    .clean-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px 0;
+      max-height: 240px;
+      overflow-y: auto;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(15px);
+      position: relative;
+    }
+    .clean-list:empty { display: none; }
+    .clean-list::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    }
+    .clean-list-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.9rem;
+      color: var(--fg, #ffffff);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      background: transparent;
+    }
+    .clean-list-item:last-child { border-bottom: none; }
+    .clean-list-item:hover { background: rgba(255, 255, 255, 0.08); transform: translateX(4px); padding-left: 24px; }
+    .clean-list-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .clean-list-item:hover::before { opacity: 1; }
+    .clean-list-text { 
+      flex: 1; 
+      word-break: break-all; 
+      font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.85rem;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin-right: 12px;
+    }
+    .remove-btn {
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid rgba(255, 107, 107, 0.2);
+      color: rgba(255, 107, 107, 0.8);
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 36px;
+    }
+    .remove-btn:hover {
+      background: rgba(255, 107, 107, 0.2);
+      color: #ff6b6b;
+      border-color: rgba(255, 107, 107, 0.4);
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(255, 107, 107, 0.2);
+    }
+    .remove-btn:active { transform: scale(0.95); }
+    .add-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      align-items: flex-end;
+    }
+    .add-row .form-input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    .add-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 24px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+      position: relative;
+      overflow: hidden;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .add-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.6s ease;
+    }
+    .add-btn:hover::before { left: 100%; }
+    .add-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.35);
+    }
+    .add-btn:active { transform: translateY(0); }
+    #searchEngineSection .form-group:first-of-type {
+      background: rgba(255, 255, 255, 0.03);
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 24px;
+    }
+    .clean-list::-webkit-scrollbar { width: 6px; }
+    .clean-list::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 3px;
+    }
+    .clean-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      transition: all 0.3s ease;
+    }
+    .clean-list::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
     @media (max-width: 768px) {
-      .settings-grid {
-        grid-template-columns: 1fr;
-        gap: 24px;
-      }
-      
-      .container {
-        padding: 24px 16px;
-      }
-      
-      .section {
-        padding: 24px;
-      }
-      
-      h1 { 
-        font-size: 2rem; 
-        margin-bottom: 32px;
-      }
-      
-      .theme-buttons {
-        grid-template-columns: 1fr;
-      }
+      .settings-grid { grid-template-columns: 1fr; gap: 24px; }
+      .container { padding: 24px 16px; }
+      .section { padding: 24px; }
+      h1 { font-size: 2rem; margin-bottom: 32px; }
+      .theme-buttons { grid-template-columns: 1fr; }
+      .add-row { flex-direction: column; gap: 16px; }
+      .add-btn { width: 100%; }
     }
-    
     @media (max-width: 480px) {
-      .section { 
-        padding: 20px; 
-      }
-      
-      h1 { 
-        font-size: 1.75rem; 
-      }
-      
-      .theme-btn { 
-        padding: 10px 14px; 
-        font-size: 0.9rem; 
-      }
-      
-      .setting-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-      }
-      
-      .toggle-switch {
-        align-self: flex-end;
-      }
+      .section { padding: 20px; }
+      h1 { font-size: 1.75rem; }
+      .theme-btn { padding: 10px 14px; font-size: 0.9rem; }
+      .setting-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .toggle-switch { align-self: flex-end; }
+      .custom-select-wrap { flex-direction: column; align-items: stretch; gap: 8px; }
+      .clean-list-item { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+      .clean-list-text { margin-right: 0; width: 100%; }
+      .remove-btn { align-self: flex-end; }
+    }
+    .loading { opacity: 0.6; pointer-events: none; position: relative; }
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #667eea;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      margin-right: 12px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      vertical-align: middle;
+    }
+    #bareSettingsSection .section-title::before {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+    }
+    #searchEngineSection .section-title::before {
+      background: linear-gradient(135deg, #10ac84 0%, #00d2d3 100%);
+    }
+    #themeSection .section-title::before {
+      background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+    }
+    #restoreTabsSection .section-title::before {
+      background: linear-gradient(135deg, #5f27cd 0%, #00d2d3 100%);
     }
   </style>
 </head>
-<body>
+<body data-theme="dark">
   <div class="container">
     <h1>Settings</h1>
-
     <div class="settings-grid">
+      <!-- Startup Restore -->
       <form class="section" id="restoreTabsSection" onsubmit="return false;">
         <h2 class="section-title">Startup Behavior</h2>
         <p class="section-desc">Configure how Fusion Tabs behaves when you start your browser.</p>
-        
         <div class="setting-row">
           <div>
             <div style="font-size: 1.1rem; font-weight: 500; margin-bottom: 4px;">Restore Tabs on Startup</div>
@@ -353,21 +563,19 @@
             <span class="slider"></span>
           </label>
         </div>
-        
         <button class="save-btn" onclick="saveRestoreTabs()">Save Changes</button>
       </form>
 
+      <!-- Appearance/Theme -->
       <form class="section" id="themeSection" onsubmit="return false;">
         <h2 class="section-title">Appearance</h2>
         <p class="section-desc">Customize the look and feel of your Fusion Tabs experience.</p>
-        
         <div class="theme-buttons">
           <button type="button" class="theme-btn" id="theme-dark">🌙 Dark</button>
           <button type="button" class="theme-btn" id="theme-light">☀️ Light</button>
           <button type="button" class="theme-btn" id="theme-purple">💜 Purple</button>
           <button type="button" class="theme-btn" id="theme-custom">🎨 Custom</button>
         </div>
-        
         <div id="customThemeFields" class="custom-theme-fields" style="display:none;">
           <div class="color-input-group">
             <label>Background Color</label>
@@ -388,35 +596,78 @@
             </div>
           </div>
         </div>
-        
         <button class="save-btn" onclick="saveTheme()">Apply Theme</button>
+      </form>
+
+      <!-- Bare Proxy Settings -->
+      <form class="section" id="bareSettingsSection" onsubmit="return false;">
+        <h2 class="section-title">Bare Proxy</h2>
+        <p class="section-desc">Configure custom bare proxy endpoints for enhanced privacy and access.</p>
+        
+        <div class="setting-row">
+          <span class="toggle-label">Enable Bare Proxy</span>
+          <label class="toggle-switch">
+            <input id="bareSwitchToggle" type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <ul class="clean-list" id="bareUrlList"></ul>
+
+        <div class="add-row">
+          <input id="bareUrlInput" type="text" class="form-input" placeholder="https://bare.example.com">
+          <button type="button" class="add-btn" onclick="addBareUrl()">Add</button>
+        </div>
+
+        <button class="save-btn" onclick="saveBareSettings()">Save Settings</button>
+      </form>
+
+      <!-- Search Engine Settings -->
+      <form class="section" id="searchEngineSection" onsubmit="return false;">
+        <h2 class="section-title">Search Engine</h2>
+        <p class="section-desc">Choose your default search provider or add a custom search engine.</p>
+        
+        <div class="form-group custom-select-wrap">
+          <img id="searchLogoPreview" class="custom-select-logo" src="" alt="Logo">
+          <select id="searchEngineSelect" class="form-select"></select>
+        </div>
+
+        <div class="add-row">
+          <input id="searchNameInput" type="text" class="form-input" placeholder="Engine Name">
+          <input id="searchUrlInput" type="text" class="form-input" placeholder="Search URL (e.g. https://duckduckgo.com/?q=)">
+        </div>
+        
+        <div class="form-group">
+          <input id="searchLogoInput" type="text" class="form-input" placeholder="Logo URL (optional)">
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+          <button type="button" class="add-btn" onclick="addSearchEngine()" style="flex: 1;">Add Custom Engine</button>
+        </div>
+
+        <button class="save-btn" onclick="saveSearchEngine()">Save Search Engine</button>
       </form>
     </div>
   </div>
-
   <script>
-    // --- Restore Tabs Toggle ---
+    // --- Restore Tabs ---
     function saveRestoreTabs() {
       const checked = document.getElementById('restoreTabsToggle').checked;
       localStorage.setItem('restoreTabs', checked ? '1' : '0');
-      
-      // Create a more elegant notification
       const btn = event.target;
       const originalText = btn.textContent;
       btn.textContent = '✓ Saved!';
       btn.style.background = 'linear-gradient(135deg, #00C851 0%, #007E33 100%)';
-      
       setTimeout(() => {
         btn.textContent = originalText;
         btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
       }, 1500);
     }
-    
-    // Load state from localStorage
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('restoreTabsToggle').checked = localStorage.getItem('restoreTabs') === '1';
-      // Theme UI
       loadThemeUI();
+      loadBareUI();
+      loadSearchEngineUI();
     });
 
     // --- Theme Switcher ---
@@ -425,24 +676,24 @@
       light:  { bg: "#f8fafc", fg: "#1a202c", section_bg: "rgba(255, 255, 255, 0.8)" },
       purple: { bg: "#1a0b2e", fg: "#edf2f7", section_bg: "rgba(123, 44, 191, 0.1)" }
     };
-    
     function setThemeVars(theme) {
       document.body.style.setProperty("--bg", theme.bg);
       document.body.style.setProperty("--fg", theme.fg);
       document.body.style.setProperty("--section-bg", theme.section_bg);
     }
-    
+    function updateBodyTheme(themeName) {
+      document.body.setAttribute('data-theme', themeName);
+    }
     function highlightThemeBtn(id) {
       document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('selected'));
       document.getElementById(id).classList.add('selected');
     }
-    
     function loadThemeUI() {
       let theme = localStorage.getItem('theme') || 'dark';
       let customTheme = JSON.parse(localStorage.getItem('customTheme') || '{}');
-      
       if (theme === 'custom' && customTheme.bg && customTheme.fg && customTheme.section_bg) {
         setThemeVars(customTheme);
+        updateBodyTheme('custom');
         highlightThemeBtn('theme-custom');
         document.getElementById('ct-bg').value = customTheme.bg;
         document.getElementById('ct-fg').value = customTheme.fg;
@@ -450,33 +701,32 @@
         document.getElementById('customThemeFields').style.display = '';
       } else {
         setThemeVars(themes[theme] || themes.dark);
+        updateBodyTheme(theme);
         highlightThemeBtn('theme-' + theme);
         document.getElementById('customThemeFields').style.display = 'none';
       }
     }
-    
-    // Button listeners
     document.getElementById('theme-dark').onclick = function() {
       localStorage.setItem('theme', 'dark');
       setThemeVars(themes.dark);
+      updateBodyTheme('dark');
       highlightThemeBtn('theme-dark');
       document.getElementById('customThemeFields').style.display = 'none';
     };
-    
     document.getElementById('theme-light').onclick = function() {
       localStorage.setItem('theme', 'light');
       setThemeVars(themes.light);
+      updateBodyTheme('light');
       highlightThemeBtn('theme-light');
       document.getElementById('customThemeFields').style.display = 'none';
     };
-    
     document.getElementById('theme-purple').onclick = function() {
       localStorage.setItem('theme', 'purple');
       setThemeVars(themes.purple);
+      updateBodyTheme('purple');
       highlightThemeBtn('theme-purple');
       document.getElementById('customThemeFields').style.display = 'none';
     };
-    
     document.getElementById('theme-custom').onclick = function() {
       localStorage.setItem('theme', 'custom');
       let custom = JSON.parse(localStorage.getItem('customTheme') || '{}');
@@ -485,16 +735,14 @@
         fg: custom.fg || "#e8eaed",
         section_bg: custom.section_bg || "rgba(255, 255, 255, 0.05)"
       });
+      updateBodyTheme('custom');
       highlightThemeBtn('theme-custom');
       document.getElementById('customThemeFields').style.display = '';
     };
-    
-    // Save Custom Theme
     function saveTheme() {
       let theme = localStorage.getItem('theme') || 'dark';
       const btn = event.target;
       const originalText = btn.textContent;
-      
       if (theme === 'custom') {
         let custom = {
           bg: document.getElementById('ct-bg').value,
@@ -503,32 +751,192 @@
         };
         localStorage.setItem('customTheme', JSON.stringify(custom));
         setThemeVars(custom);
+        updateBodyTheme('custom');
       } else {
         setThemeVars(themes[theme]);
+        updateBodyTheme(theme);
       }
-      
-      // Elegant save feedback
       btn.textContent = '✓ Applied!';
       btn.style.background = 'linear-gradient(135deg, #00C851 0%, #007E33 100%)';
-      
       setTimeout(() => {
         btn.textContent = originalText;
         btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
       }, 1500);
     }
-    
-    // Custom theme fields update live
     document.getElementById('ct-bg').addEventListener('input', function() {
       document.body.style.setProperty("--bg", this.value);
     });
-    
     document.getElementById('ct-fg').addEventListener('input', function() {
       document.body.style.setProperty("--fg", this.value);
     });
-    
     document.getElementById('ct-section-bg').addEventListener('input', function() {
       document.body.style.setProperty("--section-bg", this.value);
     });
+
+    // --- Bare Proxy Settings ---
+    function loadBareUI() {
+      document.getElementById('bareSwitchToggle').checked = localStorage.getItem('bareEnabled') === '1';
+      const bareList = JSON.parse(localStorage.getItem('bareUrls') || '[]');
+      renderBareUrlList(bareList);
+    }
+    function renderBareUrlList(urls) {
+      const ul = document.getElementById('bareUrlList');
+      ul.innerHTML = '';
+      urls.forEach((url, idx) => {
+        const li = document.createElement('li');
+        li.className = 'clean-list-item';
+        const textSpan = document.createElement('span');
+        textSpan.className = 'clean-list-text';
+        textSpan.textContent = url;
+        const btn = document.createElement('button');
+        btn.className = 'remove-btn';
+        btn.innerHTML = '✕';
+        btn.title = 'Remove';
+        btn.onclick = function() {
+          const arr = JSON.parse(localStorage.getItem('bareUrls') || '[]');
+          arr.splice(idx, 1);
+          localStorage.setItem('bareUrls', JSON.stringify(arr));
+          renderBareUrlList(arr);
+        };
+        li.appendChild(textSpan);
+        li.appendChild(btn);
+        ul.appendChild(li);
+      });
+    }
+    function addBareUrl() {
+      const input = document.getElementById('bareUrlInput');
+      let url = input.value.trim();
+      if (!/^https?:\/\//i.test(url)) {
+        alert("Please enter a valid URL starting with http:// or https://");
+        return;
+      }
+      let arr = JSON.parse(localStorage.getItem('bareUrls') || '[]');
+      if (arr.includes(url)) {
+        alert('URL already added.');
+        return;
+      }
+      arr.push(url);
+      localStorage.setItem('bareUrls', JSON.stringify(arr));
+      renderBareUrlList(arr);
+      input.value = '';
+    }
+    function saveBareSettings() {
+      localStorage.setItem('bareEnabled', document.getElementById('bareSwitchToggle').checked ? '1' : '0');
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = '✓ Saved!';
+      btn.style.background = 'linear-gradient(135deg, #00C851 0%, #007E33 100%)';
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      }, 1500);
+    }
+
+    // --- Search Engine Settings ---
+    const defaultSearchEngines = [
+      {
+        name: "Google",
+        url: "https://www.google.com/search?q=",
+        logo: "https://www.google.com/favicon.ico"
+      },
+      {
+        name: "DuckDuckGo",
+        url: "https://duckduckgo.com/?q=",
+        logo: "https://duckduckgo.com/favicon.ico"
+      },
+      {
+        name: "Bing",
+        url: "https://www.bing.com/search?q=",
+        logo: "https://www.bing.com/sa/simg/favicon-2x.ico"
+      },
+      {
+        name: "Brave",
+        url: "https://search.brave.com/search?q=",
+        logo: "https://search.brave.com/favicon.ico"
+      },
+      {
+        name: "Yahoo",
+        url: "https://search.yahoo.com/search?p=",
+        logo: "https://s.yimg.com/rz/l/favicon.ico"
+      }
+    ];
+    function getCustomSearchEngines() {
+      try { return JSON.parse(localStorage.getItem('customSearchEngines') || "[]"); }
+      catch { return []; }
+    }
+    function setCustomSearchEngines(arr) {
+      localStorage.setItem('customSearchEngines', JSON.stringify(arr));
+    }
+    function getAllEngines() {
+      return [...defaultSearchEngines, ...getCustomSearchEngines()];
+    }
+    function loadSearchEngineUI() {
+      const select = document.getElementById('searchEngineSelect');
+      select.innerHTML = '';
+      const all = getAllEngines();
+      let current = localStorage.getItem('searchEngine') || defaultSearchEngines[0].url;
+      all.forEach((engine, idx) => {
+        const opt = document.createElement('option');
+        opt.value = engine.url;
+        opt.textContent = engine.name;
+        opt.setAttribute('data-logo', engine.logo || "");
+        select.appendChild(opt);
+      });
+      select.value = current;
+      updateSearchLogo();
+      select.onchange = updateSearchLogo;
+    }
+    function updateSearchLogo() {
+      const select = document.getElementById('searchEngineSelect');
+      const logoImg = document.getElementById('searchLogoPreview');
+      const selectedOpt = select.options[select.selectedIndex];
+      const logo = selectedOpt ? selectedOpt.getAttribute('data-logo') : "";
+      if (logo) {
+        logoImg.src = logo;
+        logoImg.style.display = "inline-block";
+      } else {
+        logoImg.src = "";
+        logoImg.style.display = "none";
+      }
+    }
+    function addSearchEngine() {
+      const name = document.getElementById('searchNameInput').value.trim();
+      const url = document.getElementById('searchUrlInput').value.trim();
+      const logoInput = document.getElementById('searchLogoInput').value.trim();
+      let logo = logoInput || "https://www.google.com/favicon.ico";
+      if (!name || !url) {
+        alert("Fill in both name and URL for the custom engine.");
+        return;
+      }
+      if (!url.endsWith('=') && !/\{q\}/.test(url)) {
+        alert('Search Engine URL should end with "=" or contain "{q}" for the search term.');
+        return;
+      }
+      let custom = getCustomSearchEngines();
+      if (custom.some(e => e.name.toLowerCase() === name.toLowerCase())) {
+        alert("Engine name already exists.");
+        return;
+      }
+      custom.push({ name, url, logo });
+      setCustomSearchEngines(custom);
+      loadSearchEngineUI();
+      document.getElementById('searchNameInput').value = '';
+      document.getElementById('searchUrlInput').value = '';
+      document.getElementById('searchLogoInput').value = '';
+    }
+    function saveSearchEngine() {
+      const select = document.getElementById('searchEngineSelect');
+      const url = select.value;
+      localStorage.setItem('searchEngine', url);
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = '✓ Saved!';
+      btn.style.background = 'linear-gradient(135deg, #00C851 0%, #007E33 100%)';
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      }, 1500);
+    }
   </script>
 </body>
 </html>
