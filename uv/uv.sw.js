@@ -1,26 +1,14 @@
-self.addEventListener('fetch', async (event) => {
-    const url = new URL(event.request.url);
+/*global UVServiceWorker,__uv$config*/
+/*
+ * Stock service worker script.
+ * Users can provide their own sw.js if they need to extend the functionality of the service worker.
+ * Ideally, this will be registered under the scope in uv.config.js so it will not need to be modified.
+ * However, if a user changes the location of uv.bundle.js/uv.config.js or sw.js is not relative to them, they will need to modify this script locally.
+ */
+importScripts('uv.bundle.js');
+importScripts('uv.config.js');
+importScripts(__uv$config.sw || 'uv.sw.js');
 
-    // Check if the request is for Discord web
-    if (url.hostname.endsWith("discord.com") && event.request.destination === "document") {
-        let response = await fetch(event.request);
-        let text = await response.text();
+const sw = new UVServiceWorker();
 
-        // Inject Vencord before </body>
-        text = text.replace(
-            "</body>",
-            `<script src="https://vencord.dev/inject.js"></script></body>`
-        );
-
-        // Return the modified response
-        event.respondWith(new Response(text, {
-            headers: response.headers,
-            status: response.status,
-            statusText: response.statusText
-        }));
-        return; // Stop further processing
-    }
-
-    // Fallback to normal handling
-    event.respondWith(fetch(event.request));
-});
+self.addEventListener('fetch', (event) => event.respondWith(sw.fetch(event)));
