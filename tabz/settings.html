@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fusion Tabs - Settings</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <style>
+    body {
+      font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+      background: var(--bg, #202124);
+      color: var(--fg, #e8eaed);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      transition: background 0.2s, color 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-top: 36px;
+      margin-bottom: 24px;
+      font-size: 2rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .section {
+      background: var(--section-bg, #23242b);
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 2px 18px #0002;
+    }
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .setting-row:last-child { margin-bottom: 0; }
+    .toggle-switch {
+      position: relative;
+      width: 46px;
+      height: 26px;
+      display: inline-block;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #757575;
+      transition: 0.2s;
+      border-radius: 26px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px; width: 22px;
+      left: 2px; bottom: 2px;
+      background: #fff;
+      transition: 0.2s;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px #0003;
+    }
+    input:checked + .slider {
+      background-color: #1a73e8;
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+    .theme-buttons {
+      display: flex; gap: 12px;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+    .theme-btn {
+      padding: 7px 18px;
+      border-radius: 7px;
+      border: none;
+      cursor: pointer;
+      background: #323639;
+      color: #e8eaed;
+      font-size: 1rem;
+      transition: background 0.18s;
+      outline: none;
+      border: 2px solid transparent;
+    }
+    .theme-btn.selected,
+    .theme-btn:focus {
+      background: #1a73e8;
+      color: #fff;
+    }
+    .custom-theme-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+      margin-bottom: 6px;
+    }
+    .custom-theme-fields label {
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+      color: var(--fg, #e8eaed);
+    }
+    .custom-theme-fields input[type="color"] {
+      width: 36px;
+      height: 28px;
+      border: none;
+      background: none;
+      margin-left: 10px;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+    .custom-theme-fields input[type="text"] {
+      width: 120px;
+      border-radius: 5px;
+      border: 1px solid #999;
+      padding: 4px 7px;
+      background: #18181c;
+      color: #e8eaed;
+    }
+    .save-btn {
+      background: #1a73e8;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 7px 20px;
+      font-size: 1rem;
+      margin-top: 14px;
+      cursor: pointer;
+      transition: box-shadow 0.18s, background 0.18s;
+      box-shadow: 0 2px 8px #0002;
+    }
+    .save-btn:active { background: #155ab6; }
+    .desc {
+      font-size: 0.97rem;
+      color: #aab;
+      margin-bottom: 8px;
+      margin-top: -10px;
+    }
+    @media (max-width: 480px) {
+      .section { max-width: 95vw; padding: 14px; }
+      h1 { font-size: 1.3rem; }
+      .theme-btn { padding: 6px 11px; font-size: 0.92rem; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Settings</h1>
+
+  <form class="section" id="restoreTabsSection" onsubmit="return false;">
+    <div class="setting-row">
+      <label for="restoreTabsToggle" style="font-size:1.08rem;">
+        Restore Tabs on Startup
+      </label>
+      <label class="toggle-switch">
+        <input id="restoreTabsToggle" type="checkbox">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="desc">When enabled, re-opens your tabs from your last session (saved in your browser).</div>
+    <button class="save-btn" onclick="saveRestoreTabs()">Save</button>
+  </form>
+
+  <form class="section" id="themeSection" onsubmit="return false;">
+    <div class="setting-row">
+      <label style="font-size:1.08rem;">Theme</label>
+    </div>
+    <div class="theme-buttons">
+      <button type="button" class="theme-btn" id="theme-dark">Dark</button>
+      <button type="button" class="theme-btn" id="theme-light">Light</button>
+      <button type="button" class="theme-btn" id="theme-purple">Purple</button>
+      <button type="button" class="theme-btn" id="theme-custom">Custom</button>
+    </div>
+    <div id="customThemeFields" class="custom-theme-fields" style="display:none;">
+      <label>
+        Background Color:
+        <input type="color" id="ct-bg" value="#202124">
+      </label>
+      <label>
+        Foreground Color:
+        <input type="color" id="ct-fg" value="#e8eaed">
+      </label>
+      <label>
+        Section BG:
+        <input type="color" id="ct-section-bg" value="#23242b">
+      </label>
+    </div>
+    <button class="save-btn" onclick="saveTheme()">Save</button>
+  </form>
+
+  <script>
+    // --- Restore Tabs Toggle ---
+    function saveRestoreTabs() {
+      const checked = document.getElementById('restoreTabsToggle').checked;
+      localStorage.setItem('restoreTabs', checked ? '1' : '0');
+      alert('Restore Tabs setting saved!');
+    }
+    // Load state from localStorage
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('restoreTabsToggle').checked = localStorage.getItem('restoreTabs') === '1';
+      // Theme UI
+      loadThemeUI();
+    });
+
+    // --- Theme Switcher ---
+    const themes = {
+      dark:   { bg: "#202124", fg: "#e8eaed", section_bg: "#23242b" },
+      light:  { bg: "#f4f5fa", fg: "#181818", section_bg: "#ffffff" },
+      purple: { bg: "#2a183b", fg: "#f9d7ff", section_bg: "#391a53" }
+    };
+    function setThemeVars(theme) {
+      document.body.style.setProperty("--bg", theme.bg);
+      document.body.style.setProperty("--fg", theme.fg);
+      document.body.style.setProperty("--section-bg", theme.section_bg);
+      document.body.style.background = theme.bg;
+      document.body.style.color = theme.fg;
+    }
+    function highlightThemeBtn(id) {
+      document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('selected'));
+      document.getElementById(id).classList.add('selected');
+    }
+    function loadThemeUI() {
+      let theme = localStorage.getItem('theme') || 'dark';
+      let customTheme = JSON.parse(localStorage.getItem('customTheme') || '{}');
+      if (theme === 'custom' && customTheme.bg && customTheme.fg && customTheme.section_bg) {
+        setThemeVars(customTheme);
+        highlightThemeBtn('theme-custom');
+        document.getElementById('ct-bg').value = customTheme.bg;
+        document.getElementById('ct-fg').value = customTheme.fg;
+        document.getElementById('ct-section-bg').value = customTheme.section_bg;
+        document.getElementById('customThemeFields').style.display = '';
+      } else {
+        setThemeVars(themes[theme] || themes.dark);
+        highlightThemeBtn('theme-' + theme);
+        document.getElementById('customThemeFields').style.display = 'none';
+      }
+    }
+    // Button listeners
+    document.getElementById('theme-dark').onclick = function() {
+      localStorage.setItem('theme', 'dark');
+      setThemeVars(themes.dark);
+      highlightThemeBtn('theme-dark');
+      document.getElementById('customThemeFields').style.display = 'none';
+    };
+    document.getElementById('theme-light').onclick = function() {
+      localStorage.setItem('theme', 'light');
+      setThemeVars(themes.light);
+      highlightThemeBtn('theme-light');
+      document.getElementById('customThemeFields').style.display = 'none';
+    };
+    document.getElementById('theme-purple').onclick = function() {
+      localStorage.setItem('theme', 'purple');
+      setThemeVars(themes.purple);
+      highlightThemeBtn('theme-purple');
+      document.getElementById('customThemeFields').style.display = 'none';
+    };
+    document.getElementById('theme-custom').onclick = function() {
+      localStorage.setItem('theme', 'custom');
+      let custom = JSON.parse(localStorage.getItem('customTheme') || '{}');
+      setThemeVars({
+        bg: custom.bg || "#202124",
+        fg: custom.fg || "#e8eaed",
+        section_bg: custom.section_bg || "#23242b"
+      });
+      highlightThemeBtn('theme-custom');
+      document.getElementById('customThemeFields').style.display = '';
+    };
+    // Save Custom Theme
+    function saveTheme() {
+      let theme = localStorage.getItem('theme') || 'dark';
+      if (theme === 'custom') {
+        let custom = {
+          bg: document.getElementById('ct-bg').value,
+          fg: document.getElementById('ct-fg').value,
+          section_bg: document.getElementById('ct-section-bg').value
+        };
+        localStorage.setItem('customTheme', JSON.stringify(custom));
+        setThemeVars(custom);
+        alert('Custom theme saved!');
+      } else {
+        setThemeVars(themes[theme]);
+        alert('Theme applied!');
+      }
+    }
+    // Custom theme fields update live
+    document.getElementById('ct-bg').addEventListener('input', function() {
+      document.body.style.setProperty("--bg", this.value);
+      document.body.style.background = this.value;
+    });
+    document.getElementById('ct-fg').addEventListener('input', function() {
+      document.body.style.setProperty("--fg", this.value);
+      document.body.style.color = this.value;
+    });
+    document.getElementById('ct-section-bg').addEventListener('input', function() {
+      document.body.style.setProperty("--section-bg", this.value);
+    });
+  </script>
+</body>
+</html>
