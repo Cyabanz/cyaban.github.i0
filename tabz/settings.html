@@ -5,204 +5,413 @@
   <title>Fusion Tabs - Settings</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <style>
+    * {
+      box-sizing: border-box;
+    }
+    
     body {
       font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-      background: var(--bg, #202124);
-      color: var(--fg, #e8eaed);
+      background: var(--bg, #0f0f0f);
+      color: var(--fg, #ffffff);
       margin: 0;
       padding: 0;
       min-height: 100vh;
-      transition: background 0.2s, color 0.2s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      transition: background 0.3s ease, color 0.3s ease;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(120, 198, 255, 0.08) 0%, transparent 50%);
     }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+    
     h1 {
-      margin-top: 36px;
-      margin-bottom: 24px;
-      font-size: 2rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
+      text-align: center;
+      margin-bottom: 48px;
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--fg, #ffffff) 0%, rgba(255,255,255,0.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
+    
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: stretch;
+    }
+    
     .section {
-      background: var(--section-bg, #23242b);
-      padding: 24px;
-      border-radius: 12px;
-      margin-bottom: 24px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 2px 18px #0002;
+      background: var(--section-bg, rgba(255, 255, 255, 0.05));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 32px;
+      border-radius: 20px;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
+    
+    .section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    }
+    
+    .section:hover {
+      transform: translateY(-4px);
+      box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    }
+    
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--fg, #ffffff);
+    }
+    
+    .section-desc {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    
     .setting-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 18px;
+      margin-bottom: 24px;
     }
-    .setting-row:last-child { margin-bottom: 0; }
+    
+    .setting-row:last-child { 
+      margin-bottom: 0; 
+    }
+    
     .toggle-switch {
       position: relative;
-      width: 46px;
-      height: 26px;
+      width: 54px;
+      height: 30px;
       display: inline-block;
     }
+    
     .toggle-switch input {
       opacity: 0;
       width: 0;
       height: 0;
     }
+    
     .slider {
       position: absolute;
       cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #757575;
-      transition: 0.2s;
-      border-radius: 26px;
+      background: rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
+    
     .slider:before {
       position: absolute;
       content: "";
-      height: 22px; width: 22px;
-      left: 2px; bottom: 2px;
-      background: #fff;
-      transition: 0.2s;
+      height: 26px; 
+      width: 26px;
+      left: 2px; 
+      bottom: 1px;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+      transition: all 0.3s ease;
       border-radius: 50%;
-      box-shadow: 0 1px 4px #0003;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     }
+    
     input:checked + .slider {
-      background-color: #1a73e8;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-color: rgba(255, 255, 255, 0.3);
     }
+    
     input:checked + .slider:before {
-      transform: translateX(20px);
+      transform: translateX(24px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
+    
     .theme-buttons {
-      display: flex; gap: 12px;
-      margin-top: 8px;
-      margin-bottom: 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
     }
+    
     .theme-btn {
-      padding: 7px 18px;
-      border-radius: 7px;
-      border: none;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       cursor: pointer;
-      background: #323639;
-      color: #e8eaed;
-      font-size: 1rem;
-      transition: background 0.18s;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--fg, #ffffff);
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
       outline: none;
-      border: 2px solid transparent;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
     }
-    .theme-btn.selected,
-    .theme-btn:focus {
-      background: #1a73e8;
-      color: #fff;
+    
+    .theme-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.6s ease;
     }
+    
+    .theme-btn:hover::before {
+      left: 100%;
+    }
+    
+    .theme-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+    
+    .theme-btn.selected {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
     .custom-theme-fields {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-top: 10px;
-      margin-bottom: 6px;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
     }
-    .custom-theme-fields label {
+    
+    .color-input-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .color-input-group label {
       font-size: 0.95rem;
-      margin-bottom: 2px;
-      color: var(--fg, #e8eaed);
+      font-weight: 500;
+      color: var(--fg, #ffffff);
     }
+    
+    .color-input-wrapper {
+      position: relative;
+    }
+    
     .custom-theme-fields input[type="color"] {
-      width: 36px;
-      height: 28px;
-      border: none;
+      width: 44px;
+      height: 44px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
       background: none;
-      margin-left: 10px;
-      vertical-align: middle;
       cursor: pointer;
+      transition: all 0.3s ease;
     }
-    .custom-theme-fields input[type="text"] {
-      width: 120px;
-      border-radius: 5px;
-      border: 1px solid #999;
-      padding: 4px 7px;
-      background: #18181c;
-      color: #e8eaed;
+    
+    .custom-theme-fields input[type="color"]:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
     }
+    
     .save-btn {
-      background: #1a73e8;
-      color: #fff;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff;
       border: none;
-      border-radius: 7px;
-      padding: 7px 20px;
+      border-radius: 12px;
+      padding: 14px 28px;
       font-size: 1rem;
-      margin-top: 14px;
+      font-weight: 600;
       cursor: pointer;
-      transition: box-shadow 0.18s, background 0.18s;
-      box-shadow: 0 2px 8px #0002;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      position: relative;
+      overflow: hidden;
+      width: 100%;
     }
-    .save-btn:active { background: #155ab6; }
-    .desc {
-      font-size: 0.97rem;
-      color: #aab;
-      margin-bottom: 8px;
-      margin-top: -10px;
+    
+    .save-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.6s ease;
     }
+    
+    .save-btn:hover::before {
+      left: 100%;
+    }
+    
+    .save-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .save-btn:active { 
+      transform: translateY(0);
+    }
+    
+    @media (max-width: 768px) {
+      .settings-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+      
+      .container {
+        padding: 24px 16px;
+      }
+      
+      .section {
+        padding: 24px;
+      }
+      
+      h1 { 
+        font-size: 2rem; 
+        margin-bottom: 32px;
+      }
+      
+      .theme-buttons {
+        grid-template-columns: 1fr;
+      }
+    }
+    
     @media (max-width: 480px) {
-      .section { max-width: 95vw; padding: 14px; }
-      h1 { font-size: 1.3rem; }
-      .theme-btn { padding: 6px 11px; font-size: 0.92rem; }
+      .section { 
+        padding: 20px; 
+      }
+      
+      h1 { 
+        font-size: 1.75rem; 
+      }
+      
+      .theme-btn { 
+        padding: 10px 14px; 
+        font-size: 0.9rem; 
+      }
+      
+      .setting-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      
+      .toggle-switch {
+        align-self: flex-end;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Settings</h1>
+  <div class="container">
+    <h1>Settings</h1>
 
-  <form class="section" id="restoreTabsSection" onsubmit="return false;">
-    <div class="setting-row">
-      <label for="restoreTabsToggle" style="font-size:1.08rem;">
-        Restore Tabs on Startup
-      </label>
-      <label class="toggle-switch">
-        <input id="restoreTabsToggle" type="checkbox">
-        <span class="slider"></span>
-      </label>
-    </div>
-    <div class="desc">When enabled, re-opens your tabs from your last session (saved in your browser).</div>
-    <button class="save-btn" onclick="saveRestoreTabs()">Save</button>
-  </form>
+    <div class="settings-grid">
+      <form class="section" id="restoreTabsSection" onsubmit="return false;">
+        <h2 class="section-title">Startup Behavior</h2>
+        <p class="section-desc">Configure how Fusion Tabs behaves when you start your browser.</p>
+        
+        <div class="setting-row">
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 500; margin-bottom: 4px;">Restore Tabs on Startup</div>
+            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6);">Re-opens your tabs from your last session</div>
+          </div>
+          <label class="toggle-switch">
+            <input id="restoreTabsToggle" type="checkbox">
+            <span class="slider"></span>
+          </label>
+        </div>
+        
+        <button class="save-btn" onclick="saveRestoreTabs()">Save Changes</button>
+      </form>
 
-  <form class="section" id="themeSection" onsubmit="return false;">
-    <div class="setting-row">
-      <label style="font-size:1.08rem;">Theme</label>
+      <form class="section" id="themeSection" onsubmit="return false;">
+        <h2 class="section-title">Appearance</h2>
+        <p class="section-desc">Customize the look and feel of your Fusion Tabs experience.</p>
+        
+        <div class="theme-buttons">
+          <button type="button" class="theme-btn" id="theme-dark">🌙 Dark</button>
+          <button type="button" class="theme-btn" id="theme-light">☀️ Light</button>
+          <button type="button" class="theme-btn" id="theme-purple">💜 Purple</button>
+          <button type="button" class="theme-btn" id="theme-custom">🎨 Custom</button>
+        </div>
+        
+        <div id="customThemeFields" class="custom-theme-fields" style="display:none;">
+          <div class="color-input-group">
+            <label>Background Color</label>
+            <div class="color-input-wrapper">
+              <input type="color" id="ct-bg" value="#202124">
+            </div>
+          </div>
+          <div class="color-input-group">
+            <label>Text Color</label>
+            <div class="color-input-wrapper">
+              <input type="color" id="ct-fg" value="#e8eaed">
+            </div>
+          </div>
+          <div class="color-input-group">
+            <label>Panel Color</label>
+            <div class="color-input-wrapper">
+              <input type="color" id="ct-section-bg" value="#23242b">
+            </div>
+          </div>
+        </div>
+        
+        <button class="save-btn" onclick="saveTheme()">Apply Theme</button>
+      </form>
     </div>
-    <div class="theme-buttons">
-      <button type="button" class="theme-btn" id="theme-dark">Dark</button>
-      <button type="button" class="theme-btn" id="theme-light">Light</button>
-      <button type="button" class="theme-btn" id="theme-purple">Purple</button>
-      <button type="button" class="theme-btn" id="theme-custom">Custom</button>
-    </div>
-    <div id="customThemeFields" class="custom-theme-fields" style="display:none;">
-      <label>
-        Background Color:
-        <input type="color" id="ct-bg" value="#202124">
-      </label>
-      <label>
-        Foreground Color:
-        <input type="color" id="ct-fg" value="#e8eaed">
-      </label>
-      <label>
-        Section BG:
-        <input type="color" id="ct-section-bg" value="#23242b">
-      </label>
-    </div>
-    <button class="save-btn" onclick="saveTheme()">Save</button>
-  </form>
+  </div>
 
   <script>
     // --- Restore Tabs Toggle ---
     function saveRestoreTabs() {
       const checked = document.getElementById('restoreTabsToggle').checked;
       localStorage.setItem('restoreTabs', checked ? '1' : '0');
-      alert('Restore Tabs setting saved!');
+      
+      // Create a more elegant notification
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = '✓ Saved!';
+      btn.style.background = 'linear-gradient(135deg, #00C851 0%, #007E33 100%)';
+      
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      }, 1500);
     }
+    
     // Load state from localStorage
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('restoreTabsToggle').checked = localStorage.getItem('restoreTabs') === '1';
@@ -212,24 +421,26 @@
 
     // --- Theme Switcher ---
     const themes = {
-      dark:   { bg: "#202124", fg: "#e8eaed", section_bg: "#23242b" },
-      light:  { bg: "#f4f5fa", fg: "#181818", section_bg: "#ffffff" },
-      purple: { bg: "#2a183b", fg: "#f9d7ff", section_bg: "#391a53" }
+      dark:   { bg: "#0f0f0f", fg: "#ffffff", section_bg: "rgba(255, 255, 255, 0.05)" },
+      light:  { bg: "#f8fafc", fg: "#1a202c", section_bg: "rgba(255, 255, 255, 0.8)" },
+      purple: { bg: "#1a0b2e", fg: "#edf2f7", section_bg: "rgba(123, 44, 191, 0.1)" }
     };
+    
     function setThemeVars(theme) {
       document.body.style.setProperty("--bg", theme.bg);
       document.body.style.setProperty("--fg", theme.fg);
       document.body.style.setProperty("--section-bg", theme.section_bg);
-      document.body.style.background = theme.bg;
-      document.body.style.color = theme.fg;
     }
+    
     function highlightThemeBtn(id) {
       document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('selected'));
       document.getElementById(id).classList.add('selected');
     }
+    
     function loadThemeUI() {
       let theme = localStorage.getItem('theme') || 'dark';
       let customTheme = JSON.parse(localStorage.getItem('customTheme') || '{}');
+      
       if (theme === 'custom' && customTheme.bg && customTheme.fg && customTheme.section_bg) {
         setThemeVars(customTheme);
         highlightThemeBtn('theme-custom');
@@ -243,6 +454,7 @@
         document.getElementById('customThemeFields').style.display = 'none';
       }
     }
+    
     // Button listeners
     document.getElementById('theme-dark').onclick = function() {
       localStorage.setItem('theme', 'dark');
@@ -250,32 +462,39 @@
       highlightThemeBtn('theme-dark');
       document.getElementById('customThemeFields').style.display = 'none';
     };
+    
     document.getElementById('theme-light').onclick = function() {
       localStorage.setItem('theme', 'light');
       setThemeVars(themes.light);
       highlightThemeBtn('theme-light');
       document.getElementById('customThemeFields').style.display = 'none';
     };
+    
     document.getElementById('theme-purple').onclick = function() {
       localStorage.setItem('theme', 'purple');
       setThemeVars(themes.purple);
       highlightThemeBtn('theme-purple');
       document.getElementById('customThemeFields').style.display = 'none';
     };
+    
     document.getElementById('theme-custom').onclick = function() {
       localStorage.setItem('theme', 'custom');
       let custom = JSON.parse(localStorage.getItem('customTheme') || '{}');
       setThemeVars({
         bg: custom.bg || "#202124",
         fg: custom.fg || "#e8eaed",
-        section_bg: custom.section_bg || "#23242b"
+        section_bg: custom.section_bg || "rgba(255, 255, 255, 0.05)"
       });
       highlightThemeBtn('theme-custom');
       document.getElementById('customThemeFields').style.display = '';
     };
+    
     // Save Custom Theme
     function saveTheme() {
       let theme = localStorage.getItem('theme') || 'dark';
+      const btn = event.target;
+      const originalText = btn.textContent;
+      
       if (theme === 'custom') {
         let custom = {
           bg: document.getElementById('ct-bg').value,
@@ -284,21 +503,29 @@
         };
         localStorage.setItem('customTheme', JSON.stringify(custom));
         setThemeVars(custom);
-        alert('Custom theme saved!');
       } else {
         setThemeVars(themes[theme]);
-        alert('Theme applied!');
       }
+      
+      // Elegant save feedback
+      btn.textContent = '✓ Applied!';
+      btn.style.background = 'linear-gradient(135deg, #00C851 0%, #007E33 100%)';
+      
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      }, 1500);
     }
+    
     // Custom theme fields update live
     document.getElementById('ct-bg').addEventListener('input', function() {
       document.body.style.setProperty("--bg", this.value);
-      document.body.style.background = this.value;
     });
+    
     document.getElementById('ct-fg').addEventListener('input', function() {
       document.body.style.setProperty("--fg", this.value);
-      document.body.style.color = this.value;
     });
+    
     document.getElementById('ct-section-bg').addEventListener('input', function() {
       document.body.style.setProperty("--section-bg", this.value);
     });
