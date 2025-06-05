@@ -1,4 +1,5 @@
 :root {
+      /* Default Dark Theme */
       --primary-bg: #0a0a0a;
       --secondary-bg: #141414;
       --surface-bg: #1a1a1a;
@@ -23,8 +24,16 @@
       --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
       --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* Theme-specific gradients and effects */
+      --gradient-primary: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+      --gradient-surface: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.02) 100%);
+      --gradient-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+      --backdrop-blur: blur(20px) saturate(180%);
     }
 
+    /* Light Theme */
+    body.light-theme,
     .light-theme {
       --primary-bg: #ffffff;
       --secondary-bg: #f8fafc;
@@ -38,7 +47,76 @@
       --text-muted: #94a3b8;
       --accent-color: #4f46e5;
       --accent-hover: #6366f1;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      
+      --gradient-surface: linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.02) 50%, rgba(0, 0, 0, 0.01) 100%);
+      --gradient-hover: linear-gradient(135deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.04) 100%);
     }
+
+    /* Dark Theme (Enhanced) */
+    body.dark-theme,
+    .dark-theme {
+      --primary-bg: #0f0f0f;
+      --secondary-bg: #141414;
+      --surface-bg: #1a1a1a;
+      --elevated-bg: #202020;
+      --hover-bg: #252525;
+      --active-bg: #2a2a2a;
+      --border-color: #333333;
+      --text-primary: #ffffff;
+      --text-secondary: #b3b3b3;
+      --text-muted: #666666;
+      --accent-color: #4f46e5;
+      --accent-hover: #6366f1;
+      
+      /* Dark theme specific gradients with subtle background patterns */
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(120, 198, 255, 0.08) 0%, transparent 50%);
+    }
+
+    /* Purple Theme */
+    body.purple-theme,
+    .purple-theme {
+      --primary-bg: #1a0f2e;
+      --secondary-bg: #2d1b45;
+      --surface-bg: #3d2456;
+      --elevated-bg: #4a2c5e;
+      --hover-bg: #5a3470;
+      --active-bg: #6b3d82;
+      --border-color: #7c4993;
+      --text-primary: #f3e8ff;
+      --text-secondary: #d8b4fe;
+      --text-muted: #a855f7;
+      --accent-color: #8b5cf6;
+      --accent-hover: #a78bfa;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+      
+      /* Purple theme specific gradients */
+      --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+      --gradient-surface: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(139, 92, 246, 0.02) 100%);
+      --gradient-hover: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%);
+      
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(167, 139, 250, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(196, 181, 253, 0.08) 0%, transparent 50%);
+    }
+
+    /* Custom Theme - Will be overridden by JavaScript */
+    body.custom-theme,
+    .custom-theme {
+      /* These will be set dynamically by JavaScript based on user preferences */
+    }
+
 
     * { 
       margin: 0; 
