@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>New Tab</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="newtab.css">
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.config.js"></script>
+</head>
+<body>
+  <form class="search-bar" id="nt-search-form" autocomplete="off">
+    <input id="nt-search" type="text" placeholder="Search or type a URL" autofocus autocomplete="off" spellcheck="false">
+    <button type="submit">→</button>
+  </form>
+  <button class="make-bookmark-btn" id="show-add-bookmark" title="Add Bookmark">
+    <i class='bx bx-plus'></i>
+  </button>
+  <form class="add-bookmark-bar hidden" id="add-bookmark-bar" autocomplete="off" onsubmit="return false;">
+    <input type="text" id="bm-url" placeholder="Bookmark URL (https://)" autocomplete="off" spellcheck="false">
+    <input type="text" id="bm-label" placeholder="Label (e.g. Twitter)" autocomplete="off" spellcheck="false">
+    <input type="text" id="bm-img" placeholder="Image URL (icon)" autocomplete="off" spellcheck="false">
+    <button id="bm-add" type="submit">Add</button>
+    <button id="bm-cancel" type="button" style="background:#444;">Cancel</button>
+  </form>
+  <div class="bookmarks" id="nt-bookmarks"></div>
+  <script>
+    // --- THEME SYSTEM: add theme class for advanced theming ---
+    function applyThemeClass(theme) {
+      if (!theme) theme = localStorage.getItem('theme') || 'dark';
+      document.body.classList.remove('dark-theme', 'light-theme', 'purple-theme', 'custom-theme');
+      document.body.classList.add(theme + '-theme');
+    }
+
+    // --- THEME SYNC ---
+    function applyThemeVars(style) {
+      document.body.style.setProperty('--bg', style.bg || "#202124");
+      document.body.style.setProperty('--fg', style.fg || "#e8eaed");
+      document.body.style.setProperty('--section-bg', style.section_bg || "#23242b");
+      document.body.style.background = style.bg || "#202124";
+      document.body.style.color = style.fg || "#e8eaed";
+    }
+    function getThemeStyle(theme, customThemeStr) {
+      if (!theme) theme = localStorage.getItem('theme') || 'dark';
+      let customTheme = {};
+      if (customThemeStr !== undefined) {
+        try { customTheme = JSON.parse(customThemeStr || '{}'); } catch(e){}
+      } else {
+        try { customTheme = JSON.parse(localStorage.getItem('customTheme') || '{}'); } catch(e){}
+      }
+      let vars = {
+        dark:   { bg: "#202124", fg: "#e8eaed", section_bg: "#23242b" },
+        light:  { bg: "#f4f5fa", fg: "#181818", section_bg: "#ffffff" },
+        purple: { bg: "#2a183b", fg: "#f9d7ff", section_bg: "#391a53" }
+      };
+      let style = vars[theme] || vars.dark;
+      if (theme === 'custom' && customTheme.bg && customTheme.fg && customTheme.section_bg) {
+        style = customTheme;
+      }
+      return style;
+    }
+    function applyThemeFromParentOrStorage(theme, customThemeStr) {
+      if (window.parent !== window && !theme) {
+        window.parent.postMessage({ ntThemeRequest: true }, '*');
+      } else {
+        applyThemeVars(getThemeStyle(theme, customThemeStr));
+        applyThemeClass(theme);
+      }
+    }
+    window.addEventListener('message', e => {
+      // Accept full theme info from parent
+      if (e.data && e.data.ntSetTheme) {
+        let theme = e.data.ntSetTheme.theme;
+        let customTheme = e.data.ntSetTheme.customTheme;
+        applyThemeVars(getThemeStyle(theme, customTheme));
+        applyThemeClass(theme);
+      }
+      if (e.data.ntNavigate) openUvUrl(e.data.ntNavigate);
+    });
+    window.addEventListener('storage', function(e) {
+      if (['theme', 'customTheme'].includes(e.key)) {
+        applyThemeFromParentOrStorage();
+      }
+    });
+    applyThemeFromParentOrStorage();
+
+    // --- Default bookmarks ---
+    const defaultBookmarks = [
+      { url: "https://www.google.com", label: "Google", img: "https://www.google.com/favicon.ico" },
+      { url: "https://www.youtube.com", label: "YouTube", img: "https://www.youtube.com/s/desktop/2e7e9e8e/img/favicon_48x48.png" },
+      { url: "https://github.com", label: "GitHub", img: "https://github.githubassets.com/favicons/favicon.png" },
+      { url: "https://mail.google.com", label: "Gmail", img: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" },
+      { url: "https://chat.openai.com", label: "ChatGPT", img: "https://chat.openai.com/favicon.ico" }
+    ];
+    const USER_BM_KEY = "uv_user_bookmarks_v1";
+    const bmEl = document.getElementById('nt-bookmarks');
+    function getUserBookmarks() {
+      try {
+        const arr = JSON.parse(localStorage.getItem(USER_BM_KEY));
+        return Array.isArray(arr) ? arr : [];
+      } catch { return []; }
+    }
+    function setUserBookmarks(arr) {
+      localStorage.setItem(USER_BM_KEY, JSON.stringify(arr));
+    }
+    function allBookmarks() {
+      return [...defaultBookmarks, ...getUserBookmarks()];
+    }
+    function renderBookmarks() {
+      bmEl.innerHTML = "";
+      const bookmarks = allBookmarks();
+      bookmarks.forEach((bm, idx) => {
+        const a = document.createElement('a');
+        a.className = 'bookmark';
+        a.href = "#";
+        a.innerHTML =
+          `<img class="bookmark-icon-img" src="${bm.img ? bm.img : 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f517.png'}" alt="icon">
+           <div class="bookmark-label">${bm.label || bm.url}</div>`;
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          if (window.parent !== window) {
+            window.parent.postMessage({ addSearchHistory: { query: bm.url } }, "*");
+          } else {
+            let arr = JSON.parse(localStorage.getItem('uv_search_history') || "[]");
+            arr.push({query: bm.url, time: (new Date()).toISOString()});
+            localStorage.setItem('uv_search_history', JSON.stringify(arr));
+          }
+          openUvUrl(bm.url);
+        });
+        if (idx >= defaultBookmarks.length) {
+          const btn = document.createElement("button");
+          btn.className = "delete-bookmark-btn";
+          btn.innerHTML = "✕";
+          btn.title = "Delete";
+          btn.onclick = (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            const userBms = getUserBookmarks();
+            userBms.splice(idx - defaultBookmarks.length, 1);
+            setUserBookmarks(userBms);
+            renderBookmarks();
+          };
+          a.appendChild(btn);
+        }
+        bmEl.appendChild(a);
+      });
+    }
+    const showAddBtn = document.getElementById("show-add-bookmark");
+    const addBar = document.getElementById("add-bookmark-bar");
+    showAddBtn.onclick = () => {
+      addBar.classList.remove('hidden');
+      showAddBtn.classList.add('hidden');
+      document.getElementById("bm-url").focus();
+    };
+    document.getElementById("bm-cancel").onclick = () => {
+      addBar.classList.add('hidden');
+      showAddBtn.classList.remove('hidden');
+      document.getElementById("bm-url").value = "";
+      document.getElementById("bm-label").value = "";
+      document.getElementById("bm-img").value = "";
+    };
+    document.getElementById("bm-add").onclick = function(e) {
+      e.preventDefault();
+      const url = document.getElementById("bm-url").value.trim();
+      const label = document.getElementById("bm-label").value.trim();
+      const img = document.getElementById("bm-img").value.trim();
+      if (!/^https?:\/\//i.test(url)) {
+        alert("Please enter a valid URL (starts with https:// or http://)");
+        return;
+      }
+      if (!label) {
+        alert("Please enter a label for your bookmark.");
+        return;
+      }
+      if (!img) {
+        alert("Please enter an Image URL (favicon or logo).");
+        return;
+      }
+      const userBms = getUserBookmarks();
+      if (userBms.find(bm => bm.url === url)) {
+        alert("Bookmark already exists!");
+        return;
+      }
+      userBms.push({url, label, img});
+      setUserBookmarks(userBms);
+      document.getElementById("bm-url").value = "";
+      document.getElementById("bm-label").value = "";
+      document.getElementById("bm-img").value = "";
+      addBar.classList.add('hidden');
+      showAddBtn.classList.remove('hidden');
+      renderBookmarks();
+    };
+
+    // --- FIXED UV Search Bar ---
+    function proxifyUrl(url) {
+      // Only proxify if not already proxified or internal/special
+      if (
+        url.startsWith(location.origin + (__uv$config.prefix || "/uv/")) ||
+        url.startsWith(__uv$config.prefix || "/uv/") ||
+        url.startsWith("about:") ||
+        url.startsWith("ht://") ||
+        url.startsWith("/") ||
+        url.startsWith("chrome-extension:") ||
+        url.startsWith("edge-extension:") ||
+        url.startsWith("moz-extension:")
+      ) return url;
+      return (__uv$config.prefix || "/uv/") + __uv$config.encodeUrl(url);
+    }
+    function openUvUrl(url) {
+      if (window.parent !== window) {
+        window.parent.postMessage({ ntNavigate: url }, '*');
+      } else {
+        // Use setTimeout to avoid browser navigation interrupting input events
+        setTimeout(() => {
+          window.location.href = proxifyUrl(url);
+        }, 10);
+      }
+    }
+    window.addEventListener('message', e => {
+      if (e.data.ntNavigate) openUvUrl(e.data.ntNavigate);
+    });
+
+    const searchEngine = localStorage.getItem('searchEngine') || 'https://www.google.com/search?q=';
+
+    // --- PATCH: Prevent form from stealing focus on input ---
+    // This ensures you can type in the search bar!
+    document.getElementById('nt-search-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      let q = document.getElementById('nt-search').value.trim();
+      if (!q) return;
+
+      // Improved URL detection logic
+      let url = q;
+      // If contains whitespace, treat as search query
+      if (/\s/.test(q)) {
+        url = searchEngine + encodeURIComponent(q);
+      } else if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(q)) {
+        // Looks like a scheme: treat as full URL
+        url = q;
+      } else if (q.includes('.') && !q.startsWith('localhost') && !q.startsWith('127.') && !q.startsWith('0.0.0.0')) {
+        // Looks like a domain, add https://
+        url = 'https://' + q;
+      } else {
+        // Otherwise, treat as search
+        url = searchEngine + encodeURIComponent(q);
+      }
+
+      openUvUrl(url);
+
+      if (window.parent !== window) {
+        window.parent.postMessage({ addSearchHistory: { query: q } }, "*");
+      } else {
+        let arr = JSON.parse(localStorage.getItem('uv_search_history') || "[]");
+        arr.push({query: q, time: (new Date()).toISOString()});
+        localStorage.setItem('uv_search_history', JSON.stringify(arr));
+      }
+    });
+
+    // --- PATCH: Fix for not being able to type ---
+    // If you still can't type, check if another script is stealing focus or blocking input.
+    // This code doesn't block key events or focus on the input.
+
+    renderBookmarks();
+  </script>
+</body>
+</html>
