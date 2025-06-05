@@ -192,8 +192,20 @@
       showAddBtn.classList.remove('hidden');
       renderBookmarks();
     };
+
+    // --- FIXED UV Search Bar ---
     function proxifyUrl(url) {
-      if (url.startsWith(location.origin + __uv$config.prefix)) return url;
+      // Only proxify if not already proxified or internal/special
+      if (
+        url.startsWith(location.origin + __uv$config.prefix) ||
+        url.startsWith(__uv$config.prefix) ||
+        url.startsWith("about:") ||
+        url.startsWith("ht://") ||
+        url.startsWith("/") ||
+        url.startsWith("chrome-extension:") ||
+        url.startsWith("edge-extension:") ||
+        url.startsWith("moz-extension:")
+      ) return url;
       return __uv$config.prefix + __uv$config.encodeUrl(url);
     }
     function openUvUrl(url) {
@@ -206,16 +218,31 @@
     window.addEventListener('message', e => {
       if (e.data.ntNavigate) openUvUrl(e.data.ntNavigate);
     });
+
     const searchEngine = localStorage.getItem('searchEngine') || 'https://www.google.com/search?q=';
     document.getElementById('nt-search-form').addEventListener('submit', e => {
       e.preventDefault();
       let q = document.getElementById('nt-search').value.trim();
       if (!q) return;
-      if (!q.includes('://')) {
-        if (q.includes('.')) q = 'https://' + q;
-        else q = searchEngine + encodeURIComponent(q);
+
+      // Improved URL detection logic
+      let url = q;
+      // If contains whitespace, treat as search query
+      if (/\s/.test(q)) {
+        url = searchEngine + encodeURIComponent(q);
+      } else if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(q)) {
+        // Looks like a scheme: treat as full URL
+        url = q;
+      } else if (q.includes('.') && !q.startsWith('localhost') && !q.startsWith('127.') && !q.startsWith('0.0.0.0')) {
+        // Looks like a domain, add https://
+        url = 'https://' + q;
+      } else {
+        // Otherwise, treat as search
+        url = searchEngine + encodeURIComponent(q);
       }
-      openUvUrl(q);
+
+      openUvUrl(url);
+
       if (window.parent !== window) {
         window.parent.postMessage({ addSearchHistory: { query: q } }, "*");
       } else {
