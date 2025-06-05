@@ -6,6 +6,104 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <style>
+    :root {
+      /* Default Dark Theme */
+      --primary-bg: #0a0a0a;
+      --secondary-bg: #141414;
+      --surface-bg: #1a1a1a;
+      --elevated-bg: #202020;
+      --hover-bg: #252525;
+      --active-bg: #2a2a2a;
+      --border-color: #333333;
+      --text-primary: #ffffff;
+      --text-secondary: #b3b3b3;
+      --text-muted: #666666;
+      --accent-color: #4f46e5;
+      --accent-hover: #6366f1;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.25);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.25);
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      --gradient-primary: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+      --gradient-surface: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.02) 100%);
+      --gradient-hover: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+      --backdrop-blur: blur(20px) saturate(180%);
+    }
+    body.light-theme,
+    .light-theme {
+      --primary-bg: #ffffff;
+      --secondary-bg: #f8fafc;
+      --surface-bg: #f1f5f9;
+      --elevated-bg: #ffffff;
+      --hover-bg: #f1f5f9;
+      --active-bg: #e2e8f0;
+      --border-color: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --accent-color: #4f46e5;
+      --accent-hover: #6366f1;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --gradient-surface: linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.02) 50%, rgba(0, 0, 0, 0.01) 100%);
+      --gradient-hover: linear-gradient(135deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0.04) 100%);
+    }
+    body.dark-theme,
+    .dark-theme {
+      --primary-bg: #0f0f0f;
+      --secondary-bg: #141414;
+      --surface-bg: #1a1a1a;
+      --elevated-bg: #202020;
+      --hover-bg: #252525;
+      --active-bg: #2a2a2a;
+      --border-color: #333333;
+      --text-primary: #ffffff;
+      --text-secondary: #b3b3b3;
+      --text-muted: #666666;
+      --accent-color: #4f46e5;
+      --accent-hover: #6366f1;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(120, 198, 255, 0.08) 0%, transparent 50%);
+    }
+    body.purple-theme,
+    .purple-theme {
+      --primary-bg: #1a0f2e;
+      --secondary-bg: #2d1b45;
+      --surface-bg: #3d2456;
+      --elevated-bg: #4a2c5e;
+      --hover-bg: #5a3470;
+      --active-bg: #6b3d82;
+      --border-color: #7c4993;
+      --text-primary: #f3e8ff;
+      --text-secondary: #d8b4fe;
+      --text-muted: #a855f7;
+      --accent-color: #8b5cf6;
+      --accent-hover: #a78bfa;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --danger-color: #ef4444;
+      --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+      --gradient-surface: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(139, 92, 246, 0.02) 100%);
+      --gradient-hover: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%);
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(167, 139, 250, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(196, 181, 253, 0.08) 0%, transparent 50%);
+    }
     * { box-sizing: border-box; }
     body {
       background: var(--bg, #202124);
@@ -378,8 +476,14 @@
   </form>
   <div class="bookmarks" id="nt-bookmarks"></div>
   <script>
+    // --- THEME SYSTEM: add theme class for advanced theming ---
+    function applyThemeClass() {
+      let theme = localStorage.getItem('theme') || 'dark';
+      document.body.classList.remove('dark-theme', 'light-theme', 'purple-theme', 'custom-theme');
+      document.body.classList.add(theme + '-theme');
+    }
+
     // --- THEME SYNC ---
-    // Listen for theme updates from parent
     function applyThemeVars(style) {
       document.body.style.setProperty('--bg', style.bg || "#202124");
       document.body.style.setProperty('--fg', style.fg || "#e8eaed");
@@ -404,29 +508,24 @@
     }
     function applyThemeFromParentOrStorage() {
       if (window.parent !== window) {
-        // Ask parent for theme
         window.parent.postMessage({ ntThemeRequest: true }, '*');
       } else {
-        // Standalone: use localStorage
         applyThemeVars(getThemeStyle());
+        applyThemeClass();
       }
     }
-    // Handle parent theme response
     window.addEventListener('message', e => {
       if (e.data && e.data.ntSetTheme && typeof e.data.ntSetTheme === "object") {
-        // e.data.ntSetTheme should be an object with .bg, .fg, .section_bg
         applyThemeVars(e.data.ntSetTheme);
+        applyThemeClass();
       }
-      // --- Keep UV open-in-tab working ---
       if (e.data.ntNavigate) openUvUrl(e.data.ntNavigate);
     });
-    // Also react to localStorage theme changes (if open as standalone)
     window.addEventListener('storage', function(e) {
       if (['theme', 'customTheme'].includes(e.key)) {
         applyThemeFromParentOrStorage();
       }
     });
-    // Initial theme application
     applyThemeFromParentOrStorage();
 
     // --- Default bookmarks ---
@@ -437,10 +536,8 @@
       { url: "https://mail.google.com", label: "Gmail", img: "https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" },
       { url: "https://chat.openai.com", label: "ChatGPT", img: "https://chat.openai.com/favicon.ico" }
     ];
-
     const USER_BM_KEY = "uv_user_bookmarks_v1";
     const bmEl = document.getElementById('nt-bookmarks');
-
     function getUserBookmarks() {
       try {
         const arr = JSON.parse(localStorage.getItem(USER_BM_KEY));
@@ -451,7 +548,6 @@
       localStorage.setItem(USER_BM_KEY, JSON.stringify(arr));
     }
     function allBookmarks() {
-      // Merge default and user bookmarks (user bookmarks after default)
       return [...defaultBookmarks, ...getUserBookmarks()];
     }
     function renderBookmarks() {
@@ -466,7 +562,6 @@
            <div class="bookmark-label">${bm.label || bm.url}</div>`;
         a.addEventListener('click', e => {
           e.preventDefault();
-          // --- Save to search history ---
           if (window.parent !== window) {
             window.parent.postMessage({ addSearchHistory: { query: bm.url } }, "*");
           } else {
@@ -476,7 +571,6 @@
           }
           openUvUrl(bm.url);
         });
-        // Allow deleting user bookmarks (but not default)
         if (idx >= defaultBookmarks.length) {
           const btn = document.createElement("button");
           btn.className = "delete-bookmark-btn";
@@ -495,8 +589,6 @@
         bmEl.appendChild(a);
       });
     }
-
-    // --- Add bookmark UI logic ---
     const showAddBtn = document.getElementById("show-add-bookmark");
     const addBar = document.getElementById("add-bookmark-bar");
     showAddBtn.onclick = () => {
@@ -511,8 +603,6 @@
       document.getElementById("bm-label").value = "";
       document.getElementById("bm-img").value = "";
     };
-
-    // --- Add bookmark handler ---
     document.getElementById("bm-add").onclick = function(e) {
       e.preventDefault();
       const url = document.getElementById("bm-url").value.trim();
@@ -544,8 +634,6 @@
       showAddBtn.classList.remove('hidden');
       renderBookmarks();
     };
-
-    // --- UV Search Bar ---
     function proxifyUrl(url) {
       if (url.startsWith(location.origin + __uv$config.prefix)) return url;
       return __uv$config.prefix + __uv$config.encodeUrl(url);
@@ -560,7 +648,6 @@
     window.addEventListener('message', e => {
       if (e.data.ntNavigate) openUvUrl(e.data.ntNavigate);
     });
-
     const searchEngine = localStorage.getItem('searchEngine') || 'https://www.google.com/search?q=';
     document.getElementById('nt-search-form').addEventListener('submit', e => {
       e.preventDefault();
@@ -571,7 +658,6 @@
         else q = searchEngine + encodeURIComponent(q);
       }
       openUvUrl(q);
-      // --- Add to search history in parent
       if (window.parent !== window) {
         window.parent.postMessage({ addSearchHistory: { query: q } }, "*");
       } else {
@@ -580,8 +666,6 @@
         localStorage.setItem('uv_search_history', JSON.stringify(arr));
       }
     });
-
-    // --- Init ---
     renderBookmarks();
   </script>
 </body>
