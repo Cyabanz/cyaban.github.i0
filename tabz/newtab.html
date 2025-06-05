@@ -7,7 +7,6 @@
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <style>
     :root {
-      /* Default Dark Theme */
       --primary-bg: #0a0a0a;
       --secondary-bg: #141414;
       --surface-bg: #1a1a1a;
@@ -477,8 +476,8 @@
   <div class="bookmarks" id="nt-bookmarks"></div>
   <script>
     // --- THEME SYSTEM: add theme class for advanced theming ---
-    function applyThemeClass() {
-      let theme = localStorage.getItem('theme') || 'dark';
+    function applyThemeClass(theme) {
+      if (!theme) theme = localStorage.getItem('theme') || 'dark';
       document.body.classList.remove('dark-theme', 'light-theme', 'purple-theme', 'custom-theme');
       document.body.classList.add(theme + '-theme');
     }
@@ -491,10 +490,14 @@
       document.body.style.background = style.bg || "#202124";
       document.body.style.color = style.fg || "#e8eaed";
     }
-    function getThemeStyle() {
-      let theme = localStorage.getItem('theme') || 'dark';
+    function getThemeStyle(theme, customThemeStr) {
+      if (!theme) theme = localStorage.getItem('theme') || 'dark';
       let customTheme = {};
-      try { customTheme = JSON.parse(localStorage.getItem('customTheme') || '{}'); } catch(e){}
+      if (customThemeStr !== undefined) {
+        try { customTheme = JSON.parse(customThemeStr || '{}'); } catch(e){}
+      } else {
+        try { customTheme = JSON.parse(localStorage.getItem('customTheme') || '{}'); } catch(e){}
+      }
       let vars = {
         dark:   { bg: "#202124", fg: "#e8eaed", section_bg: "#23242b" },
         light:  { bg: "#f4f5fa", fg: "#181818", section_bg: "#ffffff" },
@@ -506,18 +509,21 @@
       }
       return style;
     }
-    function applyThemeFromParentOrStorage() {
-      if (window.parent !== window) {
+    function applyThemeFromParentOrStorage(theme, customThemeStr) {
+      if (window.parent !== window && !theme) {
         window.parent.postMessage({ ntThemeRequest: true }, '*');
       } else {
-        applyThemeVars(getThemeStyle());
-        applyThemeClass();
+        applyThemeVars(getThemeStyle(theme, customThemeStr));
+        applyThemeClass(theme);
       }
     }
     window.addEventListener('message', e => {
-      if (e.data && e.data.ntSetTheme && typeof e.data.ntSetTheme === "object") {
-        applyThemeVars(e.data.ntSetTheme);
-        applyThemeClass();
+      // Accept full theme info from parent
+      if (e.data && e.data.ntSetTheme) {
+        let theme = e.data.ntSetTheme.theme;
+        let customTheme = e.data.ntSetTheme.customTheme;
+        applyThemeVars(getThemeStyle(theme, customTheme));
+        applyThemeClass(theme);
       }
       if (e.data.ntNavigate) openUvUrl(e.data.ntNavigate);
     });
