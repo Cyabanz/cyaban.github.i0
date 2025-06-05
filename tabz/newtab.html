@@ -6,23 +6,22 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <link rel="stylesheet" href="newtab.css">
-  
   <script src="/uv/uv.bundle.js"></script>
   <script src="/uv/uv.config.js"></script>
 </head>
 <body>
   <form class="search-bar" id="nt-search-form" autocomplete="off">
-    <input id="nt-search" type="text" placeholder="Search or type a URL" autofocus>
+    <input id="nt-search" type="text" placeholder="Search or type a URL" autofocus autocomplete="off" spellcheck="false">
     <button type="submit">→</button>
   </form>
   <button class="make-bookmark-btn" id="show-add-bookmark" title="Add Bookmark">
     <i class='bx bx-plus'></i>
   </button>
-  <form class="add-bookmark-bar hidden" id="add-bookmark-bar">
-    <input type="text" id="bm-url" placeholder="Bookmark URL (https://)">
-    <input type="text" id="bm-label" placeholder="Label (e.g. Twitter)">
-    <input type="text" id="bm-img" placeholder="Image URL (icon)">
-    <button id="bm-add">Add</button>
+  <form class="add-bookmark-bar hidden" id="add-bookmark-bar" autocomplete="off" onsubmit="return false;">
+    <input type="text" id="bm-url" placeholder="Bookmark URL (https://)" autocomplete="off" spellcheck="false">
+    <input type="text" id="bm-label" placeholder="Label (e.g. Twitter)" autocomplete="off" spellcheck="false">
+    <input type="text" id="bm-img" placeholder="Image URL (icon)" autocomplete="off" spellcheck="false">
+    <button id="bm-add" type="submit">Add</button>
     <button id="bm-cancel" type="button" style="background:#444;">Cancel</button>
   </form>
   <div class="bookmarks" id="nt-bookmarks"></div>
@@ -115,11 +114,14 @@
         const a = document.createElement('a');
         a.className = 'bookmark';
         a.href = "#";
+        a.tabIndex = 0;
         a.innerHTML =
           `<img class="bookmark-icon-img" src="${bm.img ? bm.img : 'https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f517.png'}" alt="icon">
            <div class="bookmark-label">${bm.label || bm.url}</div>`;
         a.addEventListener('click', e => {
           e.preventDefault();
+          focusSearchBar();
+          // --- Save to search history ---
           if (window.parent !== window) {
             window.parent.postMessage({ addSearchHistory: { query: bm.url } }, "*");
           } else {
@@ -129,6 +131,14 @@
           }
           openUvUrl(bm.url);
         });
+        // Also allow pressing Enter when the bookmark is focused!
+        a.addEventListener('keydown', e => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            a.click();
+          }
+        });
+        // Allow deleting user bookmarks (but not default)
         if (idx >= defaultBookmarks.length) {
           const btn = document.createElement("button");
           btn.className = "delete-bookmark-btn";
@@ -141,12 +151,21 @@
             userBms.splice(idx - defaultBookmarks.length, 1);
             setUserBookmarks(userBms);
             renderBookmarks();
+            focusSearchBar();
           };
           a.appendChild(btn);
         }
         bmEl.appendChild(a);
       });
     }
+    function focusSearchBar() {
+      // Give focus back to the search bar after clicking or pressing a bookmark
+      setTimeout(() => {
+        const search = document.getElementById('nt-search');
+        if (search) search.focus();
+      }, 100);
+    }
+
     const showAddBtn = document.getElementById("show-add-bookmark");
     const addBar = document.getElementById("add-bookmark-bar");
     showAddBtn.onclick = () => {
@@ -160,6 +179,7 @@
       document.getElementById("bm-url").value = "";
       document.getElementById("bm-label").value = "";
       document.getElementById("bm-img").value = "";
+      focusSearchBar();
     };
     document.getElementById("bm-add").onclick = function(e) {
       e.preventDefault();
@@ -191,14 +211,14 @@
       addBar.classList.add('hidden');
       showAddBtn.classList.remove('hidden');
       renderBookmarks();
+      focusSearchBar();
     };
 
     // --- FIXED UV Search Bar ---
     function proxifyUrl(url) {
-      // Only proxify if not already proxified or internal/special
       if (
-        url.startsWith(location.origin + __uv$config.prefix) ||
-        url.startsWith(__uv$config.prefix) ||
+        url.startsWith(location.origin + (__uv$config.prefix || "/uv/")) ||
+        url.startsWith(__uv$config.prefix || "/uv/") ||
         url.startsWith("about:") ||
         url.startsWith("ht://") ||
         url.startsWith("/") ||
@@ -206,13 +226,15 @@
         url.startsWith("edge-extension:") ||
         url.startsWith("moz-extension:")
       ) return url;
-      return __uv$config.prefix + __uv$config.encodeUrl(url);
+      return (__uv$config.prefix || "/uv/") + __uv$config.encodeUrl(url);
     }
     function openUvUrl(url) {
       if (window.parent !== window) {
         window.parent.postMessage({ ntNavigate: url }, '*');
       } else {
-        window.location.href = proxifyUrl(url);
+        setTimeout(() => {
+          window.location.href = proxifyUrl(url);
+        }, 10);
       }
     }
     window.addEventListener('message', e => {
@@ -220,24 +242,21 @@
     });
 
     const searchEngine = localStorage.getItem('searchEngine') || 'https://www.google.com/search?q=';
-    document.getElementById('nt-search-form').addEventListener('submit', e => {
+
+    document.getElementById('nt-search-form').addEventListener('submit', function(e) {
       e.preventDefault();
       let q = document.getElementById('nt-search').value.trim();
       if (!q) return;
 
       // Improved URL detection logic
       let url = q;
-      // If contains whitespace, treat as search query
       if (/\s/.test(q)) {
         url = searchEngine + encodeURIComponent(q);
       } else if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(q)) {
-        // Looks like a scheme: treat as full URL
         url = q;
       } else if (q.includes('.') && !q.startsWith('localhost') && !q.startsWith('127.') && !q.startsWith('0.0.0.0')) {
-        // Looks like a domain, add https://
         url = 'https://' + q;
       } else {
-        // Otherwise, treat as search
         url = searchEngine + encodeURIComponent(q);
       }
 
@@ -250,7 +269,27 @@
         arr.push({query: q, time: (new Date()).toISOString()});
         localStorage.setItem('uv_search_history', JSON.stringify(arr));
       }
+      // After search, always refocus the searchbar
+      focusSearchBar();
     });
+
+    // Ensure search bar stays focused on page click unless clicking on interactive elements
+    document.body.addEventListener('mousedown', function(e) {
+      // Ignore clicks on inputs, buttons, forms, or bookmarks
+      if (
+        e.target.closest('input') ||
+        e.target.closest('button') ||
+        e.target.closest('form') ||
+        e.target.classList.contains('bookmark') ||
+        e.target.closest('.bookmark') ||
+        e.target.classList.contains('delete-bookmark-btn')
+      ) return;
+      focusSearchBar();
+    });
+
+    // Initial focus on load
+    focusSearchBar();
+
     renderBookmarks();
   </script>
 </body>
