@@ -12,6 +12,17 @@
     .app-title { font-size: 2rem; font-weight: 700; color: #90caf9; letter-spacing: 1.5px; }
     .user-info { display: flex; align-items: center; gap: 1rem; }
     .user-info img { border-radius: 50%; width: 38px; height: 38px; object-fit: cover; }
+    .toolbar { background: #232946; padding: 1.1em 2vw 1.1em 2vw; display: flex; align-items: center; gap: 1.2em; max-width: 970px; margin: 1.5em auto 0 auto; border-radius: 9px; flex-wrap: wrap;}
+    .search-wrap { position: relative; }
+    .search-input { width: 200px; padding: 0.5em 2.3em 0.5em 1em; font-size: 1em; border-radius: 7px; border: 1px solid #90caf9; background: #181c24; color: #e8eaf0; outline: none;}
+    .search-input:focus { border-color: #1976d2; }
+    .search-icon { position: absolute; right: 0.7em; top: 50%; transform: translateY(-50%); color: #90caf9; font-size: 1.2em; }
+    .category-select { font-size: 1em; padding: 0.5em 1em; border-radius: 7px; border: 1px solid #90caf9; background: #181c24; color: #e8eaf0; }
+    .category-select:focus { border-color: #1976d2; }
+    .search-history { position: absolute; z-index: 100; top: 2.6em; left: 0; right: 0; background: #232946; border: 1px solid #90caf9; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px #19193a33; max-height: 170px; overflow-y: auto; }
+    .search-history-entry { padding: 0.5em 1em; cursor: pointer; color: #b0b7c3; }
+    .search-history-entry:hover { background: #202538; color: #90caf9; }
+    .clear-history-btn { background: none; border: none; color: #90caf9; font-size: 0.95em; cursor: pointer; padding: 0.3em 0.5em; margin-left: 0.6em;}
     .games-section { max-width: 970px; margin: 2rem auto; background: #202538; border-radius: 15px; box-shadow: 0 2px 24px #19193a33; padding: 2rem; }
     .games-list { display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: flex-start; }
     .game-card { background: #232946; border-radius: 12px; width: 210px; box-shadow: 0 1px 14px #0a0a1a22; display: flex; flex-direction: column; overflow: hidden; transition: transform 0.15s; position: relative; }
@@ -41,10 +52,12 @@
       .games-section, .history-section, .favorites-section { padding: 1.2rem 1vw 1.7rem 1vw; }
       .games-list, .history-list, .favorites-list { gap: 1rem; }
       .game-card { width: 46vw; min-width: 168px; max-width: 99vw; }
+      .toolbar { max-width: 99vw; }
     }
     @media (max-width: 700px) {
       .games-list, .history-list, .favorites-list { flex-direction: column; }
       .game-card { width: 100%; }
+      .toolbar { flex-direction: column; align-items: stretch;}
     }
   </style>
   <script type="module">
@@ -82,11 +95,19 @@
     const favoritesList = $('#favorites-list');
     const historySection = $('#history-section');
     const historyList = $('#history-list');
+    const searchInput = $('#search-input');
+    const categorySelect = $('#category-select');
+    const searchHistoryWrap = $('#search-history-wrap');
+    const clearHistoryBtn = $('#clear-history-btn');
 
     let currentUser = null;
     let userFavorites = [];
     let userHistory = [];
+    let userSearchHistory = [];
     let GAMES = [];
+    let searchTerm = '';
+    let selectedCategory = 'all';
+    let allCategories = [];
 
     // --- AUTH ---
     function showSignedIn(user) {
@@ -97,6 +118,7 @@
       gamesSection.style.display = '';
       favoritesSection.style.display = '';
       historySection.style.display = '';
+      $('.toolbar').style.display = '';
       loadUserData();
     }
     function showSignedOut() {
@@ -108,6 +130,7 @@
       gamesList.innerHTML = '';
       favoritesList.innerHTML = '';
       historyList.innerHTML = '';
+      $('.toolbar').style.display = 'none';
     }
     onAuthStateChanged(auth, user => {
       currentUser = user;
@@ -131,14 +154,17 @@
       const docSnap = await getDoc(docRef);
       userFavorites = [];
       userHistory = [];
+      userSearchHistory = [];
       if (docSnap.exists()) {
         const data = docSnap.data();
         userFavorites = data.favorites || [];
         userHistory = data.history || [];
+        userSearchHistory = data.searchHistory || [];
       }
       renderGames();
       renderFavorites();
       renderHistory();
+      renderSearchHistory();
     }
     async function toggleFavorite(gameId) {
       if (!currentUser) return;
@@ -157,6 +183,23 @@
       await setDoc(userDocRef(), { history: userHistory }, { merge: true });
       renderHistory();
     }
+    async function addToSearchHistory(term) {
+      if (!currentUser) return;
+      term = term.trim();
+      if (!term) return;
+      // Remove duplicates, then unshift
+      userSearchHistory = userSearchHistory.filter(t => t.toLowerCase() !== term.toLowerCase());
+      userSearchHistory.unshift(term);
+      userSearchHistory = userSearchHistory.slice(0, 12);
+      await setDoc(userDocRef(), { searchHistory: userSearchHistory }, { merge: true });
+      renderSearchHistory();
+    }
+    async function clearSearchHistory() {
+      if (!currentUser) return;
+      userSearchHistory = [];
+      await setDoc(userDocRef(), { searchHistory: [] }, { merge: true });
+      renderSearchHistory();
+    }
 
     // --- GAMES LOADING FROM game.json ---
     async function loadGames() {
@@ -164,6 +207,8 @@
         const resp = await fetch('game.json');
         if (!resp.ok) throw new Error("Could not load games");
         GAMES = await resp.json();
+        collectCategories();
+        renderCategoryOptions();
         if (auth.currentUser) {
           renderGames();
           renderFavorites();
@@ -174,10 +219,52 @@
       }
     }
 
+    // --- CATEGORY COLLECTING ---
+    function collectCategories() {
+      const cats = new Set();
+      GAMES.forEach(game => {
+        if (Array.isArray(game.categories)) game.categories.forEach(c => cats.add(c));
+        else if (game.category) cats.add(game.category);
+      });
+      allCategories = Array.from(cats).sort((a,b) => a.localeCompare(b));
+    }
+    function renderCategoryOptions() {
+      categorySelect.innerHTML = `<option value="all">All Categories</option>` +
+        allCategories.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    // --- SEARCH + CATEGORY FILTER ---
+    function filterGames() {
+      return GAMES.filter(game => {
+        // Filter by search term
+        let matchSearch = true;
+        if (searchTerm.trim()) {
+          const term = searchTerm.trim().toLowerCase();
+          matchSearch =
+            (game.title && game.title.toLowerCase().includes(term)) ||
+            (game.description && game.description.toLowerCase().includes(term)) ||
+            (game.category && game.category.toLowerCase().includes(term)) ||
+            (Array.isArray(game.categories) && game.categories.some(c => c.toLowerCase().includes(term)));
+        }
+        // Filter by category
+        let matchCategory = (selectedCategory === 'all');
+        if (!matchCategory) {
+          if (Array.isArray(game.categories)) matchCategory = game.categories.includes(selectedCategory);
+          else if (game.category) matchCategory = (game.category === selectedCategory);
+        }
+        return matchSearch && matchCategory;
+      });
+    }
+
     // --- RENDERING ---
     function renderGames() {
       gamesList.innerHTML = '';
-      GAMES.forEach(game => {
+      const filtered = filterGames();
+      if (!filtered.length) {
+        gamesList.innerHTML = `<div style="color:#b0b7c3;font-size:1.1em;padding:2em;">No games found.</div>`;
+        return;
+      }
+      filtered.forEach(game => {
         const card = document.createElement('div');
         card.className = 'game-card';
         card.innerHTML = `
@@ -196,7 +283,6 @@
           </div>
         `;
         card.querySelector('.fav-btn').onclick = () => toggleFavorite(game.id);
-        // NEW: Play button navigates to play.html?id=game.id
         card.querySelector('.play-btn').onclick = () => {
           window.location.href = `play.html?id=${encodeURIComponent(game.id)}`;
         };
@@ -221,7 +307,6 @@
           <button class="play-btn" style="padding:3px 14px;font-size:0.95em;">Play</button>
         `;
         entry.querySelector('.fav-btn').onclick = () => toggleFavorite(game.id);
-        // Play button navigates to play.html
         entry.querySelector('.play-btn').onclick = () => {
           window.location.href = `play.html?id=${encodeURIComponent(game.id)}`;
         };
@@ -251,9 +336,69 @@
         historyList.appendChild(entry);
       });
     }
+    function renderSearchHistory() {
+      if (!userSearchHistory || !userSearchHistory.length) {
+        searchHistoryWrap.style.display = 'none';
+        return;
+      }
+      searchHistoryWrap.innerHTML = userSearchHistory.map(term =>
+        `<div class="search-history-entry">${term}</div>`
+      ).join('') +
+        `<button class="clear-history-btn" id="clear-history-btn">Clear History</button>`;
+      searchHistoryWrap.style.display = '';
+      // Click on entry to search
+      [...searchHistoryWrap.querySelectorAll('.search-history-entry')].forEach(node => {
+        node.onclick = () => {
+          searchInput.value = node.textContent;
+          searchTerm = node.textContent;
+          renderGames();
+          addToSearchHistory(searchTerm);
+          searchHistoryWrap.style.display = 'none';
+        };
+      });
+      // Clear history
+      searchHistoryWrap.querySelector('#clear-history-btn').onclick = () => clearSearchHistory();
+    }
+
+    // --- EVENTS: SEARCH & CATEGORY ---
+    function setupSearchBar() {
+      searchInput.oninput = e => {
+        searchTerm = searchInput.value;
+        renderGames();
+        if (searchInput.value.trim()) {
+          searchHistoryWrap.style.display = '';
+        } else {
+          searchHistoryWrap.style.display = 'none';
+        }
+      };
+      searchInput.onfocus = () => {
+        if (userSearchHistory.length && searchInput.value.trim() === '') {
+          renderSearchHistory();
+        }
+      };
+      searchInput.onblur = () => {
+        // Hide after short delay so click works
+        setTimeout(() => searchHistoryWrap.style.display = 'none', 130);
+      };
+      searchInput.onkeydown = e => {
+        if (e.key === "Enter") {
+          searchTerm = searchInput.value;
+          renderGames();
+          if (searchTerm.trim()) addToSearchHistory(searchTerm);
+          searchHistoryWrap.style.display = 'none';
+        }
+      };
+      categorySelect.onchange = () => {
+        selectedCategory = categorySelect.value;
+        renderGames();
+      };
+    }
 
     // --- INITIALIZE ---
-    window.addEventListener('DOMContentLoaded', () => { loadGames(); });
+    window.addEventListener('DOMContentLoaded', () => {
+      loadGames();
+      setupSearchBar();
+    });
   </script>
 </head>
 <body>
@@ -268,6 +413,16 @@
   <button class="google-btn" id="google-signin" style="display:none;">
     <i class='bx bxl-google'></i> Sign in with Google
   </button>
+  <div class="toolbar" style="display:none;">
+    <div class="search-wrap" style="position:relative;">
+      <input class="search-input" id="search-input" type="text" placeholder="Search games...">
+      <i class="bx bx-search search-icon"></i>
+      <div id="search-history-wrap" class="search-history" style="display:none;"></div>
+    </div>
+    <select class="category-select" id="category-select">
+      <option value="all">All Categories</option>
+    </select>
+  </div>
   <main>
     <section class="games-section" id="games-section" style="display:none;">
       <h2>All Games</h2>
