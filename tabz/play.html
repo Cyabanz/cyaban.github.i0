@@ -481,7 +481,7 @@
 
     // === ADMIN MODERATION ===
     const ADMIN_UIDS = [
-      "Cyabanz" // <-- Use your actual UID string, not username.
+      "Cyabanz"
     ];
 
     // --- UI ELEMENTS ---
@@ -582,7 +582,6 @@
       if (!game) return;
       ratingData.loading = true;
       ratingData.error = "";
-      // Subcollection: games/{gameId}/ratings/{userId} => { rating: 1..5 }
       let q = collection(db, "games", game.id, "ratings");
       const snap = await getDocs(q);
       let total = 0, count = 0, yourRating = 0;
@@ -622,6 +621,7 @@
       ratingData.loading = false;
       renderRating();
     }
+
     // ----- Likes/Dislikes -----
     async function loadGameLikes() {
       if (!game) return;
@@ -698,7 +698,7 @@
       let canInteract = !!currentUser && !ratingData.loading;
       let hoverValue = row && row.dataset.hover ? parseInt(row.dataset.hover) : 0;
       for (let i = 1; i <= 5; i++) {
-        let filled = hoverValue ? (i <= hoverValue) : (i <= (your || Math.round(avg)));
+        let filled = hoverValue ? (i <= hoverValue) : (your > 0 ? i <= your : i <= Math.round(avg));
         starsHTML += `<span class="star${filled ? " filled" : ""}${canInteract ? "" : " disabled"}" data-star="${i}" aria-label="${i} star${i !== 1 ? "s" : ""}">&#9733;</span>`;
       }
       $(".game-rating-stars").innerHTML = starsHTML;
@@ -706,7 +706,7 @@
         avg ? `${avg.toFixed(2)} / 5` : "Not rated";
       $(".game-rating-count").innerHTML =
         count === 1 ? "1 rating" : `${count} ratings`;
-      $(".game-rating-yours").innerHTML = your
+      $(".game-rating-yours").innerHTML = (your > 0)
         ? `<i class='bx bx-user'></i> You rated: <span style="color:#ffd600;">${your} star${your > 1 ? "s" : ""}</span>`
         : (currentUser ? "Not rated yet" : "Sign in to rate");
       $(".game-rating-error").textContent = ratingData.error || "";
