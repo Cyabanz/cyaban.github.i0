@@ -4,17 +4,18 @@
   <meta charset="UTF-8">
   <title>Play Game</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-  <!-- Minimal styling for clarity. Restore your CSS if needed. -->
   <style>
     body { font-family: 'Inter', sans-serif; background: #181c24; color: #e8eaf0; margin: 0; }
-    /* ... Paste your CSS here if you want full styling ... */
     .game-header { display: flex; align-items: flex-start; gap: 2.5em; padding: 2em 4vw 1.3em 4vw; max-width: 1100px; margin: 0 auto; }
     .game-thumb { width: 84px; height: 84px; border-radius: 18px; object-fit: cover; border: 3px solid #232946; background: #151922; }
     .game-meta-col { flex: 1; display: flex; flex-direction: column; gap: 0.4em; }
     .game-title { font-size: 2.2em; font-weight: 700; color: #90caf9; margin-bottom: 0.15em; }
+    .game-categories { margin-top: 0.1em; margin-bottom: 0.2em; }
+    .game-chip { display: inline-block; background: #232946; color: #90caf9; border: 1px solid #90caf9; border-radius: 7px; padding: 0 11px; font-size: 0.97em; margin-right: 0.5em; margin-bottom: 0.2em; }
+    .game-plays { font-size: 1.1em; color: #f3e079; background: #252b43; padding: 0.25em 1.1em 0.25em 0.7em; border-radius: 7px; display: inline-flex; align-items: center; gap: 0.4em; margin: 0.65em 0 0.25em 0; font-weight: 600; box-shadow: 0 1px 8px #19193a18; letter-spacing: 0.01em; }
+    .game-plays i { color: #ffd600; font-size: 1.13em; margin-right: 0.1em; }
     .game-rating-row { display: flex; align-items: center; gap: 1.1em; min-height: 2.7em; }
     .game-rating-stars { display: inline-flex; align-items: center; gap: 0.16em; font-size: 2.1em; cursor: pointer; user-select: none; }
     .star { color: #ffd600; opacity: 0.58; transition: opacity 0.13s, color 0.12s; }
@@ -96,10 +97,8 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // --- DOM shorthand ---
     const $ = s => document.querySelector(s);
 
-    // --- Globals ---
     let game = null, GAMES = [];
     let currentUser = null;
     let likesData = {likes:0,dislikes:0,userLiked:false,userDisliked:false};
@@ -108,7 +107,6 @@
     let lastCommentTime = 0, lastCommentText = "", lastCommentTimestamp = 0;
     let gamePlayCount = 0;
 
-    // --- RATING DATA ---
     let ratingData = {
       average: 0,
       count: 0,
@@ -117,13 +115,11 @@
       error: ""
     };
 
-    // --- Game ID ---
     function getGameId() {
       const url = new URL(window.location.href);
       return url.searchParams.get('id');
     }
 
-    // --- Load game data from game.json ---
     async function loadGameObject() {
       try {
         const resp = await fetch('game.json');
@@ -132,7 +128,6 @@
         game = GAMES.find(g => g.id === gameId);
         if (!game) throw new Error("Game not found");
       } catch {
-        // fallback
         game = {
           id: getGameId(),
           title: "Demo Game",
@@ -144,7 +139,6 @@
       }
     }
 
-    // --- Auth UI ---
     function showAuthUI() {
       if (currentUser) {
         $(".auth-btn").style.display = "none";
@@ -166,7 +160,6 @@
       renderStars();
     }
 
-    // --- Render game info ---
     function renderGame() {
       document.title = game.title + " | Play Game";
       $(".game-title").textContent = game.title;
@@ -184,7 +177,7 @@
       $(".game-iframe-wrap").appendChild(iframe);
     }
 
-    // --- RATING LOGIC (minimal + robust, replaces old) ---
+    // --- RATING LOGIC with DEBUG LOGS ---
     function renderStars(hover = 0) {
       const stars = $(".game-rating-stars");
       stars.innerHTML = "";
@@ -211,6 +204,7 @@
         : (currentUser ? "Not rated yet" : "Sign in to rate");
       $(".game-rating-error").textContent = ratingData.error || "";
     }
+
     async function loadRatings() {
       ratingData.loading = true;
       ratingData.error = "";
@@ -232,38 +226,55 @@
         ratingData.average = count ? total / count : 0;
         ratingData.count = count;
         ratingData.yourRating = your;
+        console.log("[loadRatings] avg:", ratingData.average, "count:", ratingData.count, "your:", ratingData.yourRating);
       } catch (e) {
         ratingData.error = "Failed to load ratings.";
+        console.error("[loadRatings] error:", e);
       }
       ratingData.loading = false;
       renderStars();
     }
+
     async function submitRating(rating) {
+      console.log("submitRating CALLED!", { rating, currentUser, game });
       if (!currentUser) {
         ratingData.error = "Sign in first!";
         renderStars();
         return;
       }
-      if (rating < 1 || rating > 5) return;
+      if (!game || !game.id) {
+        ratingData.error = "Game not loaded!";
+        renderStars();
+        return;
+      }
+      if (rating < 1 || rating > 5) {
+        ratingData.error = "Invalid rating value: " + rating;
+        renderStars();
+        return;
+      }
       ratingData.loading = true;
       ratingData.error = "";
       renderStars();
       try {
-        await setDoc(doc(db, "games", game.id, "ratings", currentUser.uid), {
+        const ref = doc(db, "games", game.id, "ratings", currentUser.uid);
+        console.log("Writing to Firestore path:", ref.path, "with value:", { rating, updatedAt: serverTimestamp() });
+        await setDoc(ref, {
           rating: rating,
           updatedAt: serverTimestamp()
         });
+        console.log("Firestore setDoc SUCCESS!");
         ratingData.yourRating = rating;
         await loadRatings();
       } catch (e) {
-        ratingData.error = "Failed to rate, try again.";
+        console.error("Firestore setDoc ERROR:", e);
+        ratingData.error = "Failed to rate, try again. " + (e && e.message ? e.message : JSON.stringify(e));
         renderStars();
       }
       ratingData.loading = false;
       renderStars();
     }
 
-    // --- Likes/Dislikes/Favorites/Play History (as before) ---
+    // --- Likes/Dislikes/Favorites/Play History/Comments (as before) ---
     function userDocRef() { return currentUser ? doc(db, 'users', currentUser.uid) : null; }
     async function loadUserData() {
       if (!currentUser) return;
@@ -353,8 +364,7 @@
       $('.dislike-count').textContent = likesData.dislikes;
       $('.fav-btn').classList.toggle('favorited', userFavorites.includes(game.id));
     }
-
-    // --- Comments (unchanged) ---
+    // --- Comments ---
     function setupComments() {
       if (commentsUnsubscribe) commentsUnsubscribe();
       renderCommentsList([]);
@@ -450,7 +460,6 @@
       })[c]);
     }
 
-    // --- INITIALIZE EVERYTHING ---
     window.addEventListener('DOMContentLoaded', async () => {
       await loadGameObject();
       renderGame();
@@ -464,7 +473,6 @@
       } else {
         setupComments();
       }
-      // Play button events
       $('.play-btn').onclick = async () => {
         addToHistory();
         await incrementPlays();
@@ -472,13 +480,11 @@
         const iframe = $('.game-iframe');
         if (iframe) iframe.contentWindow.focus();
       };
-      // Auth
       $('.auth-btn').onclick = () => {
         const provider = new GoogleAuthProvider();
         signInWithPopup(auth, provider).catch(err => alert(err.message));
       };
       $('.logout-btn').onclick = () => signOut(auth);
-      // Favorites / Likes / Fullscreen
       $('.fav-btn').onclick = () => toggleFavorite();
       $('.like-btn').onclick = () => updateGameLike('like');
       $('.dislike-btn').onclick = () => updateGameLike('dislike');
@@ -488,7 +494,6 @@
         info.style.display = info.style.display === 'none' ? '' : 'none';
       };
       $('.back-btn').onclick = () => window.location.href = 'games.html';
-      // Comments
       $('.comment-input').oninput = () => {
         $('.comment-post-btn').disabled = !$('.comment-input').value.trim();
         $('.comment-error').textContent = '';
@@ -517,7 +522,6 @@
       };
     });
 
-    // Auth state changes
     onAuthStateChanged(auth, async user => {
       currentUser = user;
       showAuthUI();
