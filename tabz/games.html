@@ -38,24 +38,24 @@
     .fav-btn.favorited { color: #ffd600; text-shadow: 0 0 7px #ffd60099; }
     .play-btn { background: #90caf9; color: #191c24; border: none; border-radius: 7px; font-weight: 600; font-size: 1rem; padding: 6px 18px; cursor: pointer; transition: background 0.13s; margin-left: auto; }
     .play-btn:hover { background: #1976d2; color: #fff; }
-    .history-section, .favorites-section { max-width: 970px; margin: 2rem auto 0; background: #232946; border-radius: 15px; box-shadow: 0 2px 24px #19193a22; padding: 1.2rem 2vw 1.7rem 2vw; }
+    .history-section, .favorites-section, .liked-section { max-width: 970px; margin: 2rem auto 0; background: #232946; border-radius: 15px; box-shadow: 0 2px 24px #19193a22; padding: 1.2rem 2vw 1.7rem 2vw; }
     h2 { font-weight: 600; color: #90caf9; margin: 0 0 1.1rem 0; letter-spacing: 0.5px; }
-    .history-list, .favorites-list { display: flex; gap: 1.2rem; flex-wrap: wrap; }
-    .history-entry, .favorite-entry { background: #21243d; border-radius: 10px; padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.8rem; font-size: 1rem; color: #fff; }
-    .history-entry img, .favorite-entry img { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; }
+    .history-list, .favorites-list, .liked-list { display: flex; gap: 1.2rem; flex-wrap: wrap; }
+    .history-entry, .favorite-entry, .liked-entry { background: #21243d; border-radius: 10px; padding: 0.7rem 1rem; display: flex; align-items: center; gap: 0.8rem; font-size: 1rem; color: #fff; }
+    .history-entry img, .favorite-entry img, .liked-entry img { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; }
     .logout-btn { background: #2d3748; color: #fff; border: none; border-radius: 7px; font-size: 1rem; padding: 7px 19px; font-weight: 600; cursor: pointer; margin-left: 1rem; }
     .logout-btn:hover { background: #e53935; color: #fff; }
     .google-btn { background: #fff; color: #222; border: none; border-radius: 7px; font-size: 1rem; padding: 10px 32px; font-weight: 600; cursor: pointer; margin: 4rem auto 0 auto; display: block; box-shadow: 0 2px 16px #19193a33; transition: background 0.13s; }
     .google-btn i { color: #ea4335; font-size: 1.1em; margin-right: 0.7em; vertical-align: middle; }
     .google-btn:hover { background: #e3e3e3; }
     @media (max-width: 1080px) {
-      .games-section, .history-section, .favorites-section { padding: 1.2rem 1vw 1.7rem 1vw; }
-      .games-list, .history-list, .favorites-list { gap: 1rem; }
+      .games-section, .history-section, .favorites-section, .liked-section { padding: 1.2rem 1vw 1.7rem 1vw; }
+      .games-list, .history-list, .favorites-list, .liked-list { gap: 1rem; }
       .game-card { width: 46vw; min-width: 168px; max-width: 99vw; }
       .toolbar { max-width: 99vw; }
     }
     @media (max-width: 700px) {
-      .games-list, .history-list, .favorites-list { flex-direction: column; }
+      .games-list, .history-list, .favorites-list, .liked-list { flex-direction: column; }
       .game-card { width: 100%; }
       .toolbar { flex-direction: column; align-items: stretch;}
     }
@@ -95,19 +95,21 @@
     const favoritesList = $('#favorites-list');
     const historySection = $('#history-section');
     const historyList = $('#history-list');
+    const likedSection = $('#liked-section');
+    const likedList = $('#liked-list');
     const searchInput = $('#search-input');
     const categorySelect = $('#category-select');
     const searchHistoryWrap = $('#search-history-wrap');
-    const clearHistoryBtn = $('#clear-history-btn');
 
     let currentUser = null;
     let userFavorites = [];
     let userHistory = [];
     let userSearchHistory = [];
+    let userLikedGameIds = [];
     let GAMES = [];
+    let allCategories = [];
     let searchTerm = '';
     let selectedCategory = 'all';
-    let allCategories = [];
 
     // --- AUTH ---
     function showSignedIn(user) {
@@ -118,8 +120,10 @@
       gamesSection.style.display = '';
       favoritesSection.style.display = '';
       historySection.style.display = '';
+      likedSection.style.display = '';
       $('.toolbar').style.display = '';
       loadUserData();
+      loadUserLikedGames();
     }
     function showSignedOut() {
       userInfo.style.display = 'none';
@@ -127,9 +131,11 @@
       gamesSection.style.display = 'none';
       favoritesSection.style.display = 'none';
       historySection.style.display = 'none';
+      likedSection.style.display = 'none';
       gamesList.innerHTML = '';
       favoritesList.innerHTML = '';
       historyList.innerHTML = '';
+      likedList.innerHTML = '';
       $('.toolbar').style.display = 'none';
     }
     onAuthStateChanged(auth, user => {
@@ -187,7 +193,6 @@
       if (!currentUser) return;
       term = term.trim();
       if (!term) return;
-      // Remove duplicates, then unshift
       userSearchHistory = userSearchHistory.filter(t => t.toLowerCase() !== term.toLowerCase());
       userSearchHistory.unshift(term);
       userSearchHistory = userSearchHistory.slice(0, 12);
@@ -213,6 +218,7 @@
           renderGames();
           renderFavorites();
           renderHistory();
+          loadUserLikedGames();
         }
       } catch (e) {
         gamesList.innerHTML = `<div style="color:#e53935;font-weight:600;">Failed to load games.json</div>`;
@@ -236,7 +242,6 @@
     // --- SEARCH + CATEGORY FILTER ---
     function filterGames() {
       return GAMES.filter(game => {
-        // Filter by search term
         let matchSearch = true;
         if (searchTerm.trim()) {
           const term = searchTerm.trim().toLowerCase();
@@ -246,7 +251,6 @@
             (game.category && game.category.toLowerCase().includes(term)) ||
             (Array.isArray(game.categories) && game.categories.some(c => c.toLowerCase().includes(term)));
         }
-        // Filter by category
         let matchCategory = (selectedCategory === 'all');
         if (!matchCategory) {
           if (Array.isArray(game.categories)) matchCategory = game.categories.includes(selectedCategory);
@@ -336,6 +340,52 @@
         historyList.appendChild(entry);
       });
     }
+
+    // --- LIKED GAMES ---
+    // Get liked games by querying /gameLikes/{gameId} for each game. Checks if likedUsers includes currentUser.uid.
+    async function loadUserLikedGames() {
+      if (!currentUser || !GAMES.length) {
+        userLikedGameIds = [];
+        renderLikedGames();
+        return;
+      }
+      const ids = [];
+      // Batch requests for speed
+      await Promise.all(GAMES.map(async game => {
+        try {
+          const d = await getDoc(doc(db, 'gameLikes', game.id));
+          if (d.exists()) {
+            const liked = d.data().likedUsers || [];
+            if (liked.includes(currentUser.uid)) ids.push(game.id);
+          }
+        } catch(e) {}
+      }));
+      userLikedGameIds = ids;
+      renderLikedGames();
+    }
+    function renderLikedGames() {
+      likedList.innerHTML = '';
+      if (!userLikedGameIds.length) {
+        likedList.innerHTML = `<div style="color:#a1a1aa;">You haven't liked any games yet.</div>`;
+        return;
+      }
+      userLikedGameIds.forEach(lid => {
+        const game = GAMES.find(g => g.id === lid);
+        if (!game) return;
+        const entry = document.createElement('div');
+        entry.className = 'liked-entry';
+        entry.innerHTML = `
+          <img src="${game.thumb}" alt="">
+          <span>${game.title}</span>
+          <button class="play-btn" style="padding:3px 14px;font-size:0.95em;">Play</button>
+        `;
+        entry.querySelector('.play-btn').onclick = () => {
+          window.location.href = `play.html?id=${encodeURIComponent(game.id)}`;
+        };
+        likedList.appendChild(entry);
+      });
+    }
+
     function renderSearchHistory() {
       if (!userSearchHistory || !userSearchHistory.length) {
         searchHistoryWrap.style.display = 'none';
@@ -346,7 +396,6 @@
       ).join('') +
         `<button class="clear-history-btn" id="clear-history-btn">Clear History</button>`;
       searchHistoryWrap.style.display = '';
-      // Click on entry to search
       [...searchHistoryWrap.querySelectorAll('.search-history-entry')].forEach(node => {
         node.onclick = () => {
           searchInput.value = node.textContent;
@@ -356,7 +405,6 @@
           searchHistoryWrap.style.display = 'none';
         };
       });
-      // Clear history
       searchHistoryWrap.querySelector('#clear-history-btn').onclick = () => clearSearchHistory();
     }
 
@@ -377,7 +425,6 @@
         }
       };
       searchInput.onblur = () => {
-        // Hide after short delay so click works
         setTimeout(() => searchHistoryWrap.style.display = 'none', 130);
       };
       searchInput.onkeydown = e => {
@@ -431,6 +478,10 @@
     <section class="favorites-section" id="favorites-section" style="display:none;">
       <h2><i class='bx bxs-star'></i> Favorite Games</h2>
       <div class="favorites-list" id="favorites-list"></div>
+    </section>
+    <section class="liked-section" id="liked-section" style="display:none;">
+      <h2><i class='bx bxs-like'></i> Liked Games</h2>
+      <div class="liked-list" id="liked-list"></div>
     </section>
     <section class="history-section" id="history-section" style="display:none;">
       <h2><i class='bx bx-history'></i> Play History</h2>
