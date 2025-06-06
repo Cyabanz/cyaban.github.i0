@@ -187,6 +187,8 @@
       }
       // For extra debugging, count how many such elements exist:
       console.log("DOM TEST: .game-rating-stars elements found:", document.querySelectorAll('.game-rating-stars').length);
+      // Add user/debug status
+      console.log("currentUser", currentUser, "canInteract", !!currentUser && !ratingData.loading);
 
       stars.innerHTML = "";
       let fill = hover || (ratingData.yourRating ? ratingData.yourRating : Math.round(ratingData.average));
