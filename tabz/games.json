@@ -1,0 +1,62 @@
+[
+  {
+    "id": "game1",
+    "title": "2048",
+    "url": "https://play2048.co/",
+    "thumb": "https://play-lh.googleusercontent.com/5s9kKZJIG1jGg5C7qB9rBmV2kK7b6iQ4g7HOS9Q7r9_K4aO-7Yg=w480-h960-rw",
+    "category": "Puzzle",
+    "categories": ["Puzzle", "Numbers"],
+    "description": "Join the numbers and get to the 2048 tile!",
+    "controls": "Use arrow keys to move the tiles. When two tiles with the same number touch, they merge into one."
+  },
+  {
+    "id": "game2",
+    "title": "Minesweeper",
+    "url": "https://minesweeperonline.com/",
+    "thumb": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Minesweeper_Icon.png",
+    "category": "Puzzle",
+    "categories": ["Puzzle", "Classic"],
+    "description": "Clear the board without detonating any mines!",
+    "controls": "Left-click to reveal a square. Right-click to flag a mine."
+  },
+  {
+    "id": "game3",
+    "title": "Tetris",
+    "url": "https://tetris.com/play-tetris",
+    "thumb": "https://static.tetris.com/images/meta/tetris-meta.png",
+    "category": "Arcade",
+    "categories": ["Arcade", "Blocks"],
+    "description": "Arrange the falling blocks and clear lines to score points.",
+    "controls": "Arrow keys to move, rotate with up arrow or Z/X, space to drop."
+  },
+  {
+    "id": "game4",
+    "title": "Dino Game",
+    "url": "https://chromedino.com/",
+    "thumb": "https://chromedino.com/img/dino.png",
+    "category": "Arcade",
+    "categories": ["Arcade", "Endless"],
+    "description": "Jump over obstacles as the dino in this endless runner!",
+    "controls": "Press space or up arrow to jump."
+  },
+  {
+    "id": "game5",
+    "title": "Snake",
+    "url": "https://playsnake.org/",
+    "thumb": "https://playsnake.org/images/icon.png",
+    "category": "Arcade",
+    "categories": ["Arcade", "Classic"],
+    "description": "Eat apples, grow your snake, and avoid running into yourself.",
+    "controls": "Use arrow keys to move the snake."
+  },
+  {
+    "id": "game6",
+    "title": "Chess",
+    "url": "https://www.chess.com/play/computer",
+    "thumb": "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/Patrick.Huang/phppkGz0N.png",
+    "category": "Board",
+    "categories": ["Board", "Strategy"],
+    "description": "Play chess against the computer at different skill levels.",
+    "controls": "Click and drag pieces to move."
+  }
+]
