@@ -37,39 +37,21 @@
     .google-btn { background: #fff; color: #222; border: none; border-radius: 7px; font-size: 1rem; padding: 10px 32px; font-weight: 600; cursor: pointer; margin: 4rem auto 0 auto; display: block; box-shadow: 0 2px 16px #19193a33; transition: background 0.13s; }
     .google-btn i { color: #ea4335; font-size: 1.1em; margin-right: 0.7em; vertical-align: middle; }
     .google-btn:hover { background: #e3e3e3; }
-    /* Preloader Modal Styles */
-    .game-preloader-bg { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; background: #181c2490; z-index: 1000; display: flex; align-items: center; justify-content: center; }
-    .game-preloader { background: #222633; border-radius: 23px; box-shadow: 0 8px 48px #19193a66; max-width: 370px; width: 98vw; padding: 2.2em 1.7em 1.6em 1.7em; display: flex; flex-direction: column; align-items: center; position: relative; animation: fadeInPreloader 0.26s; }
-    @keyframes fadeInPreloader { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1);} }
-    .preloader-close { position: absolute; right: 1.2em; top: 1.1em; background: none; border: none; color: #90caf9; font-size: 1.5em; cursor: pointer; }
-    .preloader-img { width: 96px; height: 96px; border-radius: 13px; object-fit: cover; margin-bottom: 1em; border: 2px solid #90caf9; }
-    .preloader-title { font-size: 1.25em; font-weight: 700; color: #fff; margin-bottom: 0.4em; text-align: center;}
-    .preloader-categories { margin-bottom: 0.5em; }
-    .preloader-desc { font-size: 1em; color: #b0b7c3; margin-bottom: 1.2em; text-align: center; }
-    .preloader-btn-row { display: flex; gap: 0.7em; margin-bottom: 0.9em; }
-    .preloader-btn, .preloader-fav-btn { border: none; border-radius: 8px; padding: 0.6em 1.2em; font-size: 1em; font-weight: 600; cursor: pointer; background: #90caf9; color: #191c24; transition: background 0.13s; }
-    .preloader-btn:hover, .preloader-fav-btn:hover { background: #1976d2; color: #fff; }
-    .preloader-fav-btn.favorited { background: #ffd600; color: #191c24; }
-    .preloader-icon-btn { background: none; border: none; color: #90caf9; font-size: 1.34em; cursor: pointer; margin: 0 0.1em; transition: color 0.15s; }
-    .preloader-icon-btn.liked { color: #48fa80; }
-    .preloader-icon-btn.disliked { color: #fa4c4c; }
-    .preloader-likes { display: flex; gap: 0.6em; align-items: center; margin-bottom: 0.7em; }
-    .preloader-likes span { font-size: 1em; color: #b0b7c3; }
-    .preloader-controls-btn { background: none; border: 1px solid #90caf9; color: #90caf9; border-radius: 8px; padding: 0.4em 1em; font-size: 0.99em; cursor: pointer; transition: all 0.13s; }
-    .preloader-controls-btn:hover { background: #232946; }
-    .preloader-controls-info { background: #232946; color: #b0b7c3; border-radius: 8px; padding: 1em; margin-top: 1em; font-size: 0.98em; text-align: left;}
-    @media (max-width: 700px) {
+    @media (max-width: 1080px) {
       .games-section, .history-section, .favorites-section { padding: 1.2rem 1vw 1.7rem 1vw; }
       .games-list, .history-list, .favorites-list { gap: 1rem; }
+      .game-card { width: 46vw; min-width: 168px; max-width: 99vw; }
+    }
+    @media (max-width: 700px) {
+      .games-list, .history-list, .favorites-list { flex-direction: column; }
       .game-card { width: 100%; }
-      .game-preloader { max-width: 98vw; }
     }
   </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // Firebase config (replace with yours if needed)
     const firebaseConfig = {
@@ -100,11 +82,11 @@
     const favoritesList = $('#favorites-list');
     const historySection = $('#history-section');
     const historyList = $('#history-list');
+
     let currentUser = null;
     let userFavorites = [];
     let userHistory = [];
     let GAMES = [];
-    let likesCache = {}; // {gameId: {likes: number, dislikes: number}}
 
     // --- AUTH ---
     function showSignedIn(user) {
@@ -182,7 +164,6 @@
         const resp = await fetch('game.json');
         if (!resp.ok) throw new Error("Could not load games");
         GAMES = await resp.json();
-        await loadAllGameLikes();
         if (auth.currentUser) {
           renderGames();
           renderFavorites();
@@ -191,119 +172,6 @@
       } catch (e) {
         gamesList.innerHTML = `<div style="color:#e53935;font-weight:600;">Failed to load games.json</div>`;
       }
-    }
-
-    // --- LIKES/DISLIKES HANDLING ---
-    async function loadAllGameLikes() {
-      likesCache = {};
-      await Promise.all(GAMES.map(async game => {
-        let d = await getDoc(doc(db, 'gameLikes', game.id));
-        likesCache[game.id] = { likes: 0, dislikes: 0, userLiked: false, userDisliked: false };
-        if (d.exists()) {
-          likesCache[game.id].likes = d.data().likes || 0;
-          likesCache[game.id].dislikes = d.data().dislikes || 0;
-          if (currentUser) {
-            const liked = d.data().likedUsers || [];
-            const disliked = d.data().dislikedUsers || [];
-            likesCache[game.id].userLiked = liked.includes(currentUser.uid);
-            likesCache[game.id].userDisliked = disliked.includes(currentUser.uid);
-          }
-        }
-      }));
-    }
-    async function updateGameLike(gameId, likeType) {
-      if (!currentUser) return;
-      const ref = doc(db, 'gameLikes', gameId);
-      const d = await getDoc(ref);
-      let likedUsers = [], dislikedUsers = [];
-      let likes = 0, dislikes = 0;
-      if (d.exists()) {
-        likedUsers = d.data().likedUsers || [];
-        dislikedUsers = d.data().dislikedUsers || [];
-        likes = d.data().likes || 0;
-        dislikes = d.data().dislikes || 0;
-      }
-      // Remove user from both, then add to one
-      likedUsers = likedUsers.filter(u => u !== currentUser.uid);
-      dislikedUsers = dislikedUsers.filter(u => u !== currentUser.uid);
-      if (likeType === 'like') likedUsers.push(currentUser.uid);
-      if (likeType === 'dislike') dislikedUsers.push(currentUser.uid);
-      likes = likedUsers.length;
-      dislikes = dislikedUsers.length;
-      await setDoc(ref, { likes, dislikes, likedUsers, dislikedUsers }, { merge: true });
-      await loadAllGameLikes();
-      renderPreloaderModal(gameId);
-    }
-
-    // --- GAMES PRELOADER MODAL ---
-    let preloaderElem = null;
-    function renderPreloaderModal(gameId) {
-      const game = GAMES.find(g => g.id === gameId);
-      if (!game) return;
-      if (preloaderElem) preloaderElem.remove();
-      preloaderElem = document.createElement('div');
-      preloaderElem.className = 'game-preloader-bg';
-      // Data for like/dislike
-      const likesData = likesCache[gameId] || {likes:0,dislikes:0,userLiked:false,userDisliked:false};
-      preloaderElem.innerHTML = `
-        <div class="game-preloader">
-          <button class="preloader-close" title="Close"><i class="bx bx-x"></i></button>
-          <img class="preloader-img" src="${game.thumb}" alt="${game.title}">
-          <div class="preloader-title">${game.title}</div>
-          <div class="preloader-categories">
-            ${Array.isArray(game.categories) ? game.categories.map(c => `<span class="game-chip">${c}</span>`).join('') : `<span class="game-chip">${game.category}</span>`}
-          </div>
-          <div class="preloader-desc">${game.description ? game.description : ''}</div>
-          <div class="preloader-likes">
-            <button class="preloader-icon-btn ${likesData.userLiked ? 'liked' : ''}" title="Like"><i class='bx bxs-like'></i></button>
-            <span>${likesData.likes}</span>
-            <button class="preloader-icon-btn ${likesData.userDisliked ? 'disliked' : ''}" title="Dislike"><i class='bx bxs-dislike'></i></button>
-            <span>${likesData.dislikes}</span>
-          </div>
-          <div class="preloader-btn-row">
-            <button class="preloader-btn" id="preloader-play">Play</button>
-            <button class="preloader-fav-btn${userFavorites.includes(game.id) ? ' favorited' : ''}" id="preloader-fav">
-              <i class='bx bxs-star'></i> Favorite
-            </button>
-            <button class="preloader-btn" id="preloader-fullscreen"><i class='bx bx-fullscreen'></i> Fullscreen</button>
-            <button class="preloader-controls-btn" id="preloader-controls"><i class='bx bx-info-circle'></i> Controls</button>
-          </div>
-          <div class="preloader-controls-info" style="display:none;"></div>
-        </div>
-      `;
-      document.body.appendChild(preloaderElem);
-      // Modal events
-      preloaderElem.querySelector('.preloader-close').onclick = () => { preloaderElem.remove(); preloaderElem = null; };
-      preloaderElem.onclick = e => { if (e.target === preloaderElem) { preloaderElem.remove(); preloaderElem = null; } };
-      // Like/Dislike
-      preloaderElem.querySelectorAll('.preloader-icon-btn')[0].onclick = async () => { await updateGameLike(game.id, 'like'); };
-      preloaderElem.querySelectorAll('.preloader-icon-btn')[1].onclick = async () => { await updateGameLike(game.id, 'dislike'); };
-      // Play
-      preloaderElem.querySelector('#preloader-play').onclick = () => {
-        addToHistory(game.id);
-        window.open(game.url, '_blank');
-        preloaderElem.remove();
-        preloaderElem = null;
-      };
-      // Favorite
-      preloaderElem.querySelector('#preloader-fav').onclick = async () => {
-        await toggleFavorite(game.id);
-        renderPreloaderModal(game.id); // re-render for icon update
-      };
-      // Fullscreen
-      preloaderElem.querySelector('#preloader-fullscreen').onclick = () => {
-        window.open(game.url, '_blank').focus();
-      };
-      // Controls/Info
-      preloaderElem.querySelector('#preloader-controls').onclick = () => {
-        const info = preloaderElem.querySelector('.preloader-controls-info');
-        if (info.style.display === 'none') {
-          info.style.display = '';
-          info.textContent = game.controls ? game.controls : 'No controls/instructions provided.';
-        } else {
-          info.style.display = 'none';
-        }
-      };
     }
 
     // --- RENDERING ---
@@ -328,7 +196,10 @@
           </div>
         `;
         card.querySelector('.fav-btn').onclick = () => toggleFavorite(game.id);
-        card.querySelector('.play-btn').onclick = () => renderPreloaderModal(game.id);
+        // NEW: Play button navigates to play.html?id=game.id
+        card.querySelector('.play-btn').onclick = () => {
+          window.location.href = `play.html?id=${encodeURIComponent(game.id)}`;
+        };
         gamesList.appendChild(card);
       });
     }
@@ -347,8 +218,13 @@
           <img src="${game.thumb}" alt="">
           <span>${game.title}</span>
           <button class="fav-btn favorited" title="Remove Favorite"><i class='bx bxs-star'></i></button>
+          <button class="play-btn" style="padding:3px 14px;font-size:0.95em;">Play</button>
         `;
         entry.querySelector('.fav-btn').onclick = () => toggleFavorite(game.id);
+        // Play button navigates to play.html
+        entry.querySelector('.play-btn').onclick = () => {
+          window.location.href = `play.html?id=${encodeURIComponent(game.id)}`;
+        };
         favoritesList.appendChild(entry);
       });
     }
@@ -369,7 +245,9 @@
           <span style="font-size:0.93em;color:#90caf9;">${new Date(h.playedAt).toLocaleString()}</span>
           <button class="play-btn" style="padding:3px 14px;font-size:0.95em;">Play</button>
         `;
-        entry.querySelector('.play-btn').onclick = () => renderPreloaderModal(game.id);
+        entry.querySelector('.play-btn').onclick = () => {
+          window.location.href = `play.html?id=${encodeURIComponent(game.id)}`;
+        };
         historyList.appendChild(entry);
       });
     }
