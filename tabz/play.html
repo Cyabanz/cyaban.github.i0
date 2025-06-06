@@ -7,8 +7,354 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <style>
-    /* ... (keep all previous CSS from earlier answer) ... */
-    /* Add admin delete styling */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1e253e 0%, #181c24 100%);
+      color: #e8eaf0;
+      margin: 0;
+      min-height: 100vh;
+    }
+    .back-btn {
+      margin: 2em 0 0 2vw;
+      background: none;
+      border: none;
+      color: #90caf9;
+      font-size: 1.1em;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      transition: color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 0.3em;
+    }
+    .back-btn:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+    .game-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 2.5em;
+      padding: 2em 4vw 1.3em 4vw;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .game-thumb {
+      width: 84px;
+      height: 84px;
+      border-radius: 18px;
+      object-fit: cover;
+      box-shadow: 0 4px 20px #19193a33;
+      border: 3px solid #232946;
+      background: #151922;
+    }
+    .game-meta-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4em;
+    }
+    .game-title {
+      font-size: 2.2em;
+      font-weight: 700;
+      color: #90caf9;
+      letter-spacing: 0.02em;
+      margin-bottom: 0.15em;
+    }
+    .game-categories {
+      margin-top: 0.1em;
+      margin-bottom: 0.2em;
+    }
+    .game-chip {
+      display: inline-block;
+      background: #232946;
+      color: #90caf9;
+      border: 1px solid #90caf9;
+      border-radius: 7px;
+      padding: 0 11px;
+      font-size: 0.97em;
+      margin-right: 0.5em;
+      margin-bottom: 0.2em;
+    }
+    .game-plays {
+      font-size: 1.1em;
+      color: #f3e079;
+      background: #252b43;
+      padding: 0.25em 1.1em 0.25em 0.7em;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4em;
+      margin: 0.65em 0 0.25em 0;
+      font-weight: 600;
+      box-shadow: 0 1px 8px #19193a18;
+      letter-spacing: 0.01em;
+    }
+    .game-plays i {
+      color: #ffd600;
+      font-size: 1.13em;
+      margin-right: 0.1em;
+    }
+    .likes-row {
+      display: flex;
+      gap: 1.3em;
+      align-items: center;
+      margin-top: 0.7em;
+      margin-bottom: 0.2em;
+    }
+    .likes-row button {
+      font-size: 1.25em;
+    }
+    .like-count, .dislike-count {
+      min-width: 16px;
+      display: inline-block;
+      text-align: center;
+      font-size: 1.07em;
+      font-weight: 600;
+      color: #90caf9;
+    }
+    .icon-btn {
+      background: none;
+      border: none;
+      color: #90caf9;
+      font-size: 1.42em;
+      cursor: pointer;
+      margin: 0 0.2em;
+      padding: 0.09em 0.22em;
+      border-radius: 50%;
+      transition: color 0.15s, background 0.12s;
+    }
+    .icon-btn.liked { color: #48fa80; background: #222e29;}
+    .icon-btn.disliked { color: #fa4c4c; background: #2c1d1d;}
+    .icon-btn:active { background: #232946; }
+
+    .action-btn {
+      border: none;
+      border-radius: 7px;
+      padding: 0.52em 1.4em;
+      font-size: 1.07em;
+      font-weight: 700;
+      cursor: pointer;
+      background: #90caf9;
+      color: #191c24;
+      transition: background 0.13s, color 0.14s;
+      margin-right: 0.5em;
+      margin-top: 0.2em;
+    }
+    .action-btn:hover { background: #1976d2; color: #fff; }
+    .fav-btn.favorited { background: #ffd600; color: #191c24; }
+    .fullscreen-btn { background: #252b43; color: #90caf9;}
+    .fullscreen-btn:hover { background: #191c24;}
+    .game-controls-btn { background: #252b43; color: #90caf9;}
+    .game-controls-btn:hover { background: #191c24;}
+    .game-controls-info {
+      background: #232946;
+      color: #b0b7c3;
+      border-radius: 8px;
+      padding: 1em 1.3em;
+      margin-top: 1em;
+      font-size: 1em;
+      max-width: 470px;
+      box-shadow: 0 1px 9px #19193a28;
+    }
+    .game-desc {
+      margin: 1.8em auto 1em auto;
+      font-size: 1.13em;
+      color: #b0b7c3;
+      max-width: 800px;
+      line-height: 1.56;
+      letter-spacing: 0.01em;
+    }
+    .game-iframe-wrap {
+      width: 100vw;
+      max-width: 1090px;
+      margin: 1.1em auto 0 auto;
+      display: flex;
+      justify-content: center;
+    }
+    .game-iframe {
+      width: 100%;
+      min-height: 64vw;
+      max-height: 650px;
+      max-width: 900px;
+      border: 0;
+      border-radius: 16px;
+      box-shadow: 0 4px 32px #1d1d2a55;
+      background: #111;
+    }
+    .game-actions {
+      display: flex;
+      gap: 1em;
+      align-items: center;
+      justify-content: flex-end;
+      max-width: 1090px;
+      margin: 1em auto 0 auto;
+      padding: 0 4vw;
+    }
+    .user-photo {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin-left: 0.7em;
+      object-fit: cover;
+      border: 2px solid #232946;
+      background: #151922;
+      vertical-align: middle;
+    }
+    .user-name {
+      margin-left: 0.65em;
+      font-weight: 600;
+      color: #90caf9;
+      font-size: 1em;
+    }
+    .logout-btn {
+      background: #2d3748;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 1em;
+      padding: 7px 19px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 1rem;
+      transition: background 0.13s;
+    }
+    .logout-btn:hover { background: #e53935; color: #fff; }
+    .auth-btn {
+      background: #fff;
+      color: #222;
+      border: none;
+      border-radius: 7px;
+      font-size: 1em;
+      padding: 8px 20px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 16px #19193a22;
+      transition: background 0.13s;
+      margin-left: 0.5em;
+    }
+    .auth-btn i { color: #ea4335; font-size: 1.1em; margin-right: 0.6em; vertical-align: middle; }
+    .auth-btn:hover { background: #e3e3e3; }
+
+    .comment-section {
+      max-width: 900px;
+      margin: 2.5em auto 3em auto;
+      background: #232946;
+      border-radius: 16px;
+      box-shadow: 0 2px 24px #19193a33;
+      padding: 2em 1em 2.5em 1em;
+    }
+    .comment-title {
+      font-size: 1.27em;
+      font-weight: 700;
+      color: #90caf9;
+      margin-bottom: 1em;
+      letter-spacing: 0.04em;
+    }
+    .comment-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7em;
+      margin-bottom: 2em;
+    }
+    .comment-input {
+      border: 1px solid #90caf9;
+      border-radius: 8px;
+      background: #181c24;
+      color: #e8eaf0;
+      font-size: 1em;
+      padding: 0.6em 1em;
+      resize: vertical;
+      min-height: 55px;
+      font-family: 'Inter', sans-serif;
+    }
+    .comment-input:focus { border-color: #1976d2; outline: none;}
+    .comment-post-btn {
+      align-self: flex-end;
+      background: #90caf9;
+      color: #191c24;
+      border: none;
+      border-radius: 7px;
+      font-weight: 600;
+      font-size: 1em;
+      padding: 7px 22px;
+      cursor: pointer;
+      transition: background 0.13s;
+      margin-top: 0.3em;
+    }
+    .comment-post-btn:disabled { background: #444b5e; color: #b0b7c3; cursor: not-allowed;}
+    .comment-form-info {
+      color: #b0b7c3;
+      font-size: 1em;
+      margin-bottom: 1.2em;
+      text-align: center;
+    }
+    .comments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.6em;
+      margin-top: 0.7em;
+    }
+    .comment {
+      background: #202538;
+      border-radius: 10px;
+      padding: 1em 1.1em 0.8em 1.1em;
+      display: flex;
+      gap: 1em;
+      box-shadow: 0 1px 7px #19193a18;
+    }
+    .comment-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-top: 0.2em;
+      border: 2px solid #252b43;
+      background: #181c24;
+    }
+    .comment-main { flex: 1; }
+    .comment-user {
+      font-weight: 600;
+      color: #90caf9;
+      font-size: 1em;
+      letter-spacing: 0.01em;
+    }
+    .comment-date {
+      font-size: 0.93em;
+      color: #b0b7c3;
+      margin-left: 0.7em;
+      font-weight: 500;
+    }
+    .comment-text {
+      margin: 0.5em 0 0.7em 0;
+      font-size: 1.05em;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .comment-actions {
+      display: flex;
+      gap: 0.8em;
+      align-items: center;
+    }
+    .comment-like-btn {
+      background: none;
+      border: none;
+      color: #90caf9;
+      font-size: 1.25em;
+      cursor: pointer;
+      transition: color 0.13s;
+      padding: 0.09em 0.22em;
+      border-radius: 50%;
+    }
+    .comment-like-btn.liked { color: #48fa80;}
+    .comment-likes-count {
+      font-size: 0.98em;
+      color: #e8eaf0;
+      min-width: 14px;
+      text-align: center;
+      font-weight: 600;
+    }
     .comment-admin-delete-btn {
       background: none;
       border: none;
@@ -16,10 +362,15 @@
       font-size: 1.1em;
       cursor: pointer;
       margin-left: 0.7em;
+      font-weight: 600;
+      padding: 0.18em 0.7em;
+      border-radius: 5px;
+      transition: color 0.13s, background 0.13s;
     }
     .comment-admin-delete-btn:hover {
       text-decoration: underline;
       color: #ff1744;
+      background: #2c1d1d;
     }
     .comment-deleted {
       color: #b0b7c3;
@@ -28,12 +379,32 @@
       margin: 0.8em 0;
       padding-left: 5.3em;
     }
+    .comment-error {
+      color: #e53935;
+      font-size: 0.98em;
+      margin-top: 0.2em;
+      font-weight: 600;
+      text-align: right;
+    }
+    @media (max-width: 1100px) {
+      .game-header { flex-direction: column; align-items: flex-start; gap: 1.2em; padding: 2em 2vw 1.3em 2vw; }
+      .game-actions { padding: 0 2vw; }
+    }
+    @media (max-width: 900px) {
+      .game-iframe { min-height: 70vw; max-width: 98vw; }
+      .comment-section { padding: 1.1em 0.3em 2em 0.3em;}
+    }
+    @media (max-width: 600px) {
+      .game-header { gap: 0.8em; padding: 1.3em 1vw 0.8em 1vw;}
+      .game-thumb { width: 64px; height: 64px;}
+      .game-title { font-size: 1.17em;}
+    }
   </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, onSnapshot, updateDoc, arrayUnion, arrayRemove, serverTimestamp, query, orderBy, deleteDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, onSnapshot, updateDoc, serverTimestamp, query, orderBy, increment } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // Firebase config
     const firebaseConfig = {
@@ -52,11 +423,7 @@
     const db = getFirestore(app);
 
     // === ADMIN MODERATION ===
-    // List of admin UIDs, add more if needed!
-    // You can get your UID from the Firebase Auth Users section.
     const ADMIN_UIDS = [
-      // Example: "abc123youruid"
-      // Replace with your UID. For example:
       "Cyabanz" // <-- Use your actual UID string, not username.
     ];
 
@@ -72,8 +439,9 @@
     let commentCooldown = 30 * 1000; // 30s per comment per user
     let lastCommentText = "";
     let lastCommentTimestamp = 0;
+    let gamePlayCount = 0;
 
-    // Bad word filter (client-side, simple, customizable)
+    // --- BAD WORDS & SPAM ---
     const BAD_WORDS = [
       'fuck','shit','bitch','cunt','nigger','fag','asshole','bastard','slut','dick','pussy','whore','faggot','cock','retard','cum','rape'
     ];
@@ -82,22 +450,16 @@
       return BAD_WORDS.some(word => lower.includes(word));
     }
     function isSpam(text) {
-      // Block if comment is repeated or too frequent
       let now = Date.now();
-      // Block if the same as last comment
       if (text.trim() === lastCommentText && now - lastCommentTimestamp < 60*1000) return true;
-      // Block if too fast
       if (now - lastCommentTime < commentCooldown) return true;
       return false;
     }
 
-    // Get ID from URL
     function getGameId() {
       const url = new URL(window.location.href);
       return url.searchParams.get('id');
     }
-
-    // ----- Firebase User Data -----
     function userDocRef() {
       if (!currentUser) return null;
       return doc(db, 'users', currentUser.uid);
@@ -129,6 +491,24 @@
       userHistory.unshift({ id: game.id, playedAt: Date.now() });
       userHistory = userHistory.slice(0, 20);
       await setDoc(userDocRef(), { history: userHistory }, { merge: true });
+    }
+
+    // ----- PLAYS -----
+    async function incrementPlays() {
+      if (!game) return;
+      const ref = doc(db, 'gamePlays', game.id);
+      await setDoc(ref, {}, { merge: true }); // ensure doc exists
+      await updateDoc(ref, { count: increment(1) });
+    }
+    async function getPlays() {
+      if (!game) return 0;
+      const ref = doc(db, 'gamePlays', game.id);
+      const d = await getDoc(ref);
+      return d.exists() && typeof d.data().count === "number" ? d.data().count : 0;
+    }
+    async function updatePlaysDisplay() {
+      gamePlayCount = await getPlays();
+      $(".game-plays").innerHTML = `<i class='bx bx-user'></i> ${gamePlayCount.toLocaleString()} play${gamePlayCount===1?"":"s"}`;
     }
 
     // ----- Likes/Dislikes -----
@@ -169,7 +549,6 @@
       await loadGameLikes();
     }
 
-    // ----- Render -----
     function renderGame() {
       if (!game) {
         $('main').innerHTML = "<div style='color:#e53935;font-size:1.3em;margin:2em;'>Game not found.</div>";
@@ -199,10 +578,11 @@
       $('.fav-btn').classList.toggle('favorited', userFavorites.includes(game.id));
     }
 
-    // ----- Listeners -----
     function setListeners() {
-      $('.play-btn').onclick = () => {
+      $('.play-btn').onclick = async () => {
         addToHistory();
+        await incrementPlays();
+        updatePlaysDisplay();
         const iframe = $('.game-iframe');
         if (iframe) iframe.contentWindow.focus();
       };
@@ -220,7 +600,6 @@
       $('.back-btn').onclick = () => window.location.href = 'games.html';
     }
 
-    // ----- Auth -----
     function showAuthBtn() {
       $('.auth-btn').style.display = '';
       $('.user-photo').style.display = 'none';
@@ -299,7 +678,6 @@
         return;
       }
       comments.forEach(comment => {
-        // If deleted, show deleted message for everyone
         if(comment.deleted) {
           const div = document.createElement('div');
           div.className = 'comment-deleted';
@@ -324,7 +702,6 @@
           </div>
         `;
         div.querySelector('.comment-like-btn').onclick = () => handleLikeComment(comment.id, likedByMe, comment.likes || []);
-        // Admin delete
         if(isAdmin()) {
           div.querySelector('.comment-admin-delete-btn').onclick = () => handleAdminDelete(comment.id);
         }
@@ -346,11 +723,9 @@
       if (!isAdmin()) return;
       if (!confirm("Delete this comment? This action cannot be undone.")) return;
       const ref = doc(db, 'games', game.id, 'comments', commentId);
-      // Instead of deleting, mark as deleted for audit trail.
       await updateDoc(ref, { deleted: true, text: "", likes: [] });
     }
     function isAdmin() {
-      // Use UID, not displayName. Use Firebase console to get your UID!
       return currentUser && ADMIN_UIDS.includes(currentUser.uid);
     }
     function escapeHTML(str) {
@@ -359,7 +734,6 @@
       })[c]);
     }
 
-    // ----- Comment Form -----
     window.addEventListener('DOMContentLoaded', async () => {
       showAuthBtn();
       const resp = await fetch('game.json');
@@ -368,6 +742,7 @@
       game = GAMES.find(g => g.id === gameId);
       renderGame();
       setListeners();
+      await updatePlaysDisplay();
       if (auth.currentUser) {
         loadUserData();
         loadGameLikes();
@@ -401,6 +776,9 @@
         }
         $('.comment-post-btn').disabled = false;
       };
+      // Also increment plays on page load
+      await incrementPlays();
+      await updatePlaysDisplay();
     });
   </script>
 </head>
@@ -408,9 +786,10 @@
   <button class="back-btn"><i class='bx bx-arrow-back'></i> Back to games</button>
   <div class="game-header">
     <img class="game-thumb" src="" alt="Game">
-    <div>
+    <div class="game-meta-col">
       <div class="game-title"></div>
       <div class="game-categories"></div>
+      <div class="game-plays"><i class='bx bx-user'></i> 0 plays</div>
       <div class="likes-row">
         <button class="icon-btn like-btn" title="Like"><i class='bx bxs-like'></i></button>
         <span class="like-count">0</span>
@@ -428,8 +807,8 @@
   <div class="game-actions">
     <button class="action-btn play-btn"><i class='bx bx-play'></i> Play</button>
     <button class="action-btn auth-btn" style="display:none;"><i class='bx bxl-google'></i> Sign in with Google</button>
-    <img class="user-photo" style="display:none;width:32px;height:32px;border-radius:50%;vertical-align:middle;">
-    <span class="user-name" style="display:none;margin-left:0.6em;"></span>
+    <img class="user-photo" style="display:none;">
+    <span class="user-name" style="display:none;"></span>
     <button class="logout-btn" style="display:none;">Logout</button>
   </div>
   <main>
@@ -440,7 +819,7 @@
         <button class="comment-post-btn" type="submit" disabled>Post</button>
         <div class="comment-error"></div>
       </form>
-      <div class="comment-form-info" style="color:#b0b7c3;display:none;">Sign in to post a comment.</div>
+      <div class="comment-form-info" style="display:none;">Sign in to post a comment.</div>
       <div class="comments-list"></div>
     </div>
   </main>
