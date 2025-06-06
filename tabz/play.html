@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Play Game</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #181c24; color: #e8eaf0; margin: 0; min-height: 100vh;}
+    .game-header { display: flex; align-items: center; gap: 1.4em; padding: 2em 4vw 1em 4vw; }
+    .game-thumb { width: 62px; height: 62px; border-radius: 12px; object-fit: cover;}
+    .game-title { font-size: 2em; font-weight: 700; color: #90caf9;}
+    .game-categories {margin-top: 0.7em;}
+    .game-chip { display: inline-block; background: #232946; color: #90caf9; border: 1px solid #90caf9; border-radius: 7px; padding: 0 9px; font-size: 0.9em; margin-right: 0.5em;}
+    .game-actions {display: flex; gap: 1.1em; margin:1.6em 0 1em 0; align-items: center; flex-wrap: wrap;}
+    .action-btn { border: none; border-radius: 8px; padding: 0.55em 1.2em; font-size: 1.05em; font-weight: 600; cursor: pointer; background: #90caf9; color: #191c24; transition: background 0.13s;}
+    .action-btn:hover { background: #1976d2; color: #fff; }
+    .fav-btn.favorited { background: #ffd600; color: #191c24; }
+    .icon-btn { background: none; border: none; color: #90caf9; font-size: 1.33em; cursor: pointer; margin: 0 0.2em; transition: color 0.15s;}
+    .icon-btn.liked { color: #48fa80; }
+    .icon-btn.disliked { color: #fa4c4c;}
+    .likes-row { display: flex; gap: 0.7em; align-items: center; }
+    .likes-row span { font-size: 1em; color: #b0b7c3;}
+    .game-controls-btn { background: none; border: 1px solid #90caf9; color: #90caf9; border-radius: 8px; padding: 0.4em 1em; font-size: 0.99em; cursor: pointer; transition: all 0.13s;}
+    .game-controls-btn:hover { background: #232946;}
+    .game-controls-info { background: #232946; color: #b0b7c3; border-radius: 8px; padding: 1em; margin-top: 1em; font-size: 0.98em; max-width: 470px;}
+    .game-desc { margin: 1.8em 0 1em 0; font-size: 1.13em; color: #b0b7c3; }
+    .game-iframe-wrap { width: 100vw; max-width: 1090px; margin: 1.1em auto 0 auto; display: flex; justify-content: center;}
+    .game-iframe { width: 100%; min-height: 64vw; max-height: 650px; max-width: 900px; border: 0; border-radius: 16px; box-shadow: 0 4px 32px #1d1d2a55;}
+    .back-btn { margin: 2em 0 0 4vw; background: none; border: none; color: #90caf9; font-size: 1.1em; cursor: pointer; }
+    @media (max-width: 900px) {
+      .game-iframe { min-height: 70vw; max-width: 98vw; }
+      .game-header { flex-direction: column; align-items: flex-start; gap: 0.7em;}
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyADCVIINCBgvTBvClWqWI5o3SlVS47IJnw",
+      authDomain: "fusioncya-cc20a.firebaseapp.com",
+      databaseURL: "https://fusioncya-cc20a-default-rtdb.firebaseio.com",
+      projectId: "fusioncya-cc20a",
+      storageBucket: "fusioncya-cc20a.appspot.com",
+      messagingSenderId: "765164293111",
+      appId: "1:765164293111:web:43e051c755c4690c0c3cf2",
+      measurementId: "G-4DT52P7MPB"
+    };
+    const app = initializeApp(firebaseConfig);
+    getAnalytics(app);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI
+    const $ = s => document.querySelector(s);
+    let GAMES = [];
+    let game = null;
+    let likesData = {likes:0,dislikes:0,userLiked:false,userDisliked:false};
+    let userFavorites = [], userHistory = [];
+    let currentUser = null;
+
+    // Get ID from URL
+    function getGameId() {
+      const url = new URL(window.location.href);
+      return url.searchParams.get('id');
+    }
+
+    // ----- Firebase User Data -----
+    function userDocRef() {
+      if (!currentUser) return null;
+      return doc(db, 'users', currentUser.uid);
+    }
+    async function loadUserData() {
+      if (!currentUser) return;
+      const docRef = userDocRef();
+      const docSnap = await getDoc(docRef);
+      userFavorites = [];
+      userHistory = [];
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        userFavorites = data.favorites || [];
+        userHistory = data.history || [];
+      }
+      renderActions();
+    }
+    async function toggleFavorite() {
+      if (!currentUser) return;
+      const idx = userFavorites.indexOf(game.id);
+      if (idx >= 0) userFavorites.splice(idx, 1);
+      else userFavorites.push(game.id);
+      await setDoc(userDocRef(), { favorites: userFavorites }, { merge: true });
+      renderActions();
+    }
+    async function addToHistory() {
+      if (!currentUser) return;
+      userHistory = userHistory.filter(h => h.id !== game.id);
+      userHistory.unshift({ id: game.id, playedAt: Date.now() });
+      userHistory = userHistory.slice(0, 20);
+      await setDoc(userDocRef(), { history: userHistory }, { merge: true });
+    }
+
+    // ----- Likes/Dislikes -----
+    async function loadGameLikes() {
+      let d = await getDoc(doc(db, 'gameLikes', game.id));
+      likesData = {likes:0,dislikes:0,userLiked:false,userDisliked:false};
+      if (d.exists()) {
+        likesData.likes = d.data().likes || 0;
+        likesData.dislikes = d.data().dislikes || 0;
+        if (currentUser) {
+          const liked = d.data().likedUsers || [];
+          const disliked = d.data().dislikedUsers || [];
+          likesData.userLiked = liked.includes(currentUser.uid);
+          likesData.userDisliked = disliked.includes(currentUser.uid);
+        }
+      }
+      renderActions();
+    }
+    async function updateGameLike(likeType) {
+      if (!currentUser) return;
+      const ref = doc(db, 'gameLikes', game.id);
+      const d = await getDoc(ref);
+      let likedUsers = [], dislikedUsers = [];
+      let likes = 0, dislikes = 0;
+      if (d.exists()) {
+        likedUsers = d.data().likedUsers || [];
+        dislikedUsers = d.data().dislikedUsers || [];
+        likes = d.data().likes || 0;
+        dislikes = d.data().dislikes || 0;
+      }
+      likedUsers = likedUsers.filter(u => u !== currentUser.uid);
+      dislikedUsers = dislikedUsers.filter(u => u !== currentUser.uid);
+      if (likeType === 'like') likedUsers.push(currentUser.uid);
+      if (likeType === 'dislike') dislikedUsers.push(currentUser.uid);
+      likes = likedUsers.length;
+      dislikes = dislikedUsers.length;
+      await setDoc(ref, { likes, dislikes, likedUsers, dislikedUsers }, { merge: true });
+      await loadGameLikes();
+    }
+
+    // ----- Render -----
+    function renderGame() {
+      if (!game) {
+        $('main').innerHTML = "<div style='color:#e53935;font-size:1.3em;margin:2em;'>Game not found.</div>";
+        return;
+      }
+      document.title = game.title + ' | Play Game';
+      $('.game-title').textContent = game.title;
+      $('.game-thumb').src = game.thumb;
+      $('.game-desc').textContent = game.description || '';
+      $('.game-categories').innerHTML =
+        (Array.isArray(game.categories) ? game.categories.map(c => `<span class="game-chip">${c}</span>`).join('') : `<span class="game-chip">${game.category}</span>`);
+      // Controls
+      $('.game-controls-info').style.display = 'none';
+      $('.game-controls-info').textContent = game.controls ? game.controls : "No controls/instructions provided.";
+      // Iframe or fallback
+      let iframe = $('.game-iframe');
+      if(iframe) iframe.remove();
+      iframe = document.createElement('iframe');
+      iframe.className = 'game-iframe';
+      iframe.setAttribute('allowfullscreen','true');
+      iframe.src = game.url;
+      $('.game-iframe-wrap').appendChild(iframe);
+    }
+    function renderActions() {
+      // Like/dislike
+      $('.like-btn').classList.toggle('liked', likesData.userLiked);
+      $('.dislike-btn').classList.toggle('disliked', likesData.userDisliked);
+      $('.like-count').textContent = likesData.likes;
+      $('.dislike-count').textContent = likesData.dislikes;
+      // Fav
+      $('.fav-btn').classList.toggle('favorited', userFavorites.includes(game.id));
+    }
+
+    // ----- Listeners -----
+    function setListeners() {
+      $('.play-btn').onclick = () => {
+        addToHistory();
+        // Try to focus the iframe
+        const iframe = $('.game-iframe');
+        if (iframe) iframe.contentWindow.focus();
+      };
+      $('.fav-btn').onclick = () => toggleFavorite();
+      $('.like-btn').onclick = () => updateGameLike('like');
+      $('.dislike-btn').onclick = () => updateGameLike('dislike');
+      $('.fullscreen-btn').onclick = () => {
+        window.open(game.url, '_blank').focus();
+      };
+      $('.game-controls-btn').onclick = () => {
+        const info = $('.game-controls-info');
+        if (info.style.display === 'none') info.style.display = '';
+        else info.style.display = 'none';
+      };
+      $('.back-btn').onclick = () => window.location.href = 'games.html';
+    }
+
+    // ----- Auth -----
+    function showAuthBtn() {
+      $('.auth-btn').style.display = '';
+      $('.user-photo').style.display = 'none';
+      $('.user-name').style.display = 'none';
+      $('.logout-btn').style.display = 'none';
+    }
+    function showUser(user) {
+      $('.auth-btn').style.display = 'none';
+      $('.user-photo').src = user.photoURL;
+      $('.user-photo').style.display = '';
+      $('.user-name').textContent = user.displayName;
+      $('.user-name').style.display = '';
+      $('.logout-btn').style.display = '';
+    }
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      if (user) {
+        showUser(user);
+        loadUserData();
+        loadGameLikes();
+      } else {
+        showAuthBtn();
+      }
+    });
+    $('.auth-btn').onclick = () => {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider).catch(err => alert(err.message));
+    };
+    $('.logout-btn').onclick = () => signOut(auth);
+
+    // ----- Init -----
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Auth user (UI)
+      showAuthBtn();
+      // Fetch games
+      const resp = await fetch('game.json');
+      GAMES = await resp.json();
+      const gameId = getGameId();
+      game = GAMES.find(g => g.id === gameId);
+      renderGame();
+      setListeners();
+      if (auth.currentUser) {
+        loadUserData();
+        loadGameLikes();
+      }
+    });
+  </script>
+</head>
+<body>
+  <button class="back-btn"><i class='bx bx-arrow-back'></i> Back to games</button>
+  <div class="game-header">
+    <img class="game-thumb" src="" alt="Game">
+    <div>
+      <div class="game-title"></div>
+      <div class="game-categories"></div>
+      <div class="likes-row">
+        <button class="icon-btn like-btn" title="Like"><i class='bx bxs-like'></i></button>
+        <span class="like-count">0</span>
+        <button class="icon-btn dislike-btn" title="Dislike"><i class='bx bxs-dislike'></i></button>
+        <span class="dislike-count">0</span>
+        <button class="action-btn fav-btn" title="Favorite"><i class='bx bxs-star'></i> Favorite</button>
+        <button class="action-btn fullscreen-btn" title="Fullscreen"><i class='bx bx-fullscreen'></i> Fullscreen</button>
+        <button class="game-controls-btn" title="Controls"><i class='bx bx-info-circle'></i> Controls</button>
+      </div>
+      <div class="game-controls-info" style="display:none;"></div>
+    </div>
+  </div>
+  <div class="game-desc"></div>
+  <div class="game-iframe-wrap"></div>
+  <div class="game-actions">
+    <button class="action-btn play-btn"><i class='bx bx-play'></i> Play</button>
+    <button class="action-btn auth-btn" style="display:none;"><i class='bx bxl-google'></i> Sign in with Google</button>
+    <img class="user-photo" style="display:none;width:32px;height:32px;border-radius:50%;vertical-align:middle;">
+    <span class="user-name" style="display:none;margin-left:0.6em;"></span>
+    <button class="logout-btn" style="display:none;">Logout</button>
+  </div>
+</body>
+</html>
