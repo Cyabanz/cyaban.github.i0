@@ -177,9 +177,17 @@
       $(".game-iframe-wrap").appendChild(iframe);
     }
 
-    // --- RATING LOGIC with DEBUG LOGS ---
+    // --- RATING LOGIC with DEBUG LOGS and DOM TEST ---
     function renderStars(hover = 0) {
       const stars = $(".game-rating-stars");
+      if (!stars) {
+        console.error("ERROR: .game-rating-stars element not found in DOM!");
+        alert("ERROR: .game-rating-stars element not found in DOM!");
+        return;
+      }
+      // For extra debugging, count how many such elements exist:
+      console.log("DOM TEST: .game-rating-stars elements found:", document.querySelectorAll('.game-rating-stars').length);
+
       stars.innerHTML = "";
       let fill = hover || (ratingData.yourRating ? ratingData.yourRating : Math.round(ratingData.average));
       let canInteract = !!currentUser && !ratingData.loading;
@@ -192,7 +200,7 @@
           s.addEventListener("mouseenter", () => renderStars(i));
           s.addEventListener("mouseleave", () => renderStars(0));
           s.addEventListener("click", async (e) => {
-            e.stopPropagation(); // Prevent bubbling just in case
+            e.stopPropagation();
             console.log("[STAR CLICK]", {star: i, user: currentUser ? currentUser.uid : null, game: game ? game.id : null});
             await submitRating(i);
           });
