@@ -177,30 +177,38 @@
       $(".game-iframe-wrap").appendChild(iframe);
     }
 
-    // --- RATING LOGIC with DEBUG LOGS and DOM TEST ---
-    function renderStars(hover = 0) {
+    // --- RATING LOGIC with robust event management ---
+    function renderStars() {
       const stars = $(".game-rating-stars");
       if (!stars) {
         console.error("ERROR: .game-rating-stars element not found in DOM!");
         alert("ERROR: .game-rating-stars element not found in DOM!");
         return;
       }
-      // For extra debugging, count how many such elements exist:
       console.log("DOM TEST: .game-rating-stars elements found:", document.querySelectorAll('.game-rating-stars').length);
-      // Add user/debug status
       console.log("currentUser", currentUser, "canInteract", !!currentUser && !ratingData.loading);
 
       stars.innerHTML = "";
-      let fill = hover || (ratingData.yourRating ? ratingData.yourRating : Math.round(ratingData.average));
+      let fill = ratingData.yourRating ? ratingData.yourRating : Math.round(ratingData.average);
       let canInteract = !!currentUser && !ratingData.loading;
+
       for (let i = 1; i <= 5; i++) {
         const s = document.createElement("span");
         s.className = "star" + (i <= fill ? " filled" : "") + (canInteract ? "" : " disabled");
         s.innerHTML = "&#9733;";
         s.dataset.star = i;
         if (canInteract) {
-          s.addEventListener("mouseenter", () => renderStars(i));
-          s.addEventListener("mouseleave", () => renderStars(0));
+          // Only visually update on hover, do not re-render DOM (fix for event handler loss)
+          s.addEventListener("mouseenter", () => {
+            stars.querySelectorAll("span").forEach((starSpan, idx) => {
+              starSpan.classList.toggle("filled", idx < i);
+            });
+          });
+          s.addEventListener("mouseleave", () => {
+            stars.querySelectorAll("span").forEach((starSpan, idx) => {
+              starSpan.classList.toggle("filled", idx < (ratingData.yourRating ? ratingData.yourRating : Math.round(ratingData.average)));
+            });
+          });
           s.addEventListener("click", async (e) => {
             e.stopPropagation();
             console.log("[STAR CLICK]", {star: i, user: currentUser ? currentUser.uid : null, game: game ? game.id : null});
@@ -286,7 +294,7 @@
       renderStars();
     }
 
-    // Likes/Dislikes/Favorites/Play History/Comments (as before)
+    // Likes/Dislikes/Favorites/Play History/Comments (unchanged)
     function userDocRef() { return currentUser ? doc(db, 'users', currentUser.uid) : null; }
     async function loadUserData() {
       if (!currentUser) return;
