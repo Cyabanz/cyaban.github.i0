@@ -29,16 +29,36 @@
     .game-iframe-wrap { width: 100vw; max-width: 1090px; margin: 1.1em auto 0 auto; display: flex; justify-content: center;}
     .game-iframe { width: 100%; min-height: 64vw; max-height: 650px; max-width: 900px; border: 0; border-radius: 16px; box-shadow: 0 4px 32px #1d1d2a55;}
     .back-btn { margin: 2em 0 0 4vw; background: none; border: none; color: #90caf9; font-size: 1.1em; cursor: pointer; }
+    .comment-section { max-width: 900px; margin: 2em auto 3em auto; background: #232946; border-radius: 16px; box-shadow: 0 2px 24px #19193a33; padding: 2em 1em 2.5em 1em;}
+    .comment-title { font-size: 1.27em; font-weight: 600; color: #90caf9; margin-bottom: 1em;}
+    .comment-form { display: flex; flex-direction: column; gap: 0.7em; margin-bottom: 2em;}
+    .comment-input { border: 1px solid #90caf9; border-radius: 8px; background: #181c24; color: #e8eaf0; font-size: 1em; padding: 0.6em 1em; resize: vertical; min-height: 55px; }
+    .comment-input:focus { border-color: #1976d2; outline: none;}
+    .comment-post-btn { align-self: flex-end; background: #90caf9; color: #191c24; border: none; border-radius: 7px; font-weight: 600; font-size: 1em; padding: 7px 22px; cursor: pointer; transition: background 0.13s;}
+    .comment-post-btn:disabled { background: #444b5e; color: #b0b7c3; cursor: not-allowed;}
+    .comments-list { display: flex; flex-direction: column; gap: 1.6em; }
+    .comment { background: #202538; border-radius: 10px; padding: 1em 1.1em 0.8em 1.1em; display: flex; gap: 1em;}
+    .comment-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; margin-top: 0.2em;}
+    .comment-main { flex: 1; }
+    .comment-user { font-weight: 600; color: #90caf9; font-size: 1em;}
+    .comment-date { font-size: 0.93em; color: #b0b7c3; margin-left: 0.7em;}
+    .comment-text { margin: 0.5em 0 0.7em 0; font-size: 1.05em;}
+    .comment-actions { display: flex; gap: 0.8em; align-items: center; }
+    .comment-like-btn { background: none; border: none; color: #90caf9; font-size: 1.25em; cursor: pointer; transition: color 0.13s;}
+    .comment-like-btn.liked { color: #48fa80;}
+    .comment-likes-count { font-size: 0.98em; color: #e8eaf0;}
+    .comment-error { color: #e53935; font-size: 0.98em; margin-top: 0.2em;}
     @media (max-width: 900px) {
       .game-iframe { min-height: 70vw; max-width: 98vw; }
       .game-header { flex-direction: column; align-items: flex-start; gap: 0.7em;}
+      .comment-section { padding: 1.1em 0.3em 2em 0.3em;}
     }
   </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, onSnapshot, updateDoc, arrayUnion, arrayRemove, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     // Firebase config
     const firebaseConfig = {
@@ -63,6 +83,18 @@
     let likesData = {likes:0,dislikes:0,userLiked:false,userDisliked:false};
     let userFavorites = [], userHistory = [];
     let currentUser = null;
+    let commentsUnsubscribe = null;
+    let commentLikeCache = {}; // {commentId: true}
+
+    // Bad word filter (client-side, simple, customizable)
+    const BAD_WORDS = [
+      'fuck','shit','bitch','cunt','nigger','fag','asshole','bastard','slut','dick','pussy','whore','faggot','cock','retard','cum','rape'
+      // Add/remove as needed
+    ];
+    function containsBadWord(text) {
+      const lower = text.toLowerCase();
+      return BAD_WORDS.some(word => lower.includes(word));
+    }
 
     // Get ID from URL
     function getGameId() {
@@ -180,7 +212,6 @@
     function setListeners() {
       $('.play-btn').onclick = () => {
         addToHistory();
-        // Try to focus the iframe
         const iframe = $('.game-iframe');
         if (iframe) iframe.contentWindow.focus();
       };
@@ -204,6 +235,8 @@
       $('.user-photo').style.display = 'none';
       $('.user-name').style.display = 'none';
       $('.logout-btn').style.display = 'none';
+      $('.comment-form').style.display = 'none';
+      $('.comment-form-info').style.display = '';
     }
     function showUser(user) {
       $('.auth-btn').style.display = 'none';
@@ -212,6 +245,8 @@
       $('.user-name').textContent = user.displayName;
       $('.user-name').style.display = '';
       $('.logout-btn').style.display = '';
+      $('.comment-form').style.display = '';
+      $('.comment-form-info').style.display = 'none';
     }
     onAuthStateChanged(auth, user => {
       currentUser = user;
@@ -219,8 +254,10 @@
         showUser(user);
         loadUserData();
         loadGameLikes();
+        setupComments();
       } else {
         showAuthBtn();
+        setupComments();
       }
     });
     $('.auth-btn').onclick = () => {
@@ -229,7 +266,84 @@
     };
     $('.logout-btn').onclick = () => signOut(auth);
 
-    // ----- Init -----
+    // ----- Comments -----
+    function setupComments() {
+      // cleanup
+      if (commentsUnsubscribe) commentsUnsubscribe();
+      renderCommentsList([]);
+      if (!game) return;
+      // Listen for comments (realtime)
+      const q = query(collection(db, 'games', game.id, 'comments'), orderBy('createdAt', 'desc'));
+      commentsUnsubscribe = onSnapshot(q, snap => {
+        let comments = [];
+        snap.forEach(doc => {
+          comments.push({ id: doc.id, ...doc.data() });
+        });
+        renderCommentsList(comments);
+      });
+    }
+    async function postComment(text) {
+      if (!currentUser) return;
+      if (!game) return;
+      if (containsBadWord(text)) throw new Error("Inappropriate language detected.");
+      await addDoc(collection(db, 'games', game.id, 'comments'), {
+        text,
+        user: {
+          uid: currentUser.uid,
+          name: currentUser.displayName,
+          photo: currentUser.photoURL || "",
+        },
+        createdAt: serverTimestamp(),
+        likes: [],
+      });
+    }
+    function renderCommentsList(comments) {
+      const list = $('.comments-list');
+      list.innerHTML = '';
+      if (!comments.length) {
+        list.innerHTML = `<div style="color:#888b9a;padding:1.4em;text-align:center;">No comments yet. Be the first to comment!</div>`;
+        return;
+      }
+      comments.forEach(comment => {
+        const div = document.createElement('div');
+        div.className = 'comment';
+        const likedByMe = comment.likes && currentUser ? comment.likes.includes(currentUser.uid) : false;
+        div.innerHTML = `
+          <img class="comment-avatar" src="${comment.user.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(comment.user.name)}" alt="">
+          <div class="comment-main">
+            <span class="comment-user">${comment.user.name || 'Unknown'}</span>
+            <span class="comment-date">${comment.createdAt && comment.createdAt.toDate ? comment.createdAt.toDate().toLocaleString() : ''}</span>
+            <div class="comment-text">${escapeHTML(comment.text)}</div>
+            <div class="comment-actions">
+              <button class="comment-like-btn${likedByMe ? ' liked' : ''}" title="Like"><i class='bx bxs-like'></i></button>
+              <span class="comment-likes-count">${comment.likes ? comment.likes.length : 0}</span>
+            </div>
+          </div>
+        `;
+        // Like button event
+        div.querySelector('.comment-like-btn').onclick = () => handleLikeComment(comment.id, likedByMe, comment.likes || []);
+        list.appendChild(div);
+      });
+    }
+    async function handleLikeComment(commentId, likedByMe, likesArr) {
+      if (!currentUser) return;
+      const ref = doc(db, 'games', game.id, 'comments', commentId);
+      let newLikes = Array.isArray(likesArr) ? [...likesArr] : [];
+      if (likedByMe) {
+        newLikes = newLikes.filter(uid => uid !== currentUser.uid);
+      } else {
+        newLikes.push(currentUser.uid);
+      }
+      await updateDoc(ref, { likes: newLikes });
+    }
+    // Escape HTML for comments
+    function escapeHTML(str) {
+      return str.replace(/[<>&"'`]/g, c => ({
+        '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;','`':'&#96;'
+      })[c]);
+    }
+
+    // ----- Comment Form -----
     window.addEventListener('DOMContentLoaded', async () => {
       // Auth user (UI)
       showAuthBtn();
@@ -243,7 +357,33 @@
       if (auth.currentUser) {
         loadUserData();
         loadGameLikes();
+        setupComments();
+      } else {
+        setupComments();
       }
+      // Comment form
+      $('.comment-input').oninput = () => {
+        $('.comment-post-btn').disabled = !$('.comment-input').value.trim();
+        $('.comment-error').textContent = '';
+      };
+      $('.comment-form').onsubmit = async e => {
+        e.preventDefault();
+        const text = $('.comment-input').value.trim();
+        if (!text) return;
+        if (containsBadWord(text)) {
+          $('.comment-error').textContent = "Please avoid inappropriate language.";
+          return;
+        }
+        $('.comment-post-btn').disabled = true;
+        try {
+          await postComment(text);
+          $('.comment-input').value = '';
+          $('.comment-error').textContent = '';
+        } catch (err) {
+          $('.comment-error').textContent = err.message || "Failed to post comment.";
+        }
+        $('.comment-post-btn').disabled = false;
+      };
     });
   </script>
 </head>
@@ -275,5 +415,17 @@
     <span class="user-name" style="display:none;margin-left:0.6em;"></span>
     <button class="logout-btn" style="display:none;">Logout</button>
   </div>
+  <main>
+    <div class="comment-section">
+      <div class="comment-title">Comments</div>
+      <form class="comment-form" style="display:none;">
+        <textarea class="comment-input" placeholder="Write a comment..." maxlength="500"></textarea>
+        <button class="comment-post-btn" type="submit" disabled>Post</button>
+        <div class="comment-error"></div>
+      </form>
+      <div class="comment-form-info" style="color:#b0b7c3;display:none;">Sign in to post a comment.</div>
+      <div class="comments-list"></div>
+    </div>
+  </main>
 </body>
 </html>
