@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minimal Star Rating System</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { background: #181c24; color: #e8eaf0; font-family: 'Inter', sans-serif; padding: 50px;}
+    .rating-row { display: flex; align-items: center; gap: 1em; }
+    .stars { display: inline-flex; font-size: 2em; cursor: pointer; }
+    .star { color: #ffd600; opacity: 0.58; transition: opacity 0.13s, color 0.12s; }
+    .star.filled { opacity: 1; color: #ffd600; }
+    .star.hovered { color: #fff176; opacity: 1; }
+    .star.disabled { cursor: not-allowed; opacity: 0.38; }
+    .summary { color: #ffd600; font-weight: 600; }
+    .yours { color: #90caf9; }
+    .count { color: #b0b7c3; }
+    .error { color: #e53935; font-weight: bold; }
+    .sign-in-btn { margin: 2em 0; background: #fff; color: #222; border: none; border-radius: 7px; font-size: 1em; padding: 8px 20px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 16px #19193a22; }
+  </style>
+</head>
+<body>
+  <button class="sign-in-btn" id="sign-in-btn" style="display:none;">Sign in with Google</button>
+  <div class="rating-row">
+    <span class="stars" id="star-row"></span>
+    <span class="summary" id="avg-summary"></span>
+    <span class="count" id="rating-count"></span>
+    <span class="yours" id="your-rating"></span>
+    <span class="error" id="rating-error"></span>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // -- CONFIGURE THIS --
+    const firebaseConfig = {
+      apiKey: "AIzaSyADCVIINCBgvTBvClWqWI5o3SlVS47IJnw",
+      authDomain: "fusioncya-cc20a.firebaseapp.com",
+      projectId: "fusioncya-cc20a",
+    };
+    const GAME_ID = "game1"; // Set to your gameId
+    // --------------------
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let avgRating = 0, ratingCount = 0, yourRating = 0, loading = false, error = "";
+
+    function renderStars(hover = 0) {
+      const row = document.getElementById("star-row");
+      row.innerHTML = "";
+      let canInteract = !!currentUser && !loading;
+      let fill = hover || (yourRating ? yourRating : Math.round(avgRating));
+      for (let i = 1; i <= 5; i++) {
+        const s = document.createElement("span");
+        s.className = "star" + (i <= fill ? " filled" : "") + (canInteract ? "" : " disabled");
+        s.innerHTML = "&#9733;";
+        s.dataset.star = i;
+        if (canInteract) {
+          s.addEventListener("mouseenter", () => renderStars(i));
+          s.addEventListener("mouseleave", () => renderStars(0));
+          s.addEventListener("click", async () => {
+            await submitRating(i);
+          });
+        }
+        row.appendChild(s);
+      }
+      document.getElementById("avg-summary").textContent = ratingCount ? `${avgRating.toFixed(2)} / 5` : "Not rated";
+      document.getElementById("rating-count").textContent = ratingCount === 1 ? "1 rating" : `${ratingCount} ratings`;
+      document.getElementById("your-rating").innerHTML = (yourRating > 0)
+        ? `You rated: <span style="color:#ffd600;">${yourRating} star${yourRating > 1 ? "s" : ""}</span>`
+        : (currentUser ? "Not rated yet" : "Sign in to rate");
+      document.getElementById("rating-error").textContent = error || "";
+    }
+
+    async function loadRatings() {
+      loading = true;
+      error = "";
+      avgRating = 0; ratingCount = 0; yourRating = 0;
+      const q = collection(db, "games", GAME_ID, "ratings");
+      const snap = await getDocs(q);
+      let total = 0, count = 0;
+      snap.forEach(docSnap => {
+        let d = docSnap.data();
+        if (typeof d.rating === "number" && d.rating >= 1 && d.rating <= 5) {
+          total += d.rating;
+          count++;
+          if (currentUser && docSnap.id === currentUser.uid) yourRating = d.rating;
+        }
+      });
+      avgRating = count ? total / count : 0;
+      ratingCount = count;
+      loading = false;
+      renderStars();
+    }
+
+    async function submitRating(rating) {
+      if (!currentUser) { error = "Sign in first!"; renderStars(); return; }
+      if (rating < 1 || rating > 5) return;
+      loading = true;
+      error = "";
+      renderStars();
+      try {
+        await setDoc(doc(db, "games", GAME_ID, "ratings", currentUser.uid), {
+          rating: rating,
+          updatedAt: serverTimestamp()
+        });
+        yourRating = rating;
+        await loadRatings();
+      } catch (e) {
+        error = "Failed to rate, try again.";
+        renderStars();
+      }
+    }
+
+    // --- AUTH ---
+    onAuthStateChanged(auth, async user => {
+      currentUser = user;
+      document.getElementById("sign-in-btn").style.display = user ? "none" : "";
+      await loadRatings();
+    });
+    document.getElementById("sign-in-btn").onclick = () => {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider).catch(err => alert(err.message));
+    };
+
+    // Initial render
+    renderStars();
+    loadRatings();
+  </script>
+</body>
+</html>
