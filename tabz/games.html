@@ -211,7 +211,6 @@
   </style>
   <!-- Firebase v9+ Modular SDKs -->
   <script type="module">
-    // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
@@ -231,55 +230,9 @@
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
+    getAnalytics(app);
     const auth = getAuth(app);
     const db = getFirestore(app);
-
-    // Demo games JSON. In production, you may fetch this from Firebase Storage, Firestore, or a remote endpoint.
-    const GAMES = [
-      {
-        id: "game1",
-        title: "2048",
-        url: "https://play2048.co/",
-        thumb: "https://play-lh.googleusercontent.com/5s9kKZJIG1jGg5C7qB9rBmV2kK7b6iQ4g7HOS9Q7r9_K4aO-7Yg=w480-h960-rw",
-        category: "Puzzle"
-      },
-      {
-        id: "game2",
-        title: "Minesweeper",
-        url: "https://minesweeperonline.com/",
-        thumb: "https://upload.wikimedia.org/wikipedia/commons/5/5a/Minesweeper_Icon.png",
-        category: "Puzzle"
-      },
-      {
-        id: "game3",
-        title: "Tetris",
-        url: "https://tetris.com/play-tetris",
-        thumb: "https://static.tetris.com/images/meta/tetris-meta.png",
-        category: "Arcade"
-      },
-      {
-        id: "game4",
-        title: "Dino Game",
-        url: "https://chromedino.com/",
-        thumb: "https://chromedino.com/img/dino.png",
-        category: "Arcade"
-      },
-      {
-        id: "game5",
-        title: "Snake",
-        url: "https://playsnake.org/",
-        thumb: "https://playsnake.org/images/icon.png",
-        category: "Arcade"
-      },
-      {
-        id: "game6",
-        title: "Chess",
-        url: "https://www.chess.com/play/computer",
-        thumb: "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/Patrick.Huang/phppkGz0N.png",
-        category: "Board"
-      }
-    ];
 
     // --- UI ELEMENTS ---
     const $ = s => document.querySelector(s);
@@ -298,6 +251,7 @@
     let currentUser = null;
     let userFavorites = [];
     let userHistory = [];
+    let GAMES = [];
 
     // --- AUTH ---
     function showSignedIn(user) {
@@ -367,6 +321,22 @@
       userHistory = userHistory.slice(0, 20);
       await setDoc(userDocRef(), { history: userHistory }, { merge: true });
       renderHistory();
+    }
+
+    // --- GAMES LOADING FROM game.json ---
+    async function loadGames() {
+      try {
+        const resp = await fetch('game.json');
+        if (!resp.ok) throw new Error("Could not load games");
+        GAMES = await resp.json();
+        if (auth.currentUser) {
+          renderGames();
+          renderFavorites();
+          renderHistory();
+        }
+      } catch (e) {
+        gamesList.innerHTML = `<div style="color:#e53935;font-weight:600;">Failed to load games.json</div>`;
+      }
     }
 
     // --- RENDERING ---
@@ -440,6 +410,11 @@
         historyList.appendChild(entry);
       });
     }
+
+    // --- INITIALIZE ---
+    window.addEventListener('DOMContentLoaded', () => {
+      loadGames();
+    });
   </script>
 </head>
 <body>
