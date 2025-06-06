@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Games Portal</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #181c24;
+      color: #e8eaf0;
+      margin: 0;
+      min-height: 100vh;
+    }
+    header {
+      background: #222633;
+      padding: 1.2rem 2vw;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .app-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #90caf9;
+      letter-spacing: 1.5px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .user-info img {
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      object-fit: cover;
+    }
+    .games-section {
+      max-width: 920px;
+      margin: 2rem auto;
+      background: #202538;
+      border-radius: 15px;
+      box-shadow: 0 2px 24px #19193a33;
+      padding: 2rem;
+    }
+    .games-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: flex-start;
+    }
+    .game-card {
+      background: #232946;
+      border-radius: 12px;
+      width: 210px;
+      box-shadow: 0 1px 14px #0a0a1a22;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.15s;
+      position: relative;
+    }
+    .game-card:hover {
+      transform: scale(1.025);
+      box-shadow: 0 4px 24px #90caf955;
+    }
+    .game-thumb {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      background: #111;
+    }
+    .game-details {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .game-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .game-meta {
+      font-size: 0.93rem;
+      color: #90caf9;
+      margin-bottom: 0.2rem;
+    }
+    .game-actions {
+      display: flex;
+      gap: 0.6rem;
+      margin-top: 0.4rem;
+      align-items: center;
+    }
+    .fav-btn {
+      background: none;
+      border: none;
+      color: #ffeb3b;
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: color 0.17s;
+      margin-right: 0.5rem;
+    }
+    .fav-btn.favorited {
+      color: #ffd600;
+      text-shadow: 0 0 7px #ffd60099;
+    }
+    .play-btn {
+      background: #90caf9;
+      color: #191c24;
+      border: none;
+      border-radius: 7px;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 6px 18px;
+      cursor: pointer;
+      transition: background 0.13s;
+      margin-left: auto;
+    }
+    .play-btn:hover {
+      background: #1976d2;
+      color: #fff;
+    }
+    .history-section, .favorites-section {
+      max-width: 920px;
+      margin: 2rem auto 0;
+      background: #232946;
+      border-radius: 15px;
+      box-shadow: 0 2px 24px #19193a22;
+      padding: 1.2rem 2vw 1.7rem 2vw;
+    }
+    h2 {
+      font-weight: 600;
+      color: #90caf9;
+      margin: 0 0 1.1rem 0;
+      letter-spacing: 0.5px;
+    }
+    .history-list, .favorites-list {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+    }
+    .history-entry, .favorite-entry {
+      background: #21243d;
+      border-radius: 10px;
+      padding: 0.7rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 1rem;
+      color: #fff;
+    }
+    .history-entry img, .favorite-entry img {
+      width: 36px;
+      height: 36px;
+      border-radius: 7px;
+      object-fit: cover;
+    }
+    .logout-btn {
+      background: #2d3748;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 1rem;
+      padding: 7px 19px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 1rem;
+    }
+    .logout-btn:hover {
+      background: #e53935;
+      color: #fff;
+    }
+    .google-btn {
+      background: #fff;
+      color: #222;
+      border: none;
+      border-radius: 7px;
+      font-size: 1rem;
+      padding: 10px 32px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 4rem auto 0 auto;
+      display: block;
+      box-shadow: 0 2px 16px #19193a33;
+      transition: background 0.13s;
+    }
+    .google-btn i {
+      color: #ea4335;
+      font-size: 1.1em;
+      margin-right: 0.7em;
+      vertical-align: middle;
+    }
+    .google-btn:hover {
+      background: #e3e3e3;
+    }
+    @media (max-width: 1080px) {
+      .games-section, .history-section, .favorites-section { padding: 1.2rem 1vw 1.7rem 1vw; }
+      .games-list, .history-list, .favorites-list { gap: 1rem; }
+      .game-card { width: 46vw; min-width: 168px; max-width: 99vw; }
+    }
+    @media (max-width: 700px) {
+      .games-list, .history-list, .favorites-list {
+        flex-direction: column;
+      }
+      .game-card { width: 100%; }
+    }
+  </style>
+  <!-- Firebase v9+ Modular SDKs -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyADCVIINCBgvTBvClWqWI5o3SlVS47IJnw",
+      authDomain: "fusioncya-cc20a.firebaseapp.com",
+      databaseURL: "https://fusioncya-cc20a-default-rtdb.firebaseio.com",
+      projectId: "fusioncya-cc20a",
+      storageBucket: "fusioncya-cc20a.appspot.com",
+      messagingSenderId: "765164293111",
+      appId: "1:765164293111:web:43e051c755c4690c0c3cf2",
+      measurementId: "G-4DT52P7MPB"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Demo games JSON. In production, you may fetch this from Firebase Storage, Firestore, or a remote endpoint.
+    const GAMES = [
+      {
+        id: "game1",
+        title: "2048",
+        url: "https://play2048.co/",
+        thumb: "https://play-lh.googleusercontent.com/5s9kKZJIG1jGg5C7qB9rBmV2kK7b6iQ4g7HOS9Q7r9_K4aO-7Yg=w480-h960-rw",
+        category: "Puzzle"
+      },
+      {
+        id: "game2",
+        title: "Minesweeper",
+        url: "https://minesweeperonline.com/",
+        thumb: "https://upload.wikimedia.org/wikipedia/commons/5/5a/Minesweeper_Icon.png",
+        category: "Puzzle"
+      },
+      {
+        id: "game3",
+        title: "Tetris",
+        url: "https://tetris.com/play-tetris",
+        thumb: "https://static.tetris.com/images/meta/tetris-meta.png",
+        category: "Arcade"
+      },
+      {
+        id: "game4",
+        title: "Dino Game",
+        url: "https://chromedino.com/",
+        thumb: "https://chromedino.com/img/dino.png",
+        category: "Arcade"
+      },
+      {
+        id: "game5",
+        title: "Snake",
+        url: "https://playsnake.org/",
+        thumb: "https://playsnake.org/images/icon.png",
+        category: "Arcade"
+      },
+      {
+        id: "game6",
+        title: "Chess",
+        url: "https://www.chess.com/play/computer",
+        thumb: "https://images.chesscomfiles.com/uploads/v1/images_users/tiny_mce/Patrick.Huang/phppkGz0N.png",
+        category: "Board"
+      }
+    ];
+
+    // --- UI ELEMENTS ---
+    const $ = s => document.querySelector(s);
+    const userInfo = $('#user-info');
+    const userPhoto = $('#user-photo');
+    const userName = $('#user-name');
+    const logoutBtn = $('#logout-btn');
+    const googleSignInBtn = $('#google-signin');
+    const gamesSection = $('#games-section');
+    const gamesList = $('#games-list');
+    const favoritesSection = $('#favorites-section');
+    const favoritesList = $('#favorites-list');
+    const historySection = $('#history-section');
+    const historyList = $('#history-list');
+
+    let currentUser = null;
+    let userFavorites = [];
+    let userHistory = [];
+
+    // --- AUTH ---
+    function showSignedIn(user) {
+      userInfo.style.display = '';
+      userPhoto.src = user.photoURL;
+      userName.textContent = user.displayName;
+      googleSignInBtn.style.display = 'none';
+      gamesSection.style.display = '';
+      favoritesSection.style.display = '';
+      historySection.style.display = '';
+      loadUserData();
+    }
+    function showSignedOut() {
+      userInfo.style.display = 'none';
+      googleSignInBtn.style.display = '';
+      gamesSection.style.display = 'none';
+      favoritesSection.style.display = 'none';
+      historySection.style.display = 'none';
+      gamesList.innerHTML = '';
+      favoritesList.innerHTML = '';
+      historyList.innerHTML = '';
+    }
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      if (user) { showSignedIn(user); }
+      else { showSignedOut(); }
+    });
+    googleSignInBtn.onclick = () => {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider).catch(err => alert(err.message));
+    };
+    logoutBtn.onclick = () => signOut(auth);
+
+    // --- FIREBASE DATA ---
+    function userDocRef() {
+      if (!currentUser) return null;
+      return doc(db, 'users', currentUser.uid);
+    }
+    async function loadUserData() {
+      if (!currentUser) return;
+      const docRef = userDocRef();
+      const docSnap = await getDoc(docRef);
+      userFavorites = [];
+      userHistory = [];
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        userFavorites = data.favorites || [];
+        userHistory = data.history || [];
+      }
+      renderGames();
+      renderFavorites();
+      renderHistory();
+    }
+    async function toggleFavorite(gameId) {
+      if (!currentUser) return;
+      const idx = userFavorites.indexOf(gameId);
+      if (idx >= 0) userFavorites.splice(idx, 1);
+      else userFavorites.push(gameId);
+      await setDoc(userDocRef(), { favorites: userFavorites }, { merge: true });
+      renderGames();
+      renderFavorites();
+    }
+    async function addToHistory(gameId) {
+      if (!currentUser) return;
+      userHistory = userHistory.filter(h => h.id !== gameId);
+      userHistory.unshift({ id: gameId, playedAt: Date.now() });
+      userHistory = userHistory.slice(0, 20);
+      await setDoc(userDocRef(), { history: userHistory }, { merge: true });
+      renderHistory();
+    }
+
+    // --- RENDERING ---
+    function renderGames() {
+      gamesList.innerHTML = '';
+      GAMES.forEach(game => {
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.innerHTML = `
+          <img class="game-thumb" src="${game.thumb}" alt="${game.title}">
+          <div class="game-details">
+            <div class="game-title">${game.title}</div>
+            <div class="game-meta">${game.category}</div>
+            <div class="game-actions">
+              <button class="fav-btn${userFavorites.includes(game.id) ? ' favorited' : ''}" title="Favorite">
+                <i class='bx bxs-star'></i>
+              </button>
+              <button class="play-btn">Play</button>
+            </div>
+          </div>
+        `;
+        card.querySelector('.fav-btn').onclick = () => toggleFavorite(game.id);
+        card.querySelector('.play-btn').onclick = () => {
+          addToHistory(game.id);
+          window.open(game.url, '_blank');
+        };
+        gamesList.appendChild(card);
+      });
+    }
+    function renderFavorites() {
+      favoritesList.innerHTML = '';
+      if (!userFavorites.length) {
+        favoritesList.innerHTML = `<div style="color:#a1a1aa;">No favorites yet.</div>`;
+        return;
+      }
+      userFavorites.forEach(fid => {
+        const game = GAMES.find(g => g.id === fid);
+        if (!game) return;
+        const entry = document.createElement('div');
+        entry.className = 'favorite-entry';
+        entry.innerHTML = `
+          <img src="${game.thumb}" alt="">
+          <span>${game.title}</span>
+          <button class="fav-btn favorited" title="Remove Favorite"><i class='bx bxs-star'></i></button>
+        `;
+        entry.querySelector('.fav-btn').onclick = () => toggleFavorite(game.id);
+        favoritesList.appendChild(entry);
+      });
+    }
+    function renderHistory() {
+      historyList.innerHTML = '';
+      if (!userHistory.length) {
+        historyList.innerHTML = `<div style="color:#a1a1aa;">No games played yet.</div>`;
+        return;
+      }
+      userHistory.forEach(h => {
+        const game = GAMES.find(g => g.id === h.id);
+        if (!game) return;
+        const entry = document.createElement('div');
+        entry.className = 'history-entry';
+        entry.innerHTML = `
+          <img src="${game.thumb}" alt="">
+          <span>${game.title}</span>
+          <span style="font-size:0.93em;color:#90caf9;">${new Date(h.playedAt).toLocaleString()}</span>
+          <button class="play-btn" style="padding:3px 14px;font-size:0.95em;">Play</button>
+        `;
+        entry.querySelector('.play-btn').onclick = () => {
+          addToHistory(game.id);
+          window.open(game.url, '_blank');
+        };
+        historyList.appendChild(entry);
+      });
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <span class="app-title">Games Portal</span>
+    <div class="user-info" id="user-info" style="display:none;">
+      <img id="user-photo" alt="Profile">
+      <span id="user-name"></span>
+      <button class="logout-btn" id="logout-btn">Logout</button>
+    </div>
+  </header>
+  <button class="google-btn" id="google-signin" style="display:none;">
+    <i class='bx bxl-google'></i> Sign in with Google
+  </button>
+  <main>
+    <section class="games-section" id="games-section" style="display:none;">
+      <h2>All Games</h2>
+      <div class="games-list" id="games-list"></div>
+    </section>
+    <section class="favorites-section" id="favorites-section" style="display:none;">
+      <h2><i class='bx bxs-star'></i> Favorite Games</h2>
+      <div class="favorites-list" id="favorites-list"></div>
+    </section>
+    <section class="history-section" id="history-section" style="display:none;">
+      <h2><i class='bx bx-history'></i> Play History</h2>
+      <div class="history-list" id="history-list"></div>
+    </section>
+  </main>
+</body>
+</html>
