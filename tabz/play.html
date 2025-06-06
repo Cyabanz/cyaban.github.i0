@@ -191,7 +191,9 @@
         if (canInteract) {
           s.addEventListener("mouseenter", () => renderStars(i));
           s.addEventListener("mouseleave", () => renderStars(0));
-          s.addEventListener("click", async () => {
+          s.addEventListener("click", async (e) => {
+            e.stopPropagation(); // Prevent bubbling just in case
+            console.log("[STAR CLICK]", {star: i, user: currentUser ? currentUser.uid : null, game: game ? game.id : null});
             await submitRating(i);
           });
         }
@@ -236,7 +238,7 @@
     }
 
     async function submitRating(rating) {
-      console.log("submitRating CALLED!", { rating, currentUser, game });
+      console.log("[submitRating CALLED]", { rating, user: currentUser, game });
       if (!currentUser) {
         ratingData.error = "Sign in first!";
         renderStars();
@@ -257,16 +259,16 @@
       renderStars();
       try {
         const ref = doc(db, "games", game.id, "ratings", currentUser.uid);
-        console.log("Writing to Firestore path:", ref.path, "with value:", { rating, updatedAt: serverTimestamp() });
+        console.log("[Firestore SET]", ref.path, { rating, updatedAt: serverTimestamp() });
         await setDoc(ref, {
           rating: rating,
           updatedAt: serverTimestamp()
         });
-        console.log("Firestore setDoc SUCCESS!");
+        console.log("[Firestore setDoc SUCCESS!]");
         ratingData.yourRating = rating;
         await loadRatings();
       } catch (e) {
-        console.error("Firestore setDoc ERROR:", e);
+        console.error("[Firestore setDoc ERROR]", e);
         ratingData.error = "Failed to rate, try again. " + (e && e.message ? e.message : JSON.stringify(e));
         renderStars();
       }
@@ -274,7 +276,7 @@
       renderStars();
     }
 
-    // --- Likes/Dislikes/Favorites/Play History/Comments (as before) ---
+    // Likes/Dislikes/Favorites/Play History/Comments (as before)
     function userDocRef() { return currentUser ? doc(db, 'users', currentUser.uid) : null; }
     async function loadUserData() {
       if (!currentUser) return;
