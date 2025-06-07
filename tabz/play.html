@@ -409,6 +409,7 @@
         s.addEventListener('click', () => { commentStarRating = i; renderCommentStarsSelector(); });
         starsWrap.appendChild(s);
       }
+      starsWrap.title = "Selected stars: " + commentStarRating;
     }
 
     function userDocRef() { return currentUser ? doc(db, 'users', currentUser.uid) : null; }
@@ -654,6 +655,10 @@
         e.preventDefault();
         const text = $('.comment-input').value.trim();
         if (!text) return;
+        if (commentStarRating === 0) {
+          $('.comment-error').textContent = "Select a star rating.";
+          return;
+        }
         if (containsBadWord(text)) {
           $('.comment-error').textContent = "Please avoid inappropriate language.";
           return;
