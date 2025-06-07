@@ -66,10 +66,10 @@
     .comment-stars-selector .star.filled {
       color: #ffd600;
     }
-    .comment-stars-display {
-      margin-bottom: 0.3em;
-      font-size: 1.2em;
+    .comment-stars-display .star {
+      font-size: 1.15em;
       color: #ffd600;
+      margin-right: 0.02em;
     }
     .comment-avatar {
       width: 38px;
@@ -286,11 +286,6 @@
     // --- RATING LOGIC with robust event management ---
     function renderStars() {
       const stars = $(".game-rating-stars");
-      if (!stars) {
-        console.error("ERROR: .game-rating-stars element not found in DOM!");
-        alert("ERROR: .game-rating-stars element not found in DOM!");
-        return;
-      }
       console.log("DOM TEST: .game-rating-stars elements found:", document.querySelectorAll('.game-rating-stars').length);
       console.log("currentUser", currentUser, "canInteract", !!currentUser && !ratingData.loading);
 
@@ -566,6 +561,7 @@
         div.className = 'comment';
         const likedByMe = comment.likes && currentUser ? comment.likes.includes(currentUser.uid) : false;
         let starsHtml = '';
+        // --- STAR DISPLAY FOR COMMENT ---
         if (comment.stars && comment.stars > 0) {
           for (let i=1; i<=5; i++) {
             starsHtml += `<span class="star"${i <= comment.stars ? ' style="color:#ffd600;"' : ''}>&#9733;</span>`;
