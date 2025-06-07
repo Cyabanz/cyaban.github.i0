@@ -5,682 +5,140 @@
   <title>Play Game</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
-  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; background: #181c24; color: #e8eaf0; margin: 0; }
-    .game-header { display: flex; align-items: flex-start; gap: 2.5em; padding: 2em 4vw 1.3em 4vw; max-width: 1100px; margin: 0 auto; }
-    .game-thumb { width: 84px; height: 84px; border-radius: 18px; object-fit: cover; border: 3px solid #232946; background: #151922; }
-    .game-meta-col { flex: 1; display: flex; flex-direction: column; gap: 0.4em; }
-    .game-title { font-size: 2.2em; font-weight: 700; color: #90caf9; margin-bottom: 0.15em; }
-    .overall-star-rating {
-      display: flex;
-      align-items: center;
-      font-size: 2em;
-      margin-bottom: 0.2em;
-    }
-    .overall-stars .star {
-      font-size: 2em;
-      color: #ffd600;
-      margin-right: 0.1em;
-    }
-    .overall-rating-text {
-      margin-left: 0.5em;
-      color: #ffd600;
-      font-weight: 700;
-      font-size: 0.8em;
-    }
-    .game-categories { margin-top: 0.1em; margin-bottom: 0.2em; }
-    .game-chip { display: inline-block; background: #232946; color: #90caf9; border: 1px solid #90caf9; border-radius: 7px; padding: 0 11px; font-size: 0.97em; margin-right: 0.5em; margin-bottom: 0.2em; }
-    .game-plays { font-size: 1.1em; color: #f3e079; background: #252b43; padding: 0.25em 1.1em 0.25em 0.7em; border-radius: 7px; display: inline-flex; align-items: center; gap: 0.4em; margin: 0.65em 0 0.25em 0; font-weight: 600; box-shadow: 0 1px 8px #19193a18; letter-spacing: 0.01em; }
-    .game-plays i { color: #ffd600; font-size: 1.13em; margin-right: 0.1em; }
-    .game-rating-row { display: flex; align-items: center; gap: 1.1em; min-height: 2.7em; }
-    .game-rating-stars { display: inline-flex; align-items: center; gap: 0.16em; font-size: 2.1em; cursor: pointer; user-select: none; }
-    .star { color: #ffd600; opacity: 0.58; transition: opacity 0.13s, color 0.12s; }
-    .star.filled { opacity: 1; color: #ffd600; }
-    .star.hovered { color: #fff176; opacity: 1; }
-    .star.disabled { cursor: not-allowed; opacity: 0.38; }
-    .game-rating-summary { color: #ffd600; font-size: 1.08em; font-weight: 600; margin-left: 0.6em; }
-    .game-rating-yours { color: #90caf9; font-size: 1.02em; margin-left: 1.1em; }
-    .game-rating-count { color: #b0b7c3; font-size: 0.99em; margin-left: 0.4em; font-weight: 500; }
-    .game-rating-error { color: #e53935; font-size: 0.99em; margin-left: 0.8em; font-weight: 600; }
-    .likes-row, .game-actions { margin-top: 1em; }
-    .comment-section { max-width: 900px; margin: 2.5em auto 3em auto; background: #232946; border-radius: 16px; padding: 2em 1em 2.5em 1em; }
-    .comment-form { display: flex; flex-direction: column; gap: 0.7em; margin-bottom: 2em; }
-    .comments-list { display: flex; flex-direction: column; gap: 1.6em; margin-top: 0.7em; }
-    .game-iframe-wrap { width: 100vw; max-width: 1090px; margin: 1.1em auto 0 auto; display: flex; justify-content: center; }
-    .game-iframe { width: 100%; min-height: 64vw; max-height: 650px; max-width: 900px; border: 0; border-radius: 16px; background: #111; }
-    .comment-stars-selector {
-      margin-bottom: 0.5em;
-      color: #ffd600;
-      font-size: 1.1em;
-      display: flex;
-      align-items: center;
-      gap: 0.3em;
-    }
     .comment-stars-selector .star {
-      font-size: 1.3em;
+      font-size: 2em;
       color: #ffd600;
+      opacity: 0.5;
       cursor: pointer;
-      transition: color 0.1s;
+      transition: opacity 0.1s;
+      user-select: none;
     }
+    .comment-stars-selector .star.selected,
     .comment-stars-selector .star.filled {
+      opacity: 1;
+    }
+    .comments-list .star {
       color: #ffd600;
-    }
-    .comment-stars-display .star {
-      font-size: 1.15em;
-      color: #ffd600;
-      margin-right: 0.02em;
-    }
-    .comment-avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      margin-right: 1em;
-      background: #232946;
-      object-fit: cover;
-      border: 1px solid #252b43;
-    }
-    .comment-main { display: flex; flex-direction: column; }
-    .comment-user { font-weight: 600; color: #90caf9; margin-right: 0.5em; }
-    .comment-date { color: #b0b7c3; font-size: 0.94em; }
-    .comment-text { margin: 0.25em 0 0.1em 0; }
-    .comment-actions { margin-top: 0.2em; }
-    .comment-like-btn { background: none; border: none; color: #ffd600; cursor: pointer; }
-    .comment-like-btn.liked { color: #fff176; }
-    .comment-likes-count { color: #ffd600; margin-left: 0.2em; }
-    .comment-deleted { color: #e53935; font-style: italic; }
-    .icon-btn, .action-btn, .logout-btn {
-      background: #232946; color: #90caf9; border: none; border-radius: 7px; padding: 0.5em 1.2em; font-size: 1em;
-      margin-right: 0.4em; cursor: pointer;
-    }
-    .icon-btn:active, .action-btn:active { background: #151922; }
-    .icon-btn.liked, .icon-btn.disliked, .action-btn.favorited { background: #ffd600; color: #232946; }
-    .fav-btn.favorited i { color: #ffd600; }
-    .user-photo { width: 36px; height: 36px; border-radius: 50%; margin-right: 0.6em; vertical-align: middle; }
-    .user-name { color: #f3e079; font-weight: 600; }
-    .logout-btn { margin-left: 1em; }
-    .back-btn { position: absolute; top: 1.2em; left: 2vw; background: none; color: #90caf9; border: none; font-size: 1.1em; cursor: pointer; }
-    @media (max-width: 700px) {
-      .game-header { flex-direction: column; gap: 1em; padding: 1em 2vw 1em 2vw; }
-      .game-thumb { width: 64px; height: 64px; }
-      .game-title { font-size: 1.25em; }
-      .overall-star-rating { font-size: 1.2em; }
+      font-size: 1.2em;
+      margin-right: 0.07em;
     }
   </style>
 </head>
 <body>
-  <button class="back-btn"><i class='bx bx-arrow-back'></i> Back to games</button>
-  <div class="game-header">
-    <img class="game-thumb" src="" alt="Game">
-    <div class="game-meta-col">
-      <div class="game-title"></div>
-      <div class="overall-star-rating">
-        <span class="overall-stars"></span>
-        <span class="overall-rating-text"></span>
-      </div>
-      <div class="game-categories"></div>
-      <div class="game-plays"><i class='bx bx-user'></i> 0 plays</div>
-      <div class="game-rating-row" data-hover="">
-        <span class="game-rating-stars"></span>
-        <span class="game-rating-summary"></span>
-        <span class="game-rating-count"></span>
-        <span class="game-rating-yours"></span>
-        <span class="game-rating-error"></span>
-      </div>
-      <div class="likes-row">
-        <button class="icon-btn like-btn" title="Like"><i class='bx bxs-like'></i></button>
-        <span class="like-count">0</span>
-        <button class="icon-btn dislike-btn" title="Dislike"><i class='bx bxs-dislike'></i></button>
-        <span class="dislike-count">0</span>
-        <button class="action-btn fav-btn" title="Favorite"><i class='bx bxs-star'></i> Favorite</button>
-        <button class="action-btn fullscreen-btn" title="Fullscreen"><i class='bx bx-fullscreen'></i> Fullscreen</button>
-        <button class="game-controls-btn" title="Controls"><i class='bx bx-info-circle'></i> Controls</button>
-      </div>
-      <div class="game-controls-info" style="display:none;"></div>
-    </div>
-  </div>
-  <div class="game-desc"></div>
-  <div class="game-iframe-wrap"></div>
-  <div class="game-actions">
-    <button class="action-btn play-btn"><i class='bx bx-play'></i> Play</button>
-    <button class="action-btn auth-btn" style="display:none;"><i class='bx bxl-google'></i> Sign in with Google</button>
-    <img class="user-photo" style="display:none;">
-    <span class="user-name" style="display:none;"></span>
-    <button class="logout-btn" style="display:none;">Logout</button>
-  </div>
   <main>
-    <div class="comment-section">
-      <div class="comment-title">Comments</div>
-      <form class="comment-form" style="display:none;">
+    <section>
+      <form class="comment-form">
         <div class="comment-stars-selector">
-          Rate this game:
           <span class="comment-stars"></span>
         </div>
         <textarea class="comment-input" placeholder="Write a comment..." maxlength="500"></textarea>
         <button class="comment-post-btn" type="submit" disabled>Post</button>
-        <div class="comment-error"></div>
+        <div class="comment-error" style="color:red"></div>
+        <div style="color:#90caf9;font-size:0.9em;">Star value: <span id="star-value-preview">0</span></div>
       </form>
-      <div class="comment-form-info" style="display:none;">Sign in to post a comment.</div>
       <div class="comments-list"></div>
-    </div>
+    </section>
   </main>
   <script type="module">
-    // --- Firebase SDKs ---
+    // --- Firebase ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, onSnapshot, updateDoc, serverTimestamp, query, orderBy, increment, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-
-    // --- Firebase config ---
+    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    // Your config (replace with your real keys)
     const firebaseConfig = {
       apiKey: "AIzaSyADCVIINCBgvTBvClWqWI5o3SlVS47IJnw",
       authDomain: "fusioncya-cc20a.firebaseapp.com",
       projectId: "fusioncya-cc20a"
     };
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getFirestore(app);
 
-    const $ = s => document.querySelector(s);
-
-    let game = null, GAMES = [];
-    let currentUser = null;
-    let likesData = {likes:0,dislikes:0,userLiked:false,userDisliked:false};
-    let userFavorites = [], userHistory = [];
-    let commentsUnsubscribe = null;
-    let lastCommentTime = 0, lastCommentText = "", lastCommentTimestamp = 0;
-    let gamePlayCount = 0;
-
-    let ratingData = {
-      average: 0,
-      count: 0,
-      yourRating: 0,
-      total: 0,
-      loading: false,
-      error: ""
-    };
-
-    // --- BULLETPROOF STAR PICKER ---
+    // --- Bulletproof Star Picker ---
     let commentStarRating = 0;
-    window._commentStarRating = 0;
     function renderCommentStarsSelector(hover=0) {
       const starsWrap = document.querySelector('.comment-stars');
-      if (!starsWrap) return;
       starsWrap.innerHTML = '';
       let fill = hover || commentStarRating;
       for (let i=1; i<=5; i++) {
         const s = document.createElement('span');
         s.className = 'star' + (i <= fill ? ' filled' : '');
-        s.innerHTML = '★';
+        if (i === commentStarRating) s.classList.add('selected');
+        s.textContent = '★';
         s.addEventListener('mouseenter', () => renderCommentStarsSelector(i));
         s.addEventListener('mouseleave', () => renderCommentStarsSelector(0));
-        s.addEventListener('click', function(e) {
+        s.addEventListener('click', () => {
           commentStarRating = i;
-          window._commentStarRating = i;
+          document.getElementById('star-value-preview').textContent = commentStarRating;
           renderCommentStarsSelector();
         });
         starsWrap.appendChild(s);
       }
+      document.getElementById('star-value-preview').textContent = commentStarRating;
     }
 
-    // --- Game load, ratings, etc. ---
-    function getGameId() {
-      const url = new URL(window.location.href);
-      return url.searchParams.get('id');
-    }
+    renderCommentStarsSelector();
 
-    async function loadGameObject() {
-      try {
-        const resp = await fetch('game.json');
-        GAMES = await resp.json();
-        const gameId = getGameId();
-        game = GAMES.find(g => g.id === gameId);
-        if (!game) throw new Error("Game not found");
-      } catch {
-        game = {
-          id: getGameId(),
-          title: "Demo Game",
-          thumb: "https://via.placeholder.com/150x120?text=Game",
-          categories: ["Arcade"],
-          description: "A demo game description.",
-          url: "https://example.com"
-        };
-      }
-    }
+    // --- Enable/disable post button based on textarea ---
+    document.querySelector('.comment-input').addEventListener('input', (e) => {
+      document.querySelector('.comment-post-btn').disabled = !e.target.value.trim();
+      document.querySelector('.comment-error').textContent = "";
+    });
 
-    function showAuthUI() {
-      if (currentUser) {
-        $(".auth-btn").style.display = "none";
-        $(".user-photo").src = currentUser.photoURL || "";
-        $(".user-photo").style.display = "";
-        $(".user-name").textContent = currentUser.displayName || "";
-        $(".user-name").style.display = "";
-        $(".logout-btn").style.display = "";
-        $(".comment-form").style.display = "";
-        $(".comment-form-info").style.display = "none";
-      } else {
-        $(".auth-btn").style.display = "";
-        $(".user-photo").style.display = "none";
-        $(".user-name").style.display = "none";
-        $(".logout-btn").style.display = "none";
-        $(".comment-form").style.display = "none";
-        $(".comment-form-info").style.display = "";
-      }
-      renderStars();
-      renderCommentStarsSelector();
-    }
+    // --- Comments in Firestore (demo: all comments are in "demo_comments" collection) ---
+    const COMMENTS_COLLECTION = "demo_comments";
 
-    function renderGame() {
-      document.title = game.title + " | Play Game";
-      $(".game-title").textContent = game.title;
-      $(".game-thumb").src = game.thumb;
-      $(".game-desc").textContent = game.description || "";
-      $(".game-categories").innerHTML = (Array.isArray(game.categories)
-        ? game.categories.map(c => `<span class="game-chip">${c}</span>`).join('')
-        : `<span class="game-chip">${game.category || ""}</span>`);
-      let iframe = $(".game-iframe");
-      if (iframe) iframe.remove();
-      iframe = document.createElement("iframe");
-      iframe.className = "game-iframe";
-      iframe.setAttribute("allowfullscreen", "true");
-      iframe.src = game.url;
-      $(".game-iframe-wrap").appendChild(iframe);
-    }
-
-    function renderOverallStars(avg, count, total) {
-      const stars = document.querySelector('.overall-stars');
-      const text = document.querySelector('.overall-rating-text');
-      stars.innerHTML = '';
-      if (count === 0) {
-        text.textContent = 'No ratings yet';
-        return;
-      }
-      let full = Math.floor(avg);
-      let half = avg - full >= 0.5 ? 1 : 0;
-      for (let i = 1; i <= 5; i++) {
-        const s = document.createElement('span');
-        s.className = "star";
-        s.innerHTML = i <= full ? "★" : (half && i === full + 1 ? "★" : "☆");
-        stars.appendChild(s);
-      }
-      text.textContent = `${avg.toFixed(1)}/5 (${count} ratings, ${total} total stars)`;
-    }
-
-    function renderStars() {
-      const stars = $(".game-rating-stars");
-      stars.innerHTML = "";
-      let fill = ratingData.yourRating ? ratingData.yourRating : Math.round(ratingData.average);
-      let canInteract = !!currentUser && !ratingData.loading;
-      for (let i = 1; i <= 5; i++) {
-        const s = document.createElement("span");
-        s.className = "star" + (i <= fill ? " filled" : "") + (canInteract ? "" : " disabled");
-        s.innerHTML = "★";
-        s.dataset.star = i;
-        if (canInteract) {
-          s.addEventListener("mouseenter", () => {
-            stars.querySelectorAll("span").forEach((starSpan, idx) => {
-              starSpan.classList.toggle("filled", idx < i);
-            });
-          });
-          s.addEventListener("mouseleave", () => {
-            stars.querySelectorAll("span").forEach((starSpan, idx) => {
-              starSpan.classList.toggle("filled", idx < (ratingData.yourRating ? ratingData.yourRating : Math.round(ratingData.average)));
-            });
-          });
-          s.addEventListener("click", async (e) => {
-            e.stopPropagation();
-            await submitRating(i);
-          });
-        }
-        stars.appendChild(s);
-      }
-      $(".game-rating-summary").textContent = ratingData.count ? `${ratingData.average.toFixed(2)} / 5 — ${ratingData.total} total stars` : "Not rated";
-      $(".game-rating-count").textContent = ratingData.count === 1 ? "1 rating" : `${ratingData.count} ratings`;
-      $(".game-rating-yours").innerHTML = (ratingData.yourRating > 0)
-        ? `<i class='bx bx-user'></i> You rated: <span style="color:#ffd600;">${ratingData.yourRating} star${ratingData.yourRating > 1 ? "s" : ""}</span>`
-        : (currentUser ? "Not rated yet" : "Sign in to rate");
-      $(".game-rating-error").textContent = ratingData.error || "";
-      renderOverallStars(ratingData.average, ratingData.count, ratingData.total);
-    }
-
-    async function loadRatings() {
-      ratingData.loading = true;
-      ratingData.error = "";
-      ratingData.average = 0;
-      ratingData.count = 0;
-      ratingData.yourRating = 0;
-      ratingData.total = 0;
-      try {
-        const q = collection(db, "games", game.id, "ratings");
-        const snap = await getDocs(q);
-        let total = 0, count = 0, your = 0;
-        snap.forEach(docSnap => {
-          const d = docSnap.data();
-          if (typeof d.rating === "number" && d.rating >= 1 && d.rating <= 5) {
-            total += d.rating;
-            count++;
-            if (currentUser && docSnap.id === currentUser.uid) your = d.rating;
-          }
-        });
-        ratingData.average = count ? total / count : 0;
-        ratingData.count = count;
-        ratingData.yourRating = your;
-        ratingData.total = total;
-      } catch (e) {
-        ratingData.error = "Failed to load ratings.";
-      }
-      ratingData.loading = false;
-      renderStars();
-    }
-
-    async function submitRating(rating) {
-      if (!currentUser) {
-        ratingData.error = "Sign in first!";
-        renderStars();
-        return;
-      }
-      if (!game || !game.id) {
-        ratingData.error = "Game not loaded!";
-        renderStars();
-        return;
-      }
-      if (rating < 1 || rating > 5) {
-        ratingData.error = "Invalid rating value: " + rating;
-        renderStars();
-        return;
-      }
-      ratingData.loading = true;
-      ratingData.error = "";
-      renderStars();
-      try {
-        const ref = doc(db, "games", game.id, "ratings", currentUser.uid);
-        await setDoc(ref, {
-          rating: rating,
-          updatedAt: serverTimestamp()
-        });
-        ratingData.yourRating = rating;
-        await loadRatings();
-      } catch (e) {
-        ratingData.error = "Failed to rate, try again. " + (e && e.message ? e.message : JSON.stringify(e));
-        renderStars();
-      }
-      ratingData.loading = false;
-      renderStars();
-    }
-
-    function userDocRef() { return currentUser ? doc(db, 'users', currentUser.uid) : null; }
-    async function loadUserData() {
-      if (!currentUser) return;
-      const docRef = userDocRef();
-      const docSnap = await getDoc(docRef);
-      userFavorites = [];
-      userHistory = [];
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        userFavorites = data.favorites || [];
-        userHistory = data.history || [];
-      }
-      renderActions();
-    }
-    async function toggleFavorite() {
-      if (!currentUser) return;
-      const idx = userFavorites.indexOf(game.id);
-      if (idx >= 0) userFavorites.splice(idx, 1);
-      else userFavorites.push(game.id);
-      await setDoc(userDocRef(), { favorites: userFavorites }, { merge: true });
-      renderActions();
-    }
-    async function addToHistory() {
-      if (!currentUser) return;
-      userHistory = userHistory.filter(h => h.id !== game.id);
-      userHistory.unshift({ id: game.id, playedAt: Date.now() });
-      userHistory = userHistory.slice(0, 20);
-      await setDoc(userDocRef(), { history: userHistory }, { merge: true });
-    }
-    async function incrementPlays() {
-      if (!game) return;
-      const ref = doc(db, 'gamePlays', game.id);
-      await setDoc(ref, {}, { merge: true });
-      await updateDoc(ref, { count: increment(1) });
-    }
-    async function getPlays() {
-      if (!game) return 0;
-      const ref = doc(db, 'gamePlays', game.id);
-      const d = await getDoc(ref);
-      return d.exists() && typeof d.data().count === "number" ? d.data().count : 0;
-    }
-    async function updatePlaysDisplay() {
-      gamePlayCount = await getPlays();
-      $(".game-plays").innerHTML = `<i class='bx bx-user'></i> ${gamePlayCount.toLocaleString()} play${gamePlayCount===1?"":"s"}`;
-    }
-    async function loadGameLikes() {
-      if (!game) return;
-      let d = await getDoc(doc(db, 'gameLikes', game.id));
-      likesData = {likes:0,dislikes:0,userLiked:false,userDisliked:false};
-      if (d.exists()) {
-        likesData.likes = d.data().likes || 0;
-        likesData.dislikes = d.data().dislikes || 0;
-        if (currentUser) {
-          const liked = d.data().likedUsers || [];
-          const disliked = d.data().dislikedUsers || [];
-          likesData.userLiked = liked.includes(currentUser.uid);
-          likesData.userDisliked = disliked.includes(currentUser.uid);
-        }
-      }
-      renderActions();
-    }
-    async function updateGameLike(likeType) {
-      if (!currentUser) return;
-      const ref = doc(db, 'gameLikes', game.id);
-      const d = await getDoc(ref);
-      let likedUsers = [], dislikedUsers = [];
-      let likes = 0, dislikes = 0;
-      if (d.exists()) {
-        likedUsers = d.data().likedUsers || [];
-        dislikedUsers = d.data().dislikedUsers || [];
-        likes = d.data().likes || 0;
-        dislikes = d.data().dislikes || 0;
-      }
-      likedUsers = likedUsers.filter(u => u !== currentUser.uid);
-      dislikedUsers = dislikedUsers.filter(u => u !== currentUser.uid);
-      if (likeType === 'like') likedUsers.push(currentUser.uid);
-      if (likeType === 'dislike') dislikedUsers.push(currentUser.uid);
-      likes = likedUsers.length;
-      dislikes = dislikedUsers.length;
-      await setDoc(ref, { likes, dislikes, likedUsers, dislikedUsers }, { merge: true });
-      await loadGameLikes();
-    }
-    function renderActions() {
-      $('.like-btn').classList.toggle('liked', likesData.userLiked);
-      $('.dislike-btn').classList.toggle('disliked', likesData.userDisliked);
-      $('.like-count').textContent = likesData.likes;
-      $('.dislike-count').textContent = likesData.dislikes;
-      $('.fav-btn').classList.toggle('favorited', userFavorites.includes(game.id));
-    }
-    function setupComments() {
-      if (commentsUnsubscribe) commentsUnsubscribe();
-      renderCommentsList([]);
-      if (!game) return;
-      const q = query(collection(db, 'games', game.id, 'comments'), orderBy('createdAt', 'desc'));
-      commentsUnsubscribe = onSnapshot(q, snap => {
-        let comments = [];
-        snap.forEach(doc => {
-          comments.push({ id: doc.id, ...doc.data() });
-        });
-        renderCommentsList(comments);
-      });
-    }
-    async function postComment(text) {
-      if (!currentUser) return;
-      if (!game) return;
-      if (containsBadWord(text)) throw new Error("Inappropriate language detected.");
-      if (isSpam(text)) throw new Error("Please wait before posting again or avoid duplicate comments.");
-      await addDoc(collection(db, 'games', game.id, 'comments'), {
-        text,
-        stars: commentStarRating,
-        user: {
-          uid: currentUser.uid,
-          name: currentUser.displayName,
-          photo: currentUser.photoURL || "",
-        },
-        createdAt: serverTimestamp(),
-        likes: [],
-        deleted: false
-      });
-      lastCommentText = text.trim();
-      lastCommentTimestamp = Date.now();
-      lastCommentTime = Date.now();
-      commentStarRating = 0;
-      window._commentStarRating = 0;
-      renderCommentStarsSelector();
-    }
+    // --- Render comments ---
     function renderCommentsList(comments) {
-      const list = $('.comments-list');
+      const list = document.querySelector('.comments-list');
       list.innerHTML = '';
-      if (!comments.length) {
-        list.innerHTML = `<div style="color:#888b9a;padding:1.4em;text-align:center;">No comments yet. Be the first to comment!</div>`;
+      if (comments.length === 0) {
+        list.innerHTML = '<div style="color:#888b9a;text-align:center;padding:2em;">No comments yet.</div>';
         return;
       }
-      comments.forEach(comment => {
-        if(comment.deleted) {
-          const div = document.createElement('div');
-          div.className = 'comment-deleted';
-          div.textContent = 'This comment was removed by a moderator.';
-          list.appendChild(div);
-          return;
-        }
+      for (const comment of comments) {
         const div = document.createElement('div');
-        div.className = 'comment';
-        const likedByMe = comment.likes && currentUser ? comment.likes.includes(currentUser.uid) : false;
-        let starsHtml = '';
-        if (typeof comment.stars === 'number' && comment.stars > 0) {
-          for (let i=1; i<=5; i++) {
-            starsHtml += `<span class="star"${i <= comment.stars ? ' style="color:#ffd600;"' : ''}>&#9733;</span>`;
-          }
+        let stars = "";
+        for (let i=1; i<=5; i++) {
+          stars += `<span class="star"${i <= (comment.stars || 0) ? ' style="opacity:1"' : ' style="opacity:0.3"'}>★</span>`;
         }
-        div.innerHTML = `
-          <img class="comment-avatar" src="${comment.user.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(comment.user.name)}" alt="">
-          <div class="comment-main">
-            <span class="comment-user">${comment.user.name || 'Unknown'}</span>
-            <span class="comment-date">${comment.createdAt && comment.createdAt.toDate ? comment.createdAt.toDate().toLocaleString() : ''}</span>
-            <div class="comment-stars-display">${starsHtml}</div>
-            <div class="comment-text">${escapeHTML(comment.text)}</div>
-            <div class="comment-actions">
-              <button class="comment-like-btn${likedByMe ? ' liked' : ''}" title="Like"><i class='bx bxs-like'></i></button>
-              <span class="comment-likes-count">${comment.likes ? comment.likes.length : 0}</span>
-            </div>
-          </div>
-        `;
-        div.querySelector('.comment-like-btn').onclick = () => handleLikeComment(comment.id, likedByMe, comment.likes || []);
+        div.innerHTML = `<div>${stars} <b>${comment.text}</b></div>`;
         list.appendChild(div);
-      });
-    }
-    async function handleLikeComment(commentId, likedByMe, likesArr) {
-      if (!currentUser) return;
-      const ref = doc(db, 'games', game.id, 'comments', commentId);
-      let newLikes = Array.isArray(likesArr) ? [...likesArr] : [];
-      if (likedByMe) {
-        newLikes = newLikes.filter(uid => uid !== currentUser.uid);
-      } else {
-        newLikes.push(currentUser.uid);
       }
-      await updateDoc(ref, { likes: newLikes });
-    }
-    function containsBadWord(text) {
-      const BAD_WORDS = ['fuck','shit','bitch','cunt','nigger','fag','asshole','bastard','slut','dick','pussy','whore','faggot','cock','retard','cum','rape'];
-      const lower = text.toLowerCase();
-      return BAD_WORDS.some(word => lower.includes(word));
-    }
-    function isSpam(text) {
-      let now = Date.now();
-      if (text.trim() === lastCommentText && now - lastCommentTimestamp < 60*1000) return true;
-      if (now - lastCommentTime < 30*1000) return true;
-      return false;
-    }
-    function escapeHTML(str) {
-      return str.replace(/[<>&"'`]/g, c => ({
-        '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;','`':'&#96;'
-      })[c]);
     }
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      renderCommentStarsSelector();
-      await loadGameObject();
-      renderGame();
-      showAuthUI();
-      await updatePlaysDisplay();
-      await loadRatings();
-      if (auth.currentUser) {
-        loadUserData();
-        loadGameLikes();
-        setupComments();
-      } else {
-        setupComments();
-      }
-      $('.play-btn').onclick = async () => {
-        addToHistory();
-        await incrementPlays();
-        updatePlaysDisplay();
-        const iframe = $('.game-iframe');
-        if (iframe) iframe.contentWindow.focus();
-      };
-      $('.auth-btn').onclick = () => {
-        const provider = new GoogleAuthProvider();
-        signInWithPopup(auth, provider).catch(err => alert(err.message));
-      };
-      $('.logout-btn').onclick = () => signOut(auth);
-      $('.fav-btn').onclick = () => toggleFavorite();
-      $('.like-btn').onclick = () => updateGameLike('like');
-      $('.dislike-btn').onclick = () => updateGameLike('dislike');
-      $('.fullscreen-btn').onclick = () => { window.open(game.url, '_blank').focus(); };
-      $('.game-controls-btn').onclick = () => {
-        const info = $('.game-controls-info');
-        info.style.display = info.style.display === 'none' ? '' : 'none';
-      };
-      $('.back-btn').onclick = () => window.location.href = 'games.html';
-      $('.comment-input').oninput = () => {
-        $('.comment-post-btn').disabled = !$('.comment-input').value.trim();
-        $('.comment-error').textContent = '';
-      };
-      $('.comment-form').onsubmit = async e => {
-        e.preventDefault();
-        const text = $('.comment-input').value.trim();
-        if (!text) return;
-        if (commentStarRating === 0) {
-          $('.comment-error').textContent = "Select a star rating.";
-          return;
-        }
-        if (containsBadWord(text)) {
-          $('.comment-error').textContent = "Please avoid inappropriate language.";
-          return;
-        }
-        if (isSpam(text)) {
-          $('.comment-error').textContent = "Please wait before posting again or avoid duplicate comments.";
-          return;
-        }
-        $('.comment-post-btn').disabled = true;
-        try {
-          await postComment(text);
-          $('.comment-input').value = '';
-          $('.comment-error').textContent = '';
-        } catch (err) {
-          $('.comment-error').textContent = err.message || "Failed to post comment.";
-        }
-        $('.comment-post-btn').disabled = false;
-      };
+    // --- Live Firestore comments listener ---
+    const q = query(collection(db, COMMENTS_COLLECTION), orderBy("createdAt", "desc"));
+    onSnapshot(q, snap => {
+      const comments = [];
+      snap.forEach(doc => comments.push(doc.data()));
+      renderCommentsList(comments);
     });
 
-    onAuthStateChanged(auth, async user => {
-      currentUser = user;
-      showAuthUI();
-      await loadRatings();
-      if (user) {
-        loadUserData();
-        loadGameLikes();
-        setupComments();
-      } else {
-        setupComments();
+    // --- Submit handler ---
+    document.querySelector('.comment-form').onsubmit = async e => {
+      e.preventDefault();
+      const text = document.querySelector('.comment-input').value.trim();
+      if (!text) return;
+      if (commentStarRating === 0) {
+        document.querySelector('.comment-error').textContent = "Select a star rating.";
+        return;
       }
-    });
+      try {
+        await addDoc(collection(db, COMMENTS_COLLECTION), {
+          text,
+          stars: commentStarRating,
+          createdAt: serverTimestamp()
+        });
+        commentStarRating = 0;
+        document.querySelector('.comment-input').value = '';
+        document.querySelector('.comment-post-btn').disabled = true;
+        renderCommentStarsSelector();
+        document.querySelector('.comment-error').textContent = '';
+      } catch (e) {
+        document.querySelector('.comment-error').textContent = "Failed to post comment: " + e.message;
+      }
+    };
   </script>
 </body>
 </html>
