@@ -34,8 +34,8 @@
     .game-plays { font-size: 1.1em; color: #f3e079; background: #252b43; padding: 0.25em 1.1em 0.25em 0.7em; border-radius: 7px; display: inline-flex; align-items: center; gap: 0.4em; margin: 0.65em 0 0.25em 0; font-weight: 600; box-shadow: 0 1px 8px #19193a18; letter-spacing: 0.01em; }
     .game-plays i { color: #ffd600; font-size: 1.13em; margin-right: 0.1em; }
     .game-rating-row { display: flex; align-items: center; gap: 1.1em; min-height: 2.7em; }
-    .game-rating-stars { display: inline-flex; align-items: center; gap: 0.16em; font-size: 2.1em; cursor: pointer; user-select: none; }
-    .star { color: #ffd600; opacity: 0.58; transition: opacity 0.13s, color 0.12s; }
+    .game-rating-stars, .comment-rating-stars { display: inline-flex; align-items: center; gap: 0.16em; font-size: 2.1em; user-select: none; }
+    .star { color: #ffd600; opacity: 0.58; transition: opacity 0.13s, color 0.12s; cursor: pointer; }
     .star.filled { opacity: 1; color: #ffd600; }
     .star.hovered { color: #fff176; opacity: 1; }
     .star.disabled { cursor: not-allowed; opacity: 0.38; }
@@ -57,24 +57,12 @@
       align-items: center;
       gap: 0.42em;
     }
-    .comment-stars { display: flex; gap: 0.08em; }
-    .comment-stars .star {
-      font-size: 1.5em;
-      color: #ffd600;
-      opacity: 0.38;
-      cursor: pointer;
-      user-select: none;
-      transition: opacity 0.13s, color 0.13s;
-    }
-    .comment-stars .star.filled { opacity: 1; color: #ffd600; }
-    .comment-stars .star.selected { opacity: 1; color: #90caf9; }
-    .comment-stars .star:hover, .comment-stars .star.hovered { color: #fff176; opacity: 1; }
+    .comment-rating-stars .star { font-size: 1.5em; }
     .star-value-preview { color: #90caf9; font-size: 1.1em; margin-left: 0.8em; }
     .comment-input { border-radius: 8px; border: none; padding: 0.7em; font-size: 1.1em; background: #181c24; color: #fff; resize: vertical; min-height: 3em; }
     .comment-post-btn { border: none; background: #ffd600; color: #181c24; font-weight: 700; border-radius: 8px; padding: 0.6em 1.8em; font-size: 1.08em; cursor: pointer; }
     .comment-post-btn:disabled { background: #b0b7c3; color: #232946; cursor: not-allowed; }
     .comment-error { color: #e53935; font-weight: 600; min-height: 1.5em; }
-    .comments-list { margin-top: 2.2em; display: flex; flex-direction: column; gap: 1.5em; }
     .comment { background: #1a1d2a; border-radius: 8px; padding: 1em; }
     .comment .stars { margin-bottom: 0.2em; }
     .comment .stars .star { font-size: 1.15em; }
@@ -155,7 +143,7 @@
       <form class="comment-form">
         <div class="comment-stars-selector">
           Rate this game:
-          <span class="comment-stars"></span>
+          <span class="comment-rating-stars"></span>
           <span class="star-value-preview">0</span>
         </div>
         <textarea class="comment-input" placeholder="Write a comment..." maxlength="500"></textarea>
@@ -168,7 +156,7 @@
   <script type="module">
     // Firebase Setup
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, onSnapshot, updateDoc, serverTimestamp, query, orderBy, increment, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     const firebaseConfig = {
       apiKey: "AIzaSyADCVIINCBgvTBvClWqWI5o3SlVS47IJnw",
@@ -182,38 +170,69 @@
     // Helper
     const $ = s => document.querySelector(s);
 
-    // --- Comment Form Star Picker ---
-    let commentStarRating = 0;
-    function renderCommentStarsSelector(hover=0) {
-      const starsWrap = document.querySelector('.comment-stars');
-      if (!starsWrap) return;
-      starsWrap.innerHTML = '';
-      let fill = hover || commentStarRating;
+    // --- Top star rating logic (for reference and for comment picker) ---
+    function makeStarPicker(container, value, cb) {
+      container.innerHTML = '';
       for (let i=1; i<=5; i++) {
         const s = document.createElement('span');
-        s.className = 'star' + (i <= fill ? ' filled' : '');
+        s.className = 'star' + (i <= value ? ' filled' : '');
         s.textContent = '★';
-        s.addEventListener('mouseenter', () => renderCommentStarsSelector(i));
-        s.addEventListener('mouseleave', () => renderCommentStarsSelector(0));
-        s.addEventListener('click', () => {
-          commentStarRating = i;
-          document.querySelector('.star-value-preview').textContent = commentStarRating;
-          renderCommentStarsSelector();
-          updatePostButton();
+        s.addEventListener('mouseenter', () => {
+          Array.from(container.children).forEach((star, idx) => {
+            star.classList.toggle('filled', idx < i);
+          });
         });
-        starsWrap.appendChild(s);
+        s.addEventListener('mouseleave', () => {
+          Array.from(container.children).forEach((star, idx) => {
+            star.classList.toggle('filled', idx < value);
+          });
+        });
+        s.addEventListener('click', () => cb(i));
+        container.appendChild(s);
       }
-      document.querySelector('.star-value-preview').textContent = commentStarRating;
     }
-    function updatePostButton() {
+
+    // --- Top star logic (static demo, replace with your own top star logic if needed) ---
+    let topStarData = { average: 4.3, count: 17, total: 73 };
+    function renderOverallStars(avg, count, total) {
+      const stars = document.querySelector('.overall-stars');
+      const text = document.querySelector('.overall-rating-text');
+      stars.innerHTML = '';
+      if (count === 0) {
+        text.textContent = 'No ratings yet';
+        return;
+      }
+      let full = Math.floor(avg);
+      let half = avg - full >= 0.5 ? 1 : 0;
+      for (let i = 1; i <= 5; i++) {
+        const s = document.createElement('span');
+        s.className = "star";
+        s.innerHTML = i <= full ? "★" : (half && i === full + 1 ? "★" : "☆");
+        stars.appendChild(s);
+      }
+      text.textContent = `${avg.toFixed(1)}/5 (${count} ratings, ${total} total stars)`;
+    }
+    renderOverallStars(topStarData.average, topStarData.count, topStarData.total);
+
+    // --- Comment star picker (using same logic as top) ---
+    let commentStarRating = 0;
+    function renderCommentStarPicker() {
+      const container = $('.comment-rating-stars');
+      makeStarPicker(container, commentStarRating, (val) => {
+        commentStarRating = val;
+        $('.star-value-preview').textContent = commentStarRating;
+        renderCommentStarPicker();
+        updateCommentPostBtn();
+      });
+      $('.star-value-preview').textContent = commentStarRating;
+    }
+
+    function updateCommentPostBtn() {
       const hasText = $('.comment-input').value.trim().length > 0;
       $('.comment-post-btn').disabled = !(hasText && commentStarRating > 0);
     }
-    // --- End Comment Form Star Picker ---
-    renderCommentStarsSelector();
-    $(".comment-input").addEventListener("input", updatePostButton);
 
-    // --- Game Demo Data (replace/load real game data as needed) ---
+    // ---- Game info/demo dummy ----
     let game = {
       id: "testgame",
       title: "Demo Game",
@@ -239,7 +258,7 @@
     }
     renderGame();
 
-    // --- Comments ---
+    // ---- Comment logic ----
     function renderCommentsList(comments) {
       const list = $('.comments-list');
       list.innerHTML = '';
@@ -248,19 +267,12 @@
         return;
       }
       comments.forEach(comment => {
-        if(comment.deleted) {
-          const div = document.createElement('div');
-          div.className = 'comment-deleted';
-          div.textContent = 'This comment was removed by a moderator.';
-          list.appendChild(div);
-          return;
-        }
         const div = document.createElement('div');
         div.className = 'comment';
         let starsHtml = '';
         if (typeof comment.stars === 'number' && comment.stars > 0) {
           for (let i=1; i<=5; i++) {
-            starsHtml += `<span class="star"${i <= comment.stars ? ' style="color:#ffd600;"' : ''}>&#9733;</span>`;
+            starsHtml += `<span class="star"${i <= comment.stars ? ' style="color:#ffd600;"' : ' style="color:#888;"'}>&#9733;</span>`;
           }
         }
         div.innerHTML = `
@@ -271,7 +283,7 @@
         list.appendChild(div);
       });
     }
-    // --- Live Firestore comments listener ---
+    // Firestore comments listener
     const COMMENTS_COLLECTION = "games/testgame/comments";
     const q = query(collection(db, COMMENTS_COLLECTION), orderBy("createdAt", "desc"));
     onSnapshot(q, snap => {
@@ -280,13 +292,15 @@
       renderCommentsList(comments);
     });
 
-    // --- Submit handler for comments ---
-    $(".comment-form").onsubmit = async e => {
+    // Comment form events
+    $('.comment-input').addEventListener('input', updateCommentPostBtn);
+
+    $('.comment-form').onsubmit = async e => {
       e.preventDefault();
-      const text = $(".comment-input").value.trim();
+      const text = $('.comment-input').value.trim();
       if (!text) return;
       if (commentStarRating === 0) {
-        $(".comment-error").textContent = "Select a star rating.";
+        $('.comment-error').textContent = "Select a star rating.";
         return;
       }
       try {
@@ -296,38 +310,16 @@
           createdAt: serverTimestamp()
         });
         commentStarRating = 0;
-        $(".comment-input").value = '';
-        $(".comment-error").textContent = '';
-        renderCommentStarsSelector();
-        updatePostButton();
+        $('.comment-input').value = '';
+        $('.comment-error').textContent = '';
+        renderCommentStarPicker();
+        updateCommentPostBtn();
       } catch (e) {
-        $(".comment-error").textContent = "Failed to post comment: " + e.message;
+        $('.comment-error').textContent = "Failed to post comment: " + e.message;
       }
     };
 
-    // --- Top star rating (demo, not live) ---
-    let topStarData = { average: 4.2, count: 12, total: 50 };
-    function renderOverallStars(avg, count, total) {
-      const stars = document.querySelector('.overall-stars');
-      const text = document.querySelector('.overall-rating-text');
-      stars.innerHTML = '';
-      if (count === 0) {
-        text.textContent = 'No ratings yet';
-        return;
-      }
-      let full = Math.floor(avg);
-      let half = avg - full >= 0.5 ? 1 : 0;
-      for (let i = 1; i <= 5; i++) {
-        const s = document.createElement('span');
-        s.className = "star";
-        s.innerHTML = i <= full ? "★" : (half && i === full + 1 ? "★" : "☆");
-        stars.appendChild(s);
-      }
-      text.textContent = `${avg.toFixed(1)}/5 (${count} ratings, ${total} total stars)`;
-    }
-    renderOverallStars(topStarData.average, topStarData.count, topStarData.total);
-
-    // --- Demo handlers for top actions (favorite, like, etc) ---
+    // --- Other top actions (demo) ---
     $(".fav-btn").onclick = () => $(".fav-btn").classList.toggle("favorited");
     $(".like-btn").onclick = () => $(".like-btn").classList.toggle("liked");
     $(".dislike-btn").onclick = () => $(".dislike-btn").classList.toggle("disliked");
@@ -343,6 +335,10 @@
     onAuthStateChanged(auth, user => {
       document.querySelector('.comment-form').style.display = user ? "" : "none";
     });
+
+    // --- Initial render for comment picker ---
+    renderCommentStarPicker();
+    updateCommentPostBtn();
   </script>
 </body>
 </html>
