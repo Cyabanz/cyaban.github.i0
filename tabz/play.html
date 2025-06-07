@@ -12,6 +12,23 @@
     .game-thumb { width: 84px; height: 84px; border-radius: 18px; object-fit: cover; border: 3px solid #232946; background: #151922; }
     .game-meta-col { flex: 1; display: flex; flex-direction: column; gap: 0.4em; }
     .game-title { font-size: 2.2em; font-weight: 700; color: #90caf9; margin-bottom: 0.15em; }
+    .overall-star-rating {
+      display: flex;
+      align-items: center;
+      font-size: 2em;
+      margin-bottom: 0.2em;
+    }
+    .overall-stars .star {
+      font-size: 2em;
+      color: #ffd600;
+      margin-right: 0.1em;
+    }
+    .overall-rating-text {
+      margin-left: 0.5em;
+      color: #ffd600;
+      font-weight: 700;
+      font-size: 0.8em;
+    }
     .game-categories { margin-top: 0.1em; margin-bottom: 0.2em; }
     .game-chip { display: inline-block; background: #232946; color: #90caf9; border: 1px solid #90caf9; border-radius: 7px; padding: 0 11px; font-size: 0.97em; margin-right: 0.5em; margin-bottom: 0.2em; }
     .game-plays { font-size: 1.1em; color: #f3e079; background: #252b43; padding: 0.25em 1.1em 0.25em 0.7em; border-radius: 7px; display: inline-flex; align-items: center; gap: 0.4em; margin: 0.65em 0 0.25em 0; font-weight: 600; box-shadow: 0 1px 8px #19193a18; letter-spacing: 0.01em; }
@@ -32,6 +49,63 @@
     .comments-list { display: flex; flex-direction: column; gap: 1.6em; margin-top: 0.7em; }
     .game-iframe-wrap { width: 100vw; max-width: 1090px; margin: 1.1em auto 0 auto; display: flex; justify-content: center; }
     .game-iframe { width: 100%; min-height: 64vw; max-height: 650px; max-width: 900px; border: 0; border-radius: 16px; background: #111; }
+    .comment-stars-selector {
+      margin-bottom: 0.5em;
+      color: #ffd600;
+      font-size: 1.1em;
+      display: flex;
+      align-items: center;
+      gap: 0.3em;
+    }
+    .comment-stars-selector .star {
+      font-size: 1.3em;
+      color: #ffd600;
+      cursor: pointer;
+      transition: color 0.1s;
+    }
+    .comment-stars-selector .star.filled {
+      color: #ffd600;
+    }
+    .comment-stars-display {
+      margin-bottom: 0.3em;
+      font-size: 1.2em;
+      color: #ffd600;
+    }
+    .comment-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      margin-right: 1em;
+      background: #232946;
+      object-fit: cover;
+      border: 1px solid #252b43;
+    }
+    .comment-main { display: flex; flex-direction: column; }
+    .comment-user { font-weight: 600; color: #90caf9; margin-right: 0.5em; }
+    .comment-date { color: #b0b7c3; font-size: 0.94em; }
+    .comment-text { margin: 0.25em 0 0.1em 0; }
+    .comment-actions { margin-top: 0.2em; }
+    .comment-like-btn { background: none; border: none; color: #ffd600; cursor: pointer; }
+    .comment-like-btn.liked { color: #fff176; }
+    .comment-likes-count { color: #ffd600; margin-left: 0.2em; }
+    .comment-deleted { color: #e53935; font-style: italic; }
+    .icon-btn, .action-btn, .logout-btn {
+      background: #232946; color: #90caf9; border: none; border-radius: 7px; padding: 0.5em 1.2em; font-size: 1em;
+      margin-right: 0.4em; cursor: pointer;
+    }
+    .icon-btn:active, .action-btn:active { background: #151922; }
+    .icon-btn.liked, .icon-btn.disliked, .action-btn.favorited { background: #ffd600; color: #232946; }
+    .fav-btn.favorited i { color: #ffd600; }
+    .user-photo { width: 36px; height: 36px; border-radius: 50%; margin-right: 0.6em; vertical-align: middle; }
+    .user-name { color: #f3e079; font-weight: 600; }
+    .logout-btn { margin-left: 1em; }
+    .back-btn { position: absolute; top: 1.2em; left: 2vw; background: none; color: #90caf9; border: none; font-size: 1.1em; cursor: pointer; }
+    @media (max-width: 700px) {
+      .game-header { flex-direction: column; gap: 1em; padding: 1em 2vw 1em 2vw; }
+      .game-thumb { width: 64px; height: 64px; }
+      .game-title { font-size: 1.25em; }
+      .overall-star-rating { font-size: 1.2em; }
+    }
   </style>
 </head>
 <body>
@@ -40,6 +114,10 @@
     <img class="game-thumb" src="" alt="Game">
     <div class="game-meta-col">
       <div class="game-title"></div>
+      <div class="overall-star-rating">
+        <span class="overall-stars"></span>
+        <span class="overall-rating-text"></span>
+      </div>
       <div class="game-categories"></div>
       <div class="game-plays"><i class='bx bx-user'></i> 0 plays</div>
       <div class="game-rating-row" data-hover="">
@@ -74,6 +152,10 @@
     <div class="comment-section">
       <div class="comment-title">Comments</div>
       <form class="comment-form" style="display:none;">
+        <div class="comment-stars-selector">
+          Rate this game:
+          <span class="comment-stars"></span>
+        </div>
         <textarea class="comment-input" placeholder="Write a comment..." maxlength="500"></textarea>
         <button class="comment-post-btn" type="submit" disabled>Post</button>
         <div class="comment-error"></div>
@@ -111,9 +193,12 @@
       average: 0,
       count: 0,
       yourRating: 0,
+      total: 0,
       loading: false,
       error: ""
     };
+
+    let commentStarRating = 0;
 
     function getGameId() {
       const url = new URL(window.location.href);
@@ -158,6 +243,7 @@
         $(".comment-form-info").style.display = "";
       }
       renderStars();
+      renderCommentStarsSelector();
     }
 
     function renderGame() {
@@ -175,6 +261,26 @@
       iframe.setAttribute("allowfullscreen", "true");
       iframe.src = game.url;
       $(".game-iframe-wrap").appendChild(iframe);
+    }
+
+    // --- Overall Star Rating (Large and Prominent) ---
+    function renderOverallStars(avg, count, total) {
+      const stars = document.querySelector('.overall-stars');
+      const text = document.querySelector('.overall-rating-text');
+      stars.innerHTML = '';
+      if (count === 0) {
+        text.textContent = 'No ratings yet';
+        return;
+      }
+      let full = Math.floor(avg);
+      let half = avg - full >= 0.5 ? 1 : 0;
+      for (let i = 1; i <= 5; i++) {
+        const s = document.createElement('span');
+        s.className = "star";
+        s.innerHTML = i <= full ? "&#9733;" : (half && i === full + 1 ? "&#9733;" : "&#9734;");
+        stars.appendChild(s);
+      }
+      text.textContent = `${avg.toFixed(1)}/5 (${count} ratings, ${total} total stars)`;
     }
 
     // --- RATING LOGIC with robust event management ---
@@ -217,12 +323,13 @@
         }
         stars.appendChild(s);
       }
-      $(".game-rating-summary").textContent = ratingData.count ? `${ratingData.average.toFixed(2)} / 5` : "Not rated";
+      $(".game-rating-summary").textContent = ratingData.count ? `${ratingData.average.toFixed(2)} / 5 — ${ratingData.total} total stars` : "Not rated";
       $(".game-rating-count").textContent = ratingData.count === 1 ? "1 rating" : `${ratingData.count} ratings`;
       $(".game-rating-yours").innerHTML = (ratingData.yourRating > 0)
         ? `<i class='bx bx-user'></i> You rated: <span style="color:#ffd600;">${ratingData.yourRating} star${ratingData.yourRating > 1 ? "s" : ""}</span>`
         : (currentUser ? "Not rated yet" : "Sign in to rate");
       $(".game-rating-error").textContent = ratingData.error || "";
+      renderOverallStars(ratingData.average, ratingData.count, ratingData.total);
     }
 
     async function loadRatings() {
@@ -231,6 +338,7 @@
       ratingData.average = 0;
       ratingData.count = 0;
       ratingData.yourRating = 0;
+      ratingData.total = 0;
       try {
         const q = collection(db, "games", game.id, "ratings");
         const snap = await getDocs(q);
@@ -246,7 +354,8 @@
         ratingData.average = count ? total / count : 0;
         ratingData.count = count;
         ratingData.yourRating = your;
-        console.log("[loadRatings] avg:", ratingData.average, "count:", ratingData.count, "your:", ratingData.yourRating);
+        ratingData.total = total;
+        console.log("[loadRatings] avg:", ratingData.average, "count:", ratingData.count, "your:", ratingData.yourRating, "total:", ratingData.total);
       } catch (e) {
         ratingData.error = "Failed to load ratings.";
         console.error("[loadRatings] error:", e);
@@ -294,7 +403,24 @@
       renderStars();
     }
 
-    // Likes/Dislikes/Favorites/Play History/Comments (unchanged)
+    // --- Comment Stars Selector ---
+    function renderCommentStarsSelector(hover=0) {
+      const starsWrap = document.querySelector('.comment-stars');
+      if (!starsWrap) return;
+      starsWrap.innerHTML = '';
+      let fill = hover || commentStarRating;
+      for (let i=1; i<=5; i++) {
+        const s = document.createElement('span');
+        s.className = 'star' + (i <= fill ? ' filled' : '');
+        s.innerHTML = '&#9733;';
+        s.addEventListener('mouseenter', () => renderCommentStarsSelector(i));
+        s.addEventListener('mouseleave', () => renderCommentStarsSelector(0));
+        s.addEventListener('click', () => { commentStarRating = i; renderCommentStarsSelector(); });
+        starsWrap.appendChild(s);
+      }
+    }
+
+    // Likes/Dislikes/Favorites/Play History/Comments (as before)
     function userDocRef() { return currentUser ? doc(db, 'users', currentUser.uid) : null; }
     async function loadUserData() {
       if (!currentUser) return;
@@ -405,6 +531,7 @@
       if (isSpam(text)) throw new Error("Please wait before posting again or avoid duplicate comments.");
       await addDoc(collection(db, 'games', game.id, 'comments'), {
         text,
+        stars: commentStarRating,
         user: {
           uid: currentUser.uid,
           name: currentUser.displayName,
@@ -417,6 +544,8 @@
       lastCommentText = text.trim();
       lastCommentTimestamp = Date.now();
       lastCommentTime = Date.now();
+      commentStarRating = 0;
+      renderCommentStarsSelector();
     }
     function renderCommentsList(comments) {
       const list = $('.comments-list');
@@ -436,11 +565,18 @@
         const div = document.createElement('div');
         div.className = 'comment';
         const likedByMe = comment.likes && currentUser ? comment.likes.includes(currentUser.uid) : false;
+        let starsHtml = '';
+        if (comment.stars && comment.stars > 0) {
+          for (let i=1; i<=5; i++) {
+            starsHtml += `<span class="star"${i <= comment.stars ? ' style="color:#ffd600;"' : ''}>&#9733;</span>`;
+          }
+        }
         div.innerHTML = `
           <img class="comment-avatar" src="${comment.user.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(comment.user.name)}" alt="">
           <div class="comment-main">
             <span class="comment-user">${comment.user.name || 'Unknown'}</span>
             <span class="comment-date">${comment.createdAt && comment.createdAt.toDate ? comment.createdAt.toDate().toLocaleString() : ''}</span>
+            <div class="comment-stars-display">${starsHtml}</div>
             <div class="comment-text">${escapeHTML(comment.text)}</div>
             <div class="comment-actions">
               <button class="comment-like-btn${likedByMe ? ' liked' : ''}" title="Like"><i class='bx bxs-like'></i></button>
