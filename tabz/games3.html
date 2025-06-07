@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Games Portal</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #181c24; color: #e8eaf0; margin: 0; min-height: 100vh; }
+    header { background: #222633; padding: 1.2rem 2vw; display: flex; align-items: center; justify-content: space-between; }
+    .app-title { font-size: 2rem; font-weight: 700; color: #90caf9; letter-spacing: 1.5px; }
+    .user-info { display: flex; align-items: center; gap: 1rem; }
+    .user-info img { border-radius: 50%; width: 38px; height: 38px; object-fit: cover; }
+    .toolbar { background: #232946; padding: 1.1em 2vw; display: flex; align-items: center; gap: 1.2em; max-width: 1100px; margin: 1.5em auto 0 auto; border-radius: 9px; flex-wrap: wrap;}
+    .search-wrap { position: relative; flex: 1; min-width: 220px; }
+    .search-input { width: 100%; min-width: 200px; max-width: 330px; padding: 0.5em 2.3em 0.5em 1em; font-size: 1em; border-radius: 7px; border: 1px solid #90caf9; background: #181c24; color: #e8eaf0; outline: none;}
+    .search-input:focus { border-color: #1976d2; }
+    .search-icon { position: absolute; right: 0.7em; top: 50%; transform: translateY(-50%); color: #90caf9; font-size: 1.2em; }
+    .category-select { font-size: 1em; padding: 0.5em 1em; border-radius: 7px; border: 1px solid #90caf9; background: #181c24; color: #e8eaf0; }
+    .category-select:focus { border-color: #1976d2; }
+    .search-history { position: absolute; z-index: 100; top: 2.6em; left: 0; right: 0; background: #232946; border: 1px solid #90caf9; border-radius: 0 0 8px 8px; box-shadow: 0 2px 8px #19193a33; max-height: 170px; overflow-y: auto; }
+    .search-history-entry { padding: 0.5em 1em; cursor: pointer; color: #b0b7c3; }
+    .search-history-entry:hover { background: #202538; color: #90caf9; }
+    .clear-history-btn { background: none; border: none; color: #90caf9; font-size: 0.95em; cursor: pointer; padding: 0.3em 0.5em; margin-left: 0.6em;}
+    .main-container { max-width: 1200px; margin: 0 auto 2em auto; }
+    .section { margin-top: 2em; background: #232946; border-radius: 15px; box-shadow: 0 2px 24px #19193a33; padding: 2rem;}
+    .section-title { font-size: 1.35em; font-weight: 700; color: #ffd600; margin-bottom: 1em; }
+    .games-grid, .custom-games-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); gap: 1.5em; width:100%; }
+    .game-card { background: #181c24; border-radius: 13px; box-shadow: 0 1px 8px #0003; padding: 0; overflow: hidden; transition: transform 0.12s, box-shadow 0.12s; display:flex; flex-direction:column; gap:0; position:relative; min-width:0;}
+    .game-card:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 6px 20px #181c241a; }
+    .game-thumb { width: 100%; height:144px; object-fit: cover; background: #111; }
+    .game-details { padding: 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
+    .game-title { font-size: 1.09em; font-weight: 700; color: #90caf9; margin-bottom: 0.2em; }
+    .game-meta { font-size: 0.93em; color: #ffd600; }
+    .game-rating-row { display: flex; align-items: center; gap: 0.5em; margin-top: 0.2em; }
+    .star { color: #ffd600; font-size: 1.1em; }
+    .game-chip { background: #232946; color: #90caf9; border-radius: 7px; border: 1px solid #90caf9; font-size: 0.92em; margin: 0.2em 0.3em 0 0; padding: 0 9px; display: inline-block; }
+    .game-actions { display: flex; gap: 0.6rem; margin-top: 0.7em; align-items: center; }
+    .fav-btn { background: none; border: none; color: #ffeb3b; font-size: 1.4rem; cursor: pointer; transition: color 0.17s; margin-right: 0.5rem; }
+    .fav-btn.favorited { color: #ffd600; text-shadow: 0 0 7px #ffd60099; }
+    .play-btn, .proxy-btn { background: #90caf9; color: #191c24; border: none; border-radius: 7px; font-weight: 600; font-size: 1rem; padding: 6px 18px; cursor: pointer; transition: background 0.13s;}
+    .play-btn:hover, .proxy-btn:hover { background: #1976d2; color: #fff; }
+    .proxy-btn { background: #ffd600; color: #181c24; padding:6px 12px;}
+    .proxy-btn:hover { background: #f3e079; color: #232946;}
+    .add-custom-btn { background: #90caf9; color: #181c24; border: none; border-radius: 7px; padding: 0.42em 1.18em; font-weight: 700; cursor: pointer; margin-bottom: 1em;}
+    .custom-game-form { background: #222633; padding: 1em 1.2em; border-radius: 11px; margin-bottom: 1.3em; display: none; flex-direction:column; gap: 0.7em;}
+    .custom-game-form input { border-radius: 7px; border: 1px solid #444; padding: 0.7em; font-size: 1.07em; }
+    .custom-game-form button { background: #ffd600; color: #181c24; border: none; border-radius: 7px; padding: 0.5em 1.4em; font-weight: 700; cursor: pointer;}
+    .close-custom-form { background: none; color: #e53935; border: none; font-size: 1.3em; margin-left: auto; cursor: pointer;}
+    .random-btn { background: #fff; color: #181c24; border: none; border-radius: 7px; padding: 0.4em 1.2em; font-weight: 700; cursor: pointer; margin-bottom: 1em;}
+    .game-of-day-banner { background: linear-gradient(90deg,#ffd600,#90caf9 120%); color: #181c24; padding: 0.75em 1.5em; border-radius: 10px; font-size: 1.15em; font-weight: 700; display: flex; align-items: center; gap: 1.1em; margin-bottom: 1.3em;}
+    .comment-history-section { max-width: 1100px; margin:2em auto; background: #232946; border-radius: 18px; padding: 2em 2vw; }
+    .comment-history-list { display: flex; flex-direction: column; gap: 1.1em;}
+    .comment-history-item { background: #1a1d2a; border-radius: 8px; padding: 1em; }
+    .comment-history-title { color: #ffd600; font-weight: 700; font-size: 1.06em;}
+    .comment-history-text { color: #90caf9; font-size: 1em; margin-top: 0.2em;}
+    .comment-history-date { color: #b0b7c3; font-size: 0.92em; margin-top:0.2em;}
+    .logout-btn { background: #2d3748; color: #fff; border: none; border-radius: 7px; font-size: 1rem; padding: 7px 19px; font-weight: 600; cursor: pointer; margin-left: 1rem; }
+    .logout-btn:hover { background: #e53935; color: #fff; }
+    .google-btn { background: #fff; color: #222; border: none; border-radius: 7px; font-size: 1rem; padding: 10px 32px; font-weight: 600; cursor: pointer; margin: 4rem auto 0 auto; display: block; box-shadow: 0 2px 16px #19193a33; transition: background 0.13s; }
+    .google-btn i { color: #ea4335; font-size: 1.1em; margin-right: 0.7em; vertical-align: middle; }
+    .google-btn:hover { background: #e3e3e3; }
+    @media (max-width: 1200px) {
+      .main-container { max-width: 99vw;}
+      .games-grid, .custom-games-grid { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+      .section { padding:1.2em 1vw 1.7em 1vw; }
+    }
+    @media (max-width: 850px) {
+      .games-grid, .custom-games-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+      .toolbar { max-width: 99vw; }
+      .main-container { padding-left:0; padding-right:0;}
+    }
+    @media (max-width: 700px) {
+      .games-grid, .custom-games-grid { grid-template-columns: 1fr; }
+      .toolbar { flex-direction: column; align-items: stretch;}
+      .section { padding:1em 3vw;}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="app-title">Games Portal</span>
+    <div class="user-info" id="user-info" style="display:none;">
+      <img id="user-photo" alt="Profile">
+      <span id="user-name"></span>
+      <button class="logout-btn" id="logout-btn">Logout</button>
+    </div>
+  </header>
+  <button class="google-btn" id="google-signin" style="display:none;">
+    <i class='bx bxl-google'></i> Sign in with Google
+  </button>
+  <div class="toolbar" style="display:none;">
+    <div class="search-wrap">
+      <input class="search-input" id="search-input" type="text" placeholder="Search games...">
+      <i class="bx bx-search search-icon"></i>
+      <div id="search-history-wrap" class="search-history" style="display:none;"></div>
+    </div>
+    <select class="category-select" id="category-select">
+      <option value="all">All Categories</option>
+    </select>
+  </div>
+  <div class="main-container">
+    <section class="game-of-day-section" id="game-of-day-section" style="display:none;">
+      <div class="game-of-day-banner">
+        <i class='bx bxs-star'></i> Game of the Day: <span class="game-of-day-title"></span>
+        <button class="play-btn game-of-day-play"> <i class='bx bx-play'></i> Play</button>
+      </div>
+    </section>
+    <section class="section" id="custom-games-section">
+      <div style="display:flex;align-items:center;gap:1em;margin-bottom:1em;">
+        <h2 style="margin:0;"><i class='bx bx-plus-circle'></i> Custom Games (Proxied)</h2>
+        <button class="add-custom-btn"><i class='bx bx-plus'></i> Add Custom Game (UV Proxy)</button>
+      </div>
+      <form class="custom-game-form">
+        <button type="button" class="close-custom-form" title="Close">&times;</button>
+        <input type="text" class="custom-title" placeholder="Game Name" required>
+        <input type="url" class="custom-url" placeholder="Game URL (e.g. https://...)" required>
+        <button type="submit">Add Game</button>
+        <div class="custom-error" style="color:#e53935;font-weight:600;"></div>
+      </form>
+      <div class="custom-games-grid"></div>
+    </section>
+    <section class="section games-section" id="games-section" style="display:none;">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <h2 class="section-title" style="margin-bottom:0;">All Games</h2>
+        <button class="random-btn"><i class='bx bx-shuffle'></i> Show Random</button>
+      </div>
+      <div class="games-grid" id="games-list"></div>
+    </section>
+    <section class="section favorites-section" id="favorites-section" style="display:none;">
+      <h2 class="section-title"><i class='bx bxs-star'></i> Favorite Games</h2>
+      <div class="games-grid" id="favorites-list"></div>
+    </section>
+    <section class="section liked-section" id="liked-section" style="display:none;">
+      <h2 class="section-title"><i class='bx bxs-like'></i> Liked Games</h2>
+      <div class="games-grid" id="liked-list"></div>
+    </section>
+    <section class="section history-section" id="history-section" style="display:none;">
+      <h2 class="section-title"><i class='bx bx-history'></i> Play History</h2>
+      <div class="games-grid" id="history-list"></div>
+    </section>
+    <section class="comment-history-section" id="comment-history-section" style="display:none;">
+      <h2><i class='bx bx-message-dots'></i> Your Comment History</h2>
+      <div class="comment-history-list"></div>
+    </section>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, getDocs, collection, query, orderBy, collectionGroup } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyADCVIINCBgvTBvClWqWI5o3SlVS47IJnw",
+      authDomain: "fusioncya-cc20a.firebaseapp.com",
+      databaseURL: "https://fusioncya-cc20a-default-rtdb.firebaseio.com",
+      projectId: "fusioncya-cc20a",
+      storageBucket: "fusioncya-cc20a.appspot.com",
+      messagingSenderId: "765164293111",
+      appId: "1:765164293111:web:43e051c755c4690c0c3cf2",
+      measurementId: "G-4DT52P7MPB"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const $ = s => document.querySelector(s);
+
+    let currentUser = null;
+    let userFavorites = [];
+    let userHistory = [];
+    let userSearchHistory = [];
+    let userLikedGameIds = [];
+    let GAMES = [];
+    let allCategories = [];
+    let searchTerm = '';
+    let selectedCategory = 'all';
+    let customGames = [];
+
+    // --- GAMES LOADING FROM game.json ---
+    async function loadGames() {
+      try {
+        const resp = await fetch('game.json');
+        if (!resp.ok) throw new Error("Could not load games");
+        GAMES = await resp.json();
+        collectCategories();
+        renderCategoryOptions();
+        renderGameOfDay();
+        if (auth.currentUser) {
+          renderGames();
+          renderFavorites();
+          renderHistory();
+          loadUserLikedGames();
+          loadCommentHistory();
+        }
+      } catch (e) {
+        $('#games-list').innerHTML = `<div style="color:#e53935;font-weight:600;">Failed to load games.json</div>`;
+      }
+    }
+    // --- CATEGORY COLLECTING ---
+    function collectCategories() {
+      const cats = new Set();
+      GAMES.forEach(game => {
+        if (Array.isArray(game.categories)) game.categories.forEach(c => cats.add(c));
+        else if (game.category) cats.add(game.category);
+      });
+      allCategories = Array.from(cats).sort((a,b) => a.localeCompare(b));
+    }
+    function renderCategoryOptions() {
+      $('#category-select').innerHTML = `<option value="all">All Categories</option>` +
+        allCategories.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+    // --- SEARCH + CATEGORY FILTER ---
+    function filterGames() {
+      return [...GAMES, ...customGames].filter(game => {
+        let matchSearch = true;
+        if (searchTerm.trim()) {
+          const term = searchTerm.trim().toLowerCase();
+          matchSearch =
+            (game.title && game.title.toLowerCase().includes(term)) ||
+            (game.description && game.description.toLowerCase().includes(term)) ||
+            (game.category && game.category.toLowerCase().includes(term)) ||
+            (Array.isArray(game.categories) && game.categories.some(c => c.toLowerCase().includes(term)));
+        }
+        let matchCategory = (selectedCategory === 'all');
+        if (!matchCategory) {
+          if (Array.isArray(game.categories)) matchCategory = game.categories.includes(selectedCategory);
+          else if (game.category) matchCategory = (game.category === selectedCategory);
+        }
+        return matchSearch && matchCategory;
+      });
+    }
+    // --- RENDERING ---
+    function renderGames() {
+      $('#games-list').innerHTML = '';
+      const filtered = filterGames();
+      if (!filtered.length) {
+        $('#games-list').innerHTML = `<div style="color:#b0b7c3;font-size:1.1em;padding:2em;">No games found.</div>`;
+        return;
+      }
+      filtered.forEach(game => {
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.innerHTML = `
+          <img class="game-thumb" src="${game.thumb}" alt="${game.title}">
+          <div class="game-details">
+            <div class="game-title">${game.title}</div>
+            <div class="game-categories">
+              ${Array.isArray(game.categories) ? game.categories.map(c => `<span class="game-chip">${c}</span>`).join('') : `<span class="game-chip">${game.category}</span>`}
+            </div>
+            <div class="game-actions">
+              <button class="fav-btn${userFavorites.includes(game.id) ? ' favorited' : ''}" title="Favorite">
+                <i class='bx bxs-star'></i>
+              </button>
+              <button class="play-btn">Play</button>
+            </div>
+          </div>
+        `;
+        card.querySelector('.fav-btn').onclick = () => toggleFavorite(game.id);
+        card.querySelector('.play-btn').onclick = () => {
+          window.location.href = `play.html?id=${encodeURIComponent(game.id)}`;
+        };
+        $('#games-list').appendChild(card);
+      });
+    }
+    function renderFavorites() {
+      $('#favorites-list').innerHTML = '';
+      if (!userFavorites.length) {
+        $('#favorites-list').innerHTML = `<div style="color:#a1a1aa;">No favorites yet.</div>`;
+        return;
+      }
+      userFavorites.forEach(fid => {
+        const game = [...GAMES, ...customGames].find(g => g.id === fid);
+        if (!game) return;
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.innerHTML = `
+          <img class="game-thumb" src="${game.thumb}" alt="${game.title}">
+          <div class="game-details">
+            <div class="game-title">${game.title}</div>
+            <div class="game-categories">
+              ${Array.isArray(game.categories) ? game.categories.map(c => `<span class="game-chip">${c}</span>`).join('') : `<span class="game-chip">${game.category}</span>`}
+            </div>
+            <div class="game-actions">
+              <button class="fav-btn favorited" title="Remove Favorite"><i class='bx bxs-star'></i></button>
+              <button class="play-btn">Play</button>
+            </div>
+          </div>
+        `;
+        card.querySelector('.fav-btn').onclick = () => toggleFavorite(game.id);
+        card.querySelector('.play-btn').onclick = () => {
+          window.location.href = `play.html?id=${encodeURIComponent(game.id)}`;
+        };
+        $('#favorites-list').appendChild(card);
+      });
+    }
+    function renderHistory() {
+      $('#history-list').innerHTML = '';
+      if (!userHistory.length) {
+        $('#history-list').innerHTML = `<div style="color:#a1a1aa;">No games played yet.</div>`;
+        return;
+      }
+      userHistory.forEach(h => {
+        const game = [...GAMES, ...customGames].find(g => g.id === h.id);
+        if (!game) return;
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.innerHTML = `
+          <img class="game-thumb" src="${game.thumb}" alt="${game.title}">
+          <div class="game-details">
+            <div class="game-title">${game.title}</div>
+            <div class="game-categories">
+              ${Array.isArray(game.categories) ? game.categories.map(c => `<span class="game-chip">${c}</span>`).join('') : `<span class="game-chip">${game.category}</span>`}
+            </div>
+            <div style="font-size:0.93em;color:#90caf9;margin-bottom:0.4em;">${new Date(h.playedAt).toLocaleString()}</div>
+            <div class="game-actions">
+              <button class="play-btn">Play</button>
+            </div>
+          </div>
+        `;
+        card.querySelector('.play-btn').onclick = () => {
+          window.location.href = `play.html?id=${encodeURIComponent(game.id)}`;
+        };
+        $('#history-list').appendChild(card);
+      });
+    }
+    // --- LIKED GAMES ---
+    async function loadUserLikedGames() {
+      if (!currentUser || !GAMES.length) {
+        userLikedGameIds = [];
+        renderLikedGames();
+        return;
+      }
+      const ids = [];
+      await Promise.all(GAMES.map(async game => {
+        try {
+          const d = await getDoc(doc(db, 'gameLikes', game.id));
+          if (d.exists()) {
+            const liked = d.data().likedUsers || [];
+            if (liked.includes(currentUser.uid)) ids.push(game.id);
+          }
+        } catch(e) {}
+      }));
+      userLikedGameIds = ids;
+      renderLikedGames();
+    }
+    function renderLikedGames() {
+      $('#liked-list').innerHTML = '';
+      if (!userLikedGameIds.length) {
+        $('#liked-list').innerHTML = `<div style="color:#a1a1aa;">You haven't liked any games yet.</div>`;
+        return;
+      }
+      userLikedGameIds.forEach(lid => {
+        const game = [...GAMES, ...customGames].find(g => g.id === lid);
+        if (!game) return;
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.innerHTML = `
+          <img class="game-thumb" src="${game.thumb}" alt="${game.title}">
+          <div class="game-details">
+            <div class="game-title">${game.title}</div>
+            <div class="game-categories">
+              ${Array.isArray(game.categories) ? game.categories.map(c => `<span class="game-chip">${c}</span>`).join('') : `<span class="game-chip">${game.category}</span>`}
+            </div>
+            <div class="game-actions">
+              <button class="play-btn">Play</button>
+            </div>
+          </div>
+        `;
+        card.querySelector('.play-btn').onclick = () => {
+          window.location.href = `play.html?id=${encodeURIComponent(game.id)}`;
+        };
+        $('#liked-list').appendChild(card);
+      });
+    }
+    // --- SEARCH HISTORY ---
+    async function addToSearchHistory(term) {
+      if (!currentUser) return;
+      term = term.trim();
+      if (!term) return;
+      userSearchHistory = userSearchHistory.filter(t => t.toLowerCase() !== term.toLowerCase());
+      userSearchHistory.unshift(term);
+      userSearchHistory = userSearchHistory.slice(0, 12);
+      await setDoc(userDocRef(), { searchHistory: userSearchHistory }, { merge: true });
+      renderSearchHistory();
+    }
+    async function clearSearchHistory() {
+      if (!currentUser) return;
+      userSearchHistory = [];
+      await setDoc(userDocRef(), { searchHistory: [] }, { merge: true });
+      renderSearchHistory();
+    }
+    function renderSearchHistory() {
+      const searchHistoryWrap = $('#search-history-wrap');
+      if (!userSearchHistory || !userSearchHistory.length) {
+        searchHistoryWrap.style.display = 'none';
+        return;
+      }
+      searchHistoryWrap.innerHTML = userSearchHistory.map(term =>
+        `<div class="search-history-entry">${term}</div>`
+      ).join('') +
+        `<button class="clear-history-btn" id="clear-history-btn">Clear History</button>`;
+      searchHistoryWrap.style.display = '';
+      [...searchHistoryWrap.querySelectorAll('.search-history-entry')].forEach(node => {
+        node.onclick = () => {
+          $('#search-input').value = node.textContent;
+          searchTerm = node.textContent;
+          renderGames();
+          addToSearchHistory(searchTerm);
+          searchHistoryWrap.style.display = 'none';
+        };
+      });
+      searchHistoryWrap.querySelector('#clear-history-btn').onclick = () => clearSearchHistory();
+    }
+    // --- AUTH ---
+    function showSignedIn(user) {
+      $('#user-info').style.display = '';
+      $('#user-photo').src = user.photoURL;
+      $('#user-name').textContent = user.displayName;
+      $('#google-signin').style.display = 'none';
+      $('#games-section').style.display = '';
+      $('#favorites-section').style.display = '';
+      $('#history-section').style.display = '';
+      $('#liked-section').style.display = '';
+      $('.toolbar').style.display = '';
+      $('#comment-history-section').style.display = '';
+      loadUserData();
+      loadUserLikedGames();
+      loadCommentHistory();
+    }
+    function showSignedOut() {
+      $('#user-info').style.display = 'none';
+      $('#google-signin').style.display = '';
+      $('#games-section').style.display = 'none';
+      $('#favorites-section').style.display = 'none';
+      $('#history-section').style.display = 'none';
+      $('#liked-section').style.display = 'none';
+      $('#comment-history-section').style.display = 'none';
+      $('#games-list').innerHTML = '';
+      $('#favorites-list').innerHTML = '';
+      $('#history-list').innerHTML = '';
+      $('#liked-list').innerHTML = '';
+      $('.toolbar').style.display = 'none';
+    }
+    function userDocRef() {
+      if (!currentUser) return null;
+      return doc(db, 'users', currentUser.uid);
+    }
+    async function loadUserData() {
+      if (!currentUser) return;
+      const docRef = userDocRef();
+      const docSnap = await getDoc(docRef);
+      userFavorites = [];
+      userHistory = [];
+      userSearchHistory = [];
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        userFavorites = data.favorites || [];
+        userHistory = data.history || [];
+        userSearchHistory = data.searchHistory || [];
+      }
+      renderGames();
+      renderFavorites();
+      renderHistory();
+      renderSearchHistory();
+    }
+    async function toggleFavorite(gameId) {
+      if (!currentUser) return;
+      const idx = userFavorites.indexOf(gameId);
+      if (idx >= 0) userFavorites.splice(idx, 1);
+      else userFavorites.push(gameId);
+      await setDoc(userDocRef(), { favorites: userFavorites }, { merge: true });
+      renderGames();
+      renderFavorites();
+    }
+    async function addToHistory(gameId) {
+      if (!currentUser) return;
+      userHistory = userHistory.filter(h => h.id !== gameId);
+      userHistory.unshift({ id: gameId, playedAt: Date.now() });
+      userHistory = userHistory.slice(0, 20);
+      await setDoc(userDocRef(), { history: userHistory }, { merge: true });
+      renderHistory();
+    }
+    // --- EVENTS: SEARCH & CATEGORY ---
+    function setupSearchBar() {
+      const searchInput = $('#search-input');
+      searchInput.oninput = e => {
+        searchTerm = searchInput.value;
+        renderGames();
+        if (searchInput.value.trim()) {
+          $('#search-history-wrap').style.display = '';
+        } else {
+          $('#search-history-wrap').style.display = 'none';
+        }
+      };
+      searchInput.onfocus = () => {
+        if (userSearchHistory.length && searchInput.value.trim() === '') {
+          renderSearchHistory();
+        }
+      };
+      searchInput.onblur = () => {
+        setTimeout(() => $('#search-history-wrap').style.display = 'none', 130);
+      };
+      searchInput.onkeydown = e => {
+        if (e.key === "Enter") {
+          searchTerm = searchInput.value;
+          renderGames();
+          if (searchTerm.trim()) addToSearchHistory(searchTerm);
+          $('#search-history-wrap').style.display = 'none';
+        }
+      };
+      $('#category-select').onchange = () => {
+        selectedCategory = $('#category-select').value;
+        renderGames();
+      };
+    }
+    // --- GAME OF THE DAY ---
+    function getGameOfDay() {
+      if (GAMES.length === 0) return null;
+      const seed = Math.floor(Date.now()/(1000*60*60*24));
+      return GAMES[seed % GAMES.length];
+    }
+    function renderGameOfDay() {
+      const god = getGameOfDay();
+      if (!god) { $('#game-of-day-section').style.display = "none"; return; }
+      $('#game-of-day-section').style.display = "";
+      $('.game-of-day-title').textContent = god.title;
+      $('.game-of-day-play').onclick = () => window.location.href = `play.html?id=${god.id}`;
+    }
+    // --- RANDOM ---
+    $('.random-btn').onclick = () => {
+      let games = [...GAMES];
+      for (let i = games.length-1; i > 0; i--) {
+        const j = Math.floor(Math.random()*(i+1));
+        [games[i],games[j]] = [games[j],games[i]];
+      }
+      games = games.slice(0,Math.min(8,games.length));
+      $('#games-list').innerHTML = '';
+      games.forEach(game => {
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.innerHTML = `
+          <img class="game-thumb" src="${game.thumb}" alt="${game.title}">
+          <div class="game-details">
+            <div class="game-title">${game.title}</div>
+            <div class="game-categories">
+              ${Array.isArray(game.categories) ? game.categories.map(c => `<span class="game-chip">${c}</span>`).join('') : `<span class="game-chip">${game.category}</span>`}
+            </div>
+            <div class="game-actions">
+              <button class="fav-btn${userFavorites.includes(game.id) ? ' favorited' : ''}" title="Favorite">
+                <i class='bx bxs-star'></i>
+              </button>
+              <button class="play-btn">Play</button>
+            </div>
+          </div>
+        `;
+        card.querySelector('.fav-btn').onclick = () => toggleFavorite(game.id);
+        card.querySelector('.play-btn').onclick = () => {
+          window.location.href = `play.html?id=${encodeURIComponent(game.id)}`;
+        };
+        $('#games-list').appendChild(card);
+      });
+    };
+    // --- CUSTOM GAMES (PROXY) ---
+    function loadCustomGames() {
+      try {
+        customGames = JSON.parse(localStorage.getItem('customGames') || '[]');
+      } catch { customGames = []; }
+      renderCustomGames();
+    }
+    function saveCustomGames() {
+      localStorage.setItem('customGames', JSON.stringify(customGames));
+    }
+    function renderCustomGames() {
+      const grid = $('.custom-games-grid');
+      grid.innerHTML = '';
+      if (!customGames.length) {
+        grid.innerHTML = `<div style="color:#a1a1aa;">No custom games added yet.</div>`;
+        return;
+      }
+      customGames.forEach(game => {
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.innerHTML = `
+          <img class="game-thumb" src="${game.thumb}" alt="${game.title}">
+          <div class="game-details">
+            <div class="game-title">${game.title}</div>
+            <div class="game-categories">
+              ${(Array.isArray(game.categories) ? game.categories.map(c => `<span class="game-chip">${c}</span>`).join('') : `<span class="game-chip">${game.category}</span>`)}
+            </div>
+            <div class="game-actions">
+              <button class="proxy-btn">Proxy</button>
+            </div>
+          </div>
+        `;
+        card.querySelector('.proxy-btn').onclick = () => {
+          window.open(`/uv/service/${btoa(game.url)}`, '_blank');
+        };
+        grid.appendChild(card);
+      });
+    }
+    function addCustomGame(name, url) {
+      const id = 'custom_'+Math.random().toString(36).slice(2,8)+Date.now();
+      customGames.push({id,title:name,thumb:"https://via.placeholder.com/150x120?text=Custom",categories:["Custom"],url});
+      saveCustomGames();
+      renderCustomGames();
+    }
+    $('.add-custom-btn').onclick = () => {
+      $('.custom-game-form').style.display = 'flex';
+      $('.add-custom-btn').style.display = 'none';
+    };
+    $('.close-custom-form').onclick = () => {
+      $('.custom-game-form').style.display = 'none';
+      $('.add-custom-btn').style.display = '';
+      $('.custom-error').textContent = '';
+      $('.custom-title').value = '';
+      $('.custom-url').value = '';
+    };
+    $('.custom-game-form').onsubmit = e => {
+      e.preventDefault();
+      const name = $('.custom-title').value.trim();
+      const url = $('.custom-url').value.trim();
+      if (!name || !url) {
+        $('.custom-error').textContent = "Please provide a name and URL.";
+        return;
+      }
+      if (!/^https?:\/\//.test(url)) {
+        $('.custom-error').textContent = "URL must start with http:// or https://";
+        return;
+      }
+      addCustomGame(name, url);
+      $('.custom-game-form').style.display = 'none';
+      $('.add-custom-btn').style.display = '';
+      $('.custom-error').textContent = '';
+      $('.custom-title').value = '';
+      $('.custom-url').value = '';
+    };
+    // --- COMMENT HISTORY ---
+    async function loadCommentHistory() {
+      if (!currentUser) { $('.comment-history-list').innerHTML = ""; return; }
+      let q_ = query(collectionGroup(db, 'comments'), orderBy('createdAt', 'desc'));
+      let snap = await getDocs(q_);
+      let myComments = [];
+      snap.forEach(docSnap => {
+        let d = docSnap.data();
+        if (d.user && d.user.uid === currentUser.uid && !d.deleted) {
+          myComments.push({
+            gameId: docSnap.ref.parent.parent.id,
+            text: d.text,
+            createdAt: d.createdAt && d.createdAt.toDate ? d.createdAt.toDate() : null
+          });
+        }
+      });
+      myComments = myComments.slice(0,15);
+      renderCommentHistory(myComments);
+    }
+    function renderCommentHistory(comments) {
+      const list = $(".comment-history-list");
+      list.innerHTML = '';
+      if (!comments.length) {
+        list.innerHTML = `<div style="color:#888b9a;padding:1em 0;text-align:center;">You have not commented yet.</div>`;
+        return;
+      }
+      comments.forEach(c => {
+        const div = document.createElement('div');
+        div.className = "comment-history-item";
+        div.innerHTML = `
+          <div class="comment-history-title">On <a href="play.html?id=${c.gameId}" style="color:#ffd600;text-decoration:underline;">${getGameTitleById(c.gameId)}</a>:</div>
+          <div class="comment-history-text">${escapeHTML(c.text)}</div>
+          <div class="comment-history-date">${c.createdAt ? c.createdAt.toLocaleString() : ''}</div>
+        `;
+        list.appendChild(div);
+      });
+    }
+    function getGameTitleById(id) {
+      let g = [...GAMES, ...customGames].find(x => x.id === id);
+      return g ? g.title : id;
+    }
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/[<>&"'`]/g, c => ({
+        '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;','`':'&#96;'
+      })[c]);
+    }
+    // --- INIT ---
+    window.addEventListener('DOMContentLoaded', () => {
+      loadGames();
+      setupSearchBar();
+      loadCustomGames();
+    });
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      if (user) { showSignedIn(user); }
+      else { showSignedOut(); }
+    });
+    $('#google-signin').onclick = () => {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider).catch(err => alert(err.message));
+    };
+    $('#logout-btn').onclick = () => signOut(auth);
+  </script>
+</body>
+</html>
