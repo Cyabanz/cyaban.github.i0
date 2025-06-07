@@ -8,13 +8,67 @@
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; background: #181c24; color: #e8eaf0; margin: 0; }
+    .game-header { display: flex; align-items: flex-start; gap: 2.5em; padding: 2em 4vw 1.3em 4vw; max-width: 1100px; margin: 0 auto; }
+    .game-thumb { width: 84px; height: 84px; border-radius: 18px; object-fit: cover; border: 3px solid #232946; background: #151922; }
+    .game-meta-col { flex: 1; display: flex; flex-direction: column; gap: 0.4em; }
+    .game-title { font-size: 2.2em; font-weight: 700; color: #90caf9; margin-bottom: 0.15em; }
+    .overall-star-rating {
+      display: flex;
+      align-items: center;
+      font-size: 2em;
+      margin-bottom: 0.2em;
+    }
+    .overall-stars .star {
+      font-size: 2em;
+      color: #ffd600;
+      margin-right: 0.1em;
+    }
+    .overall-rating-text {
+      margin-left: 0.5em;
+      color: #ffd600;
+      font-weight: 700;
+      font-size: 0.8em;
+    }
+    .game-categories { margin-top: 0.1em; margin-bottom: 0.2em; }
+    .game-chip { display: inline-block; background: #232946; color: #90caf9; border: 1px solid #90caf9; border-radius: 7px; padding: 0 11px; font-size: 0.97em; margin-right: 0.5em; margin-bottom: 0.2em; }
+    .game-plays { font-size: 1.1em; color: #f3e079; background: #252b43; padding: 0.25em 1.1em 0.25em 0.7em; border-radius: 7px; display: inline-flex; align-items: center; gap: 0.4em; margin: 0.65em 0 0.25em 0; font-weight: 600; box-shadow: 0 1px 8px #19193a18; letter-spacing: 0.01em; }
+    .game-plays i { color: #ffd600; font-size: 1.13em; margin-right: 0.1em; }
+    .game-rating-row { display: flex; align-items: center; gap: 1.1em; min-height: 2.7em; }
+    .game-rating-stars { display: inline-flex; align-items: center; gap: 0.16em; font-size: 2.1em; cursor: pointer; user-select: none; }
+    .star { color: #ffd600; opacity: 0.58; transition: opacity 0.13s, color 0.12s; }
+    .star.filled { opacity: 1; color: #ffd600; }
+    .star.hovered { color: #fff176; opacity: 1; }
+    .star.disabled { cursor: not-allowed; opacity: 0.38; }
+    .game-rating-summary { color: #ffd600; font-size: 1.08em; font-weight: 600; margin-left: 0.6em; }
+    .game-rating-yours { color: #90caf9; font-size: 1.02em; margin-left: 1.1em; }
+    .game-rating-count { color: #b0b7c3; font-size: 0.99em; margin-left: 0.4em; font-weight: 500; }
+    .game-rating-error { color: #e53935; font-size: 0.99em; margin-left: 0.8em; font-weight: 600; }
+    .likes-row, .game-actions { margin-top: 1em; }
     .comment-section { max-width: 900px; margin: 2.5em auto 3em auto; background: #232946; border-radius: 16px; padding: 2em 1em 2.5em 1em; }
     .comment-form { display: flex; flex-direction: column; gap: 0.7em; margin-bottom: 2em; }
-    .comment-stars-selector { margin-bottom: 0.5em; color: #ffd600; font-size: 1.15em; display: flex; align-items: center; gap: 0.42em; }
+    .comments-list { display: flex; flex-direction: column; gap: 1.6em; margin-top: 0.7em; }
+    .game-iframe-wrap { width: 100vw; max-width: 1090px; margin: 1.1em auto 0 auto; display: flex; justify-content: center; }
+    .game-iframe { width: 100%; min-height: 64vw; max-height: 650px; max-width: 900px; border: 0; border-radius: 16px; background: #111; }
+    .comment-stars-selector {
+      margin-bottom: 0.5em;
+      color: #ffd600;
+      font-size: 1.15em;
+      display: flex;
+      align-items: center;
+      gap: 0.42em;
+    }
     .comment-stars { display: flex; gap: 0.08em; }
-    .star { font-size: 1.5em; color: #ffd600; opacity: 0.38; cursor: pointer; user-select: none; transition: opacity 0.13s, color 0.13s; }
-    .star.filled { opacity: 1; color: #ffd600; }
-    .star.selected { opacity: 1; color: #90caf9; }
+    .comment-stars .star {
+      font-size: 1.5em;
+      color: #ffd600;
+      opacity: 0.38;
+      cursor: pointer;
+      user-select: none;
+      transition: opacity 0.13s, color 0.13s;
+    }
+    .comment-stars .star.filled { opacity: 1; color: #ffd600; }
+    .comment-stars .star.selected { opacity: 1; color: #90caf9; }
+    .comment-stars .star:hover, .comment-stars .star.hovered { color: #fff176; opacity: 1; }
     .star-value-preview { color: #90caf9; font-size: 1.1em; margin-left: 0.8em; }
     .comment-input { border-radius: 8px; border: none; padding: 0.7em; font-size: 1.1em; background: #181c24; color: #fff; resize: vertical; min-height: 3em; }
     .comment-post-btn { border: none; background: #ffd600; color: #181c24; font-weight: 700; border-radius: 8px; padding: 0.6em 1.8em; font-size: 1.08em; cursor: pointer; }
@@ -26,11 +80,75 @@
     .comment .stars .star { font-size: 1.15em; }
     .comment .text { font-size: 1.06em; color: #ffd600; }
     .comment .date { color: #b0b7c3; font-size: 0.92em; }
-    /* The rest of your page's styles, header, stars, etc, can go here... */
+    .comment-avatar { width: 38px; height: 38px; border-radius: 50%; margin-right: 1em; background: #232946; object-fit: cover; border: 1px solid #252b43; }
+    .comment-main { display: flex; flex-direction: column; }
+    .comment-user { font-weight: 600; color: #90caf9; margin-right: 0.5em; }
+    .comment-date { color: #b0b7c3; font-size: 0.94em; }
+    .comment-text { margin: 0.25em 0 0.1em 0; }
+    .comment-actions { margin-top: 0.2em; }
+    .comment-like-btn { background: none; border: none; color: #ffd600; cursor: pointer; }
+    .comment-like-btn.liked { color: #fff176; }
+    .comment-likes-count { color: #ffd600; margin-left: 0.2em; }
+    .comment-deleted { color: #e53935; font-style: italic; }
+    .icon-btn, .action-btn, .logout-btn {
+      background: #232946; color: #90caf9; border: none; border-radius: 7px; padding: 0.5em 1.2em; font-size: 1em;
+      margin-right: 0.4em; cursor: pointer;
+    }
+    .icon-btn:active, .action-btn:active { background: #151922; }
+    .icon-btn.liked, .icon-btn.disliked, .action-btn.favorited { background: #ffd600; color: #232946; }
+    .fav-btn.favorited i { color: #ffd600; }
+    .user-photo { width: 36px; height: 36px; border-radius: 50%; margin-right: 0.6em; vertical-align: middle; }
+    .user-name { color: #f3e079; font-weight: 600; }
+    .logout-btn { margin-left: 1em; }
+    .back-btn { position: absolute; top: 1.2em; left: 2vw; background: none; color: #90caf9; border: none; font-size: 1.1em; cursor: pointer; }
+    @media (max-width: 700px) {
+      .game-header { flex-direction: column; gap: 1em; padding: 1em 2vw 1em 2vw; }
+      .game-thumb { width: 64px; height: 64px; }
+      .game-title { font-size: 1.25em; }
+      .overall-star-rating { font-size: 1.2em; }
+    }
   </style>
 </head>
 <body>
-  <!-- ... your top section ... -->
+  <button class="back-btn"><i class='bx bx-arrow-back'></i> Back to games</button>
+  <div class="game-header">
+    <img class="game-thumb" src="" alt="Game">
+    <div class="game-meta-col">
+      <div class="game-title"></div>
+      <div class="overall-star-rating">
+        <span class="overall-stars"></span>
+        <span class="overall-rating-text"></span>
+      </div>
+      <div class="game-categories"></div>
+      <div class="game-plays"><i class='bx bx-user'></i> 0 plays</div>
+      <div class="game-rating-row" data-hover="">
+        <span class="game-rating-stars"></span>
+        <span class="game-rating-summary"></span>
+        <span class="game-rating-count"></span>
+        <span class="game-rating-yours"></span>
+        <span class="game-rating-error"></span>
+      </div>
+      <div class="likes-row">
+        <button class="icon-btn like-btn" title="Like"><i class='bx bxs-like'></i></button>
+        <span class="like-count">0</span>
+        <button class="icon-btn dislike-btn" title="Dislike"><i class='bx bxs-dislike'></i></button>
+        <span class="dislike-count">0</span>
+        <button class="action-btn fav-btn" title="Favorite"><i class='bx bxs-star'></i> Favorite</button>
+        <button class="action-btn fullscreen-btn" title="Fullscreen"><i class='bx bx-fullscreen'></i> Fullscreen</button>
+        <button class="game-controls-btn" title="Controls"><i class='bx bx-info-circle'></i> Controls</button>
+      </div>
+      <div class="game-controls-info" style="display:none;"></div>
+    </div>
+  </div>
+  <div class="game-desc"></div>
+  <div class="game-iframe-wrap"></div>
+  <div class="game-actions">
+    <button class="action-btn play-btn"><i class='bx bx-play'></i> Play</button>
+    <button class="action-btn auth-btn" style="display:none;"><i class='bx bxl-google'></i> Sign in with Google</button>
+    <img class="user-photo" style="display:none;">
+    <span class="user-name" style="display:none;"></span>
+    <button class="logout-btn" style="display:none;">Logout</button>
+  </div>
   <main>
     <div class="comment-section">
       <div class="comment-title">Comments</div>
@@ -48,11 +166,10 @@
     </div>
   </main>
   <script type="module">
-    // -- Firebase Setup --
+    // Firebase Setup
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, onSnapshot, updateDoc, serverTimestamp, query, orderBy, increment, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     const firebaseConfig = {
       apiKey: "AIzaSyADCVIINCBgvTBvClWqWI5o3SlVS47IJnw",
       authDomain: "fusioncya-cc20a.firebaseapp.com",
@@ -62,7 +179,10 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // --- Bulletproof Comment Star Picker, completely isolated ---
+    // Helper
+    const $ = s => document.querySelector(s);
+
+    // --- Comment Form Star Picker ---
     let commentStarRating = 0;
     function renderCommentStarsSelector(hover=0) {
       const starsWrap = document.querySelector('.comment-stars');
@@ -85,41 +205,74 @@
       }
       document.querySelector('.star-value-preview').textContent = commentStarRating;
     }
-    renderCommentStarsSelector();
-
     function updatePostButton() {
-      const hasText = document.querySelector('.comment-input').value.trim().length > 0;
-      document.querySelector('.comment-post-btn').disabled = !(hasText && commentStarRating > 0);
+      const hasText = $('.comment-input').value.trim().length > 0;
+      $('.comment-post-btn').disabled = !(hasText && commentStarRating > 0);
     }
+    // --- End Comment Form Star Picker ---
+    renderCommentStarsSelector();
+    $(".comment-input").addEventListener("input", updatePostButton);
 
-    // Enable/disable post button based on textarea and star
-    document.querySelector('.comment-input').addEventListener('input', updatePostButton);
+    // --- Game Demo Data (replace/load real game data as needed) ---
+    let game = {
+      id: "testgame",
+      title: "Demo Game",
+      thumb: "https://via.placeholder.com/150x120?text=Game",
+      categories: ["Arcade"],
+      description: "A demo game description.",
+      url: "https://example.com"
+    };
+    function renderGame() {
+      $(".game-title").textContent = game.title;
+      $(".game-thumb").src = game.thumb;
+      $(".game-desc").textContent = game.description || "";
+      $(".game-categories").innerHTML = (Array.isArray(game.categories)
+        ? game.categories.map(c => `<span class="game-chip">${c}</span>`).join('')
+        : `<span class="game-chip">${game.category || ""}</span>`);
+      let iframe = $(".game-iframe");
+      if (iframe) iframe.remove();
+      iframe = document.createElement("iframe");
+      iframe.className = "game-iframe";
+      iframe.setAttribute("allowfullscreen", "true");
+      iframe.src = game.url;
+      $(".game-iframe-wrap").appendChild(iframe);
+    }
+    renderGame();
 
-    // --- Comments in Firestore (all comments are in "games/testgame/comments" subcollection) ---
-    const COMMENTS_COLLECTION = "games/testgame/comments";
-
-    // --- Render comments ---
+    // --- Comments ---
     function renderCommentsList(comments) {
-      const list = document.querySelector('.comments-list');
+      const list = $('.comments-list');
       list.innerHTML = '';
-      if (comments.length === 0) {
-        list.innerHTML = '<div style="color:#888b9a;text-align:center;padding:2em;">No comments yet.</div>';
+      if (!comments.length) {
+        list.innerHTML = `<div style="color:#888b9a;text-align:center;padding:2em;">No comments yet.</div>`;
         return;
       }
-      for (const comment of comments) {
-        const div = document.createElement('div');
-        let stars = "";
-        for (let i=1; i<=5; i++) {
-          stars += `<span class="star"${i <= (comment.stars || 0) ? ' style="opacity:1"' : ' style="opacity:0.3"'}>★</span>`;
+      comments.forEach(comment => {
+        if(comment.deleted) {
+          const div = document.createElement('div');
+          div.className = 'comment-deleted';
+          div.textContent = 'This comment was removed by a moderator.';
+          list.appendChild(div);
+          return;
         }
-        div.innerHTML = `<div class="stars">${stars}</div>
+        const div = document.createElement('div');
+        div.className = 'comment';
+        let starsHtml = '';
+        if (typeof comment.stars === 'number' && comment.stars > 0) {
+          for (let i=1; i<=5; i++) {
+            starsHtml += `<span class="star"${i <= comment.stars ? ' style="color:#ffd600;"' : ''}>&#9733;</span>`;
+          }
+        }
+        div.innerHTML = `
+          <div class="stars">${starsHtml}</div>
           <div class="text">${comment.text}</div>
-          <div class="date">${comment.createdAt && comment.createdAt.toDate ? comment.createdAt.toDate().toLocaleString() : ''}</div>`;
+          <div class="date">${comment.createdAt && comment.createdAt.toDate ? comment.createdAt.toDate().toLocaleString() : ''}</div>
+        `;
         list.appendChild(div);
-      }
+      });
     }
-
     // --- Live Firestore comments listener ---
+    const COMMENTS_COLLECTION = "games/testgame/comments";
     const q = query(collection(db, COMMENTS_COLLECTION), orderBy("createdAt", "desc"));
     onSnapshot(q, snap => {
       const comments = [];
@@ -127,13 +280,13 @@
       renderCommentsList(comments);
     });
 
-    // --- Submit handler ---
-    document.querySelector('.comment-form').onsubmit = async e => {
+    // --- Submit handler for comments ---
+    $(".comment-form").onsubmit = async e => {
       e.preventDefault();
-      const text = document.querySelector('.comment-input').value.trim();
+      const text = $(".comment-input").value.trim();
       if (!text) return;
       if (commentStarRating === 0) {
-        document.querySelector('.comment-error').textContent = "Select a star rating.";
+        $(".comment-error").textContent = "Select a star rating.";
         return;
       }
       try {
@@ -143,20 +296,53 @@
           createdAt: serverTimestamp()
         });
         commentStarRating = 0;
-        document.querySelector('.comment-input').value = '';
-        document.querySelector('.comment-error').textContent = '';
+        $(".comment-input").value = '';
+        $(".comment-error").textContent = '';
         renderCommentStarsSelector();
         updatePostButton();
       } catch (e) {
-        document.querySelector('.comment-error').textContent = "Failed to post comment: " + e.message;
+        $(".comment-error").textContent = "Failed to post comment: " + e.message;
       }
     };
 
-    // --- If you want to hide the comment form for non-signed-in users, use this:
-    // onAuthStateChanged(auth, user => {
-    //   document.querySelector('.comment-form').style.display = user ? "" : "none";
-    // });
+    // --- Top star rating (demo, not live) ---
+    let topStarData = { average: 4.2, count: 12, total: 50 };
+    function renderOverallStars(avg, count, total) {
+      const stars = document.querySelector('.overall-stars');
+      const text = document.querySelector('.overall-rating-text');
+      stars.innerHTML = '';
+      if (count === 0) {
+        text.textContent = 'No ratings yet';
+        return;
+      }
+      let full = Math.floor(avg);
+      let half = avg - full >= 0.5 ? 1 : 0;
+      for (let i = 1; i <= 5; i++) {
+        const s = document.createElement('span');
+        s.className = "star";
+        s.innerHTML = i <= full ? "★" : (half && i === full + 1 ? "★" : "☆");
+        stars.appendChild(s);
+      }
+      text.textContent = `${avg.toFixed(1)}/5 (${count} ratings, ${total} total stars)`;
+    }
+    renderOverallStars(topStarData.average, topStarData.count, topStarData.total);
 
+    // --- Demo handlers for top actions (favorite, like, etc) ---
+    $(".fav-btn").onclick = () => $(".fav-btn").classList.toggle("favorited");
+    $(".like-btn").onclick = () => $(".like-btn").classList.toggle("liked");
+    $(".dislike-btn").onclick = () => $(".dislike-btn").classList.toggle("disliked");
+    $(".fullscreen-btn").onclick = () => window.open(game.url, '_blank').focus();
+    $(".back-btn").onclick = () => window.location.href = 'games.html';
+
+    // --- Auth (demo) ---
+    const provider = new GoogleAuthProvider();
+    $(".auth-btn").onclick = () => signInWithPopup(auth, provider).catch(err => alert(err.message));
+    $(".logout-btn").onclick = () => signOut(auth);
+
+    // Show/hide comment form for auth
+    onAuthStateChanged(auth, user => {
+      document.querySelector('.comment-form').style.display = user ? "" : "none";
+    });
   </script>
 </body>
 </html>
