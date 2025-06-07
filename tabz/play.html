@@ -165,11 +165,12 @@
     </div>
   </main>
   <script type="module">
+    // --- Firebase SDKs ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, addDoc, collection, onSnapshot, updateDoc, serverTimestamp, query, orderBy, increment, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    // Firebase config
+    // --- Firebase config ---
     const firebaseConfig = {
       apiKey: "AIzaSyADCVIINCBgvTBvClWqWI5o3SlVS47IJnw",
       authDomain: "fusioncya-cc20a.firebaseapp.com",
@@ -198,10 +199,9 @@
       error: ""
     };
 
-    // Bulletproof comment star rating
+    // --- BULLETPROOF STAR PICKER ---
     let commentStarRating = 0;
     window._commentStarRating = 0;
-
     function renderCommentStarsSelector(hover=0) {
       const starsWrap = document.querySelector('.comment-stars');
       if (!starsWrap) return;
@@ -210,20 +210,19 @@
       for (let i=1; i<=5; i++) {
         const s = document.createElement('span');
         s.className = 'star' + (i <= fill ? ' filled' : '');
-        s.innerHTML = '&#9733;';
+        s.innerHTML = '★';
         s.addEventListener('mouseenter', () => renderCommentStarsSelector(i));
         s.addEventListener('mouseleave', () => renderCommentStarsSelector(0));
-        s.addEventListener('click', () => {
+        s.addEventListener('click', function(e) {
           commentStarRating = i;
           window._commentStarRating = i;
-          console.log('[star click] commentStarRating set to', commentStarRating);
           renderCommentStarsSelector();
         });
         starsWrap.appendChild(s);
       }
-      starsWrap.title = "Selected stars: " + commentStarRating;
     }
 
+    // --- Game load, ratings, etc. ---
     function getGameId() {
       const url = new URL(window.location.href);
       return url.searchParams.get('id');
@@ -300,7 +299,7 @@
       for (let i = 1; i <= 5; i++) {
         const s = document.createElement('span');
         s.className = "star";
-        s.innerHTML = i <= full ? "&#9733;" : (half && i === full + 1 ? "&#9733;" : "&#9734;");
+        s.innerHTML = i <= full ? "★" : (half && i === full + 1 ? "★" : "☆");
         stars.appendChild(s);
       }
       text.textContent = `${avg.toFixed(1)}/5 (${count} ratings, ${total} total stars)`;
@@ -311,11 +310,10 @@
       stars.innerHTML = "";
       let fill = ratingData.yourRating ? ratingData.yourRating : Math.round(ratingData.average);
       let canInteract = !!currentUser && !ratingData.loading;
-
       for (let i = 1; i <= 5; i++) {
         const s = document.createElement("span");
         s.className = "star" + (i <= fill ? " filled" : "") + (canInteract ? "" : " disabled");
-        s.innerHTML = "&#9733;";
+        s.innerHTML = "★";
         s.dataset.star = i;
         if (canInteract) {
           s.addEventListener("mouseenter", () => {
@@ -605,6 +603,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
+      renderCommentStarsSelector();
       await loadGameObject();
       renderGame();
       showAuthUI();
@@ -645,7 +644,6 @@
       $('.comment-form').onsubmit = async e => {
         e.preventDefault();
         const text = $('.comment-input').value.trim();
-        console.log('[onsubmit] commentStarRating:', commentStarRating, window._commentStarRating);
         if (!text) return;
         if (commentStarRating === 0) {
           $('.comment-error').textContent = "Select a star rating.";
