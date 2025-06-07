@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game Comments Demo</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #181c24; color: #e8eaf0; margin: 0; }
+    .container { max-width: 480px; margin: 30px auto; background: #232946; border-radius: 16px; padding: 2em 1.2em 2.5em 1.2em; box-shadow: 0 4px 20px #0003; }
+    .comment-form { display: flex; flex-direction: column; gap: 1em; }
+    .comment-stars-selector { font-size: 1.25em; color: #ffd600; display: flex; align-items: center; gap: 0.5em; }
+    .comment-stars { display: flex; gap: 0.1em; }
+    .star {
+      font-size: 2.1em;
+      color: #ffd600;
+      opacity: 0.46;
+      cursor: pointer;
+      transition: opacity 0.13s, color 0.13s;
+      user-select: none;
+    }
+    .star.filled, .star.selected { opacity: 1; }
+    .star:hover { color: #fff176; opacity: 1; }
+    .comment-input { border-radius: 8px; border: none; padding: 0.7em; font-size: 1.1em; background: #181c24; color: #fff; resize: vertical; min-height: 3em; }
+    .comment-post-btn { border: none; background: #ffd600; color: #181c24; font-weight: 700; border-radius: 8px; padding: 0.6em 1.8em; font-size: 1.08em; cursor: pointer; }
+    .comment-post-btn:disabled { background: #b0b7c3; color: #232946; cursor: not-allowed; }
+    .comment-error { color: #e53935; font-weight: 600; min-height: 1.5em; }
+    .star-value-preview { color: #90caf9; font-size: 0.97em; }
+    .comments-list { margin-top: 2.2em; display: flex; flex-direction: column; gap: 1.5em; }
+    .comment { background: #1a1d2a; border-radius: 8px; padding: 1em; }
+    .comment .stars { margin-bottom: 0.2em; }
+    .comment .stars .star { font-size: 1.3em; }
+    .comment .text { font-size: 1.06em; color: #ffd600; }
+    .comment .date { color: #b0b7c3; font-size: 0.92em; }
+    @media (max-width: 600px) {
+      .container { max-width: 97vw; padding: 1em 2vw 1.5em 2vw; }
+      .comment .stars .star { font-size: 1.1em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <form class="comment-form" autocomplete="off">
+      <div class="comment-stars-selector">
+        Rate:
+        <span class="comment-stars"></span>
+        <span class="star-value-preview">0</span>
+      </div>
+      <textarea class="comment-input" placeholder="Write a comment..." maxlength="500"></textarea>
+      <button class="comment-post-btn" type="submit" disabled>Post</button>
+      <div class="comment-error"></div>
+    </form>
+    <div class="comments-list"></div>
+  </div>
+  <script type="module">
+    // ---------------- Firebase Setup -----------------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // -- YOUR FIREBASE CONFIG --
+    const firebaseConfig = {
+      apiKey: "AIzaSyADCVIINCBgvTBvClWqWI5o3SlVS47IJnw",
+      authDomain: "fusioncya-cc20a.firebaseapp.com",
+      projectId: "fusioncya-cc20a"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ---------------- Star Picker Logic -----------------
+    let commentStarRating = 0;
+    function renderCommentStarsSelector(hover=0) {
+      const starsWrap = document.querySelector('.comment-stars');
+      starsWrap.innerHTML = '';
+      const fill = hover || commentStarRating;
+      for (let i=1; i<=5; i++) {
+        const s = document.createElement('span');
+        s.className = 'star' + (i <= fill ? ' filled' : '');
+        s.textContent = '★';
+        s.addEventListener('mouseenter', () => renderCommentStarsSelector(i));
+        s.addEventListener('mouseleave', () => renderCommentStarsSelector(0));
+        s.addEventListener('click', () => {
+          commentStarRating = i;
+          document.querySelector('.star-value-preview').textContent = commentStarRating;
+          renderCommentStarsSelector();
+        });
+        starsWrap.appendChild(s);
+      }
+      document.querySelector('.star-value-preview').textContent = commentStarRating;
+    }
+    renderCommentStarsSelector();
+
+    // ---------------- Form Logic -----------------
+    const commentInput = document.querySelector('.comment-input');
+    const postBtn = document.querySelector('.comment-post-btn');
+    commentInput.addEventListener('input', () => {
+      postBtn.disabled = !commentInput.value.trim();
+      document.querySelector('.comment-error').textContent = '';
+    });
+
+    document.querySelector('.comment-form').onsubmit = async e => {
+      e.preventDefault();
+      const text = commentInput.value.trim();
+      if (!text) return;
+      if (commentStarRating === 0) {
+        document.querySelector('.comment-error').textContent = "Select a star rating.";
+        return;
+      }
+      try {
+        await addDoc(collection(db, "games", "testgame", "comments"), {
+          text,
+          stars: commentStarRating,
+          createdAt: serverTimestamp()
+        });
+        commentStarRating = 0;
+        commentInput.value = '';
+        postBtn.disabled = true;
+        renderCommentStarsSelector();
+        document.querySelector('.comment-error').textContent = '';
+      } catch (e) {
+        document.querySelector('.comment-error').textContent = "Failed to post comment: " + e.message;
+      }
+    };
+
+    // --------------- Comments List ---------------
+    function renderCommentsList(comments) {
+      const list = document.querySelector('.comments-list');
+      list.innerHTML = '';
+      if (comments.length === 0) {
+        list.innerHTML = '<div style="color:#888b9a;text-align:center;padding:2em;">No comments yet.</div>';
+        return;
+      }
+      for (const c of comments) {
+        const div = document.createElement('div');
+        div.className = 'comment';
+        let stars = "";
+        for (let i=1; i<=5; i++) {
+          stars += `<span class="star"${i <= (c.stars || 0) ? ' style="opacity:1"' : ' style="opacity:0.25"'}>★</span>`;
+        }
+        div.innerHTML =
+          `<div class="stars">${stars}</div>
+           <div class="text">${c.text}</div>
+           <div class="date">${c.createdAt && c.createdAt.toDate ? c.createdAt.toDate().toLocaleString() : ''}</div>`;
+        list.appendChild(div);
+      }
+    }
+
+    // --------------- Live Comments Listener ---------------
+    const q = query(collection(db, "games", "testgame", "comments"), orderBy("createdAt", "desc"));
+    onSnapshot(q, snap => {
+      const comments = [];
+      snap.forEach(doc => comments.push(doc.data()));
+      renderCommentsList(comments);
+    });
+  </script>
+</body>
+</html>
