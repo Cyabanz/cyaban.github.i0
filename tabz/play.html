@@ -58,7 +58,7 @@
       gap: 0.3em;
     }
     .comment-stars-selector .star {
-      font-size: 1.3em;
+      font-size: 1.5em;
       color: #ffd600;
       cursor: pointer;
       opacity: 0.46;
@@ -70,7 +70,8 @@
       color: #ffd600;
       opacity: 1;
     }
-    .comment-stars-selector .star:hover {
+    .comment-stars-selector .star:hover,
+    .comment-stars-selector .star.hovered {
       color: #fff176;
       opacity: 1;
     }
@@ -208,7 +209,7 @@
       error: ""
     };
 
-    // --- BULLETPROOF STAR PICKER ---
+    // --- COMMENT STAR PICKER (Independent from global variable issues) ---
     let commentStarRating = 0;
     function renderCommentStarsSelector(hover=0) {
       const starsWrap = document.querySelector('.comment-stars');
@@ -219,6 +220,7 @@
         const s = document.createElement('span');
         s.className = 'star' + (i <= fill ? ' filled' : '');
         s.textContent = '★';
+        // Use closure for correct value of i
         s.addEventListener('mouseenter', () => renderCommentStarsSelector(i));
         s.addEventListener('mouseleave', () => renderCommentStarsSelector(0));
         s.addEventListener('click', () => {
