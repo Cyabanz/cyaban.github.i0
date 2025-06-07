@@ -198,7 +198,31 @@
       error: ""
     };
 
+    // Bulletproof comment star rating
     let commentStarRating = 0;
+    window._commentStarRating = 0;
+
+    function renderCommentStarsSelector(hover=0) {
+      const starsWrap = document.querySelector('.comment-stars');
+      if (!starsWrap) return;
+      starsWrap.innerHTML = '';
+      let fill = hover || commentStarRating;
+      for (let i=1; i<=5; i++) {
+        const s = document.createElement('span');
+        s.className = 'star' + (i <= fill ? ' filled' : '');
+        s.innerHTML = '&#9733;';
+        s.addEventListener('mouseenter', () => renderCommentStarsSelector(i));
+        s.addEventListener('mouseleave', () => renderCommentStarsSelector(0));
+        s.addEventListener('click', () => {
+          commentStarRating = i;
+          window._commentStarRating = i;
+          console.log('[star click] commentStarRating set to', commentStarRating);
+          renderCommentStarsSelector();
+        });
+        starsWrap.appendChild(s);
+      }
+      starsWrap.title = "Selected stars: " + commentStarRating;
+    }
 
     function getGameId() {
       const url = new URL(window.location.href);
@@ -284,9 +308,6 @@
 
     function renderStars() {
       const stars = $(".game-rating-stars");
-      console.log("DOM TEST: .game-rating-stars elements found:", document.querySelectorAll('.game-rating-stars').length);
-      console.log("currentUser", currentUser, "canInteract", !!currentUser && !ratingData.loading);
-
       stars.innerHTML = "";
       let fill = ratingData.yourRating ? ratingData.yourRating : Math.round(ratingData.average);
       let canInteract = !!currentUser && !ratingData.loading;
@@ -309,7 +330,6 @@
           });
           s.addEventListener("click", async (e) => {
             e.stopPropagation();
-            console.log("[STAR CLICK]", {star: i, user: currentUser ? currentUser.uid : null, game: game ? game.id : null});
             await submitRating(i);
           });
         }
@@ -347,17 +367,14 @@
         ratingData.count = count;
         ratingData.yourRating = your;
         ratingData.total = total;
-        console.log("[loadRatings] avg:", ratingData.average, "count:", ratingData.count, "your:", ratingData.yourRating, "total:", ratingData.total);
       } catch (e) {
         ratingData.error = "Failed to load ratings.";
-        console.error("[loadRatings] error:", e);
       }
       ratingData.loading = false;
       renderStars();
     }
 
     async function submitRating(rating) {
-      console.log("[submitRating CALLED]", { rating, user: currentUser, game });
       if (!currentUser) {
         ratingData.error = "Sign in first!";
         renderStars();
@@ -378,38 +395,18 @@
       renderStars();
       try {
         const ref = doc(db, "games", game.id, "ratings", currentUser.uid);
-        console.log("[Firestore SET]", ref.path, { rating, updatedAt: serverTimestamp() });
         await setDoc(ref, {
           rating: rating,
           updatedAt: serverTimestamp()
         });
-        console.log("[Firestore setDoc SUCCESS!]");
         ratingData.yourRating = rating;
         await loadRatings();
       } catch (e) {
-        console.error("[Firestore setDoc ERROR]", e);
         ratingData.error = "Failed to rate, try again. " + (e && e.message ? e.message : JSON.stringify(e));
         renderStars();
       }
       ratingData.loading = false;
       renderStars();
-    }
-
-    function renderCommentStarsSelector(hover=0) {
-      const starsWrap = document.querySelector('.comment-stars');
-      if (!starsWrap) return;
-      starsWrap.innerHTML = '';
-      let fill = hover || commentStarRating;
-      for (let i=1; i<=5; i++) {
-        const s = document.createElement('span');
-        s.className = 'star' + (i <= fill ? ' filled' : '');
-        s.innerHTML = '&#9733;';
-        s.addEventListener('mouseenter', () => renderCommentStarsSelector(i));
-        s.addEventListener('mouseleave', () => renderCommentStarsSelector(0));
-        s.addEventListener('click', () => { commentStarRating = i; renderCommentStarsSelector(); });
-        starsWrap.appendChild(s);
-      }
-      starsWrap.title = "Selected stars: " + commentStarRating;
     }
 
     function userDocRef() { return currentUser ? doc(db, 'users', currentUser.uid) : null; }
@@ -519,7 +516,6 @@
       if (!game) return;
       if (containsBadWord(text)) throw new Error("Inappropriate language detected.");
       if (isSpam(text)) throw new Error("Please wait before posting again or avoid duplicate comments.");
-      console.log("[postComment] commentStarRating:", commentStarRating);
       await addDoc(collection(db, 'games', game.id, 'comments'), {
         text,
         stars: commentStarRating,
@@ -536,6 +532,7 @@
       lastCommentTimestamp = Date.now();
       lastCommentTime = Date.now();
       commentStarRating = 0;
+      window._commentStarRating = 0;
       renderCommentStarsSelector();
     }
     function renderCommentsList(comments) {
@@ -557,17 +554,11 @@
         div.className = 'comment';
         const likedByMe = comment.likes && currentUser ? comment.likes.includes(currentUser.uid) : false;
         let starsHtml = '';
-        // Debugging stars rendering
-        console.log('[renderCommentsList] comment:', comment);
         if (typeof comment.stars === 'number' && comment.stars > 0) {
-          console.log('[renderCommentsList] comment.stars:', comment.stars, 'Will render starsHtml');
           for (let i=1; i<=5; i++) {
             starsHtml += `<span class="star"${i <= comment.stars ? ' style="color:#ffd600;"' : ''}>&#9733;</span>`;
           }
-        } else {
-          console.log('[renderCommentsList] comment.stars is missing or <=0', comment.stars);
         }
-        console.log('[renderCommentsList] starsHtml:', starsHtml);
         div.innerHTML = `
           <img class="comment-avatar" src="${comment.user.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(comment.user.name)}" alt="">
           <div class="comment-main">
@@ -654,6 +645,7 @@
       $('.comment-form').onsubmit = async e => {
         e.preventDefault();
         const text = $('.comment-input').value.trim();
+        console.log('[onsubmit] commentStarRating:', commentStarRating, window._commentStarRating);
         if (!text) return;
         if (commentStarRating === 0) {
           $('.comment-error').textContent = "Select a star rating.";
