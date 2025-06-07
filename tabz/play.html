@@ -12,30 +12,13 @@
     .game-thumb { width: 84px; height: 84px; border-radius: 18px; object-fit: cover; border: 3px solid #232946; background: #151922; }
     .game-meta-col { flex: 1; display: flex; flex-direction: column; gap: 0.4em; }
     .game-title { font-size: 2.2em; font-weight: 700; color: #90caf9; margin-bottom: 0.15em; }
-    .overall-star-rating {
-      display: flex;
-      align-items: center;
-      font-size: 2em;
-      margin-bottom: 0.2em;
-    }
-    .overall-stars .star {
-      font-size: 2em;
-      color: #ffd600;
-      margin-right: 0.1em;
-    }
-    .overall-rating-text {
-      margin-left: 0.5em;
-      color: #ffd600;
-      font-weight: 700;
-      font-size: 0.8em;
-    }
     .game-categories { margin-top: 0.1em; margin-bottom: 0.2em; }
     .game-chip { display: inline-block; background: #232946; color: #90caf9; border: 1px solid #90caf9; border-radius: 7px; padding: 0 11px; font-size: 0.97em; margin-right: 0.5em; margin-bottom: 0.2em; }
     .game-plays { font-size: 1.1em; color: #f3e079; background: #252b43; padding: 0.25em 1.1em 0.25em 0.7em; border-radius: 7px; display: inline-flex; align-items: center; gap: 0.4em; margin: 0.65em 0 0.25em 0; font-weight: 600; box-shadow: 0 1px 8px #19193a18; letter-spacing: 0.01em; }
     .game-plays i { color: #ffd600; font-size: 1.13em; margin-right: 0.1em; }
     .game-rating-row { display: flex; align-items: center; gap: 1.1em; min-height: 2.7em; }
-    .game-rating-stars, .comment-rating-stars { display: inline-flex; align-items: center; gap: 0.16em; font-size: 2.1em; user-select: none; }
-    .star { color: #ffd600; opacity: 0.58; transition: opacity 0.13s, color 0.12s; cursor: pointer; }
+    .game-rating-stars { display: inline-flex; align-items: center; gap: 0.16em; font-size: 2.1em; cursor: pointer; user-select: none; }
+    .star { color: #ffd600; opacity: 0.58; transition: opacity 0.13s, color 0.12s; }
     .star.filled { opacity: 1; color: #ffd600; }
     .star.hovered { color: #fff176; opacity: 1; }
     .star.disabled { cursor: not-allowed; opacity: 0.38; }
@@ -57,6 +40,7 @@
       align-items: center;
       gap: 0.42em;
     }
+    .comment-rating-stars { display: inline-flex; align-items: center; gap: 0.16em; font-size: 1.5em; user-select: none; }
     .comment-rating-stars .star { font-size: 1.5em; }
     .star-value-preview { color: #90caf9; font-size: 1.1em; margin-left: 0.8em; }
     .comment-input { border-radius: 8px; border: none; padding: 0.7em; font-size: 1.1em; background: #181c24; color: #fff; resize: vertical; min-height: 3em; }
@@ -93,7 +77,6 @@
       .game-header { flex-direction: column; gap: 1em; padding: 1em 2vw 1em 2vw; }
       .game-thumb { width: 64px; height: 64px; }
       .game-title { font-size: 1.25em; }
-      .overall-star-rating { font-size: 1.2em; }
     }
   </style>
 </head>
@@ -103,10 +86,6 @@
     <img class="game-thumb" src="" alt="Game">
     <div class="game-meta-col">
       <div class="game-title"></div>
-      <div class="overall-star-rating">
-        <span class="overall-stars"></span>
-        <span class="overall-rating-text"></span>
-      </div>
       <div class="game-categories"></div>
       <div class="game-plays"><i class='bx bx-user'></i> 0 plays</div>
       <div class="game-rating-row" data-hover="">
@@ -140,7 +119,7 @@
   <main>
     <div class="comment-section">
       <div class="comment-title">Comments</div>
-      <form class="comment-form">
+      <form class="comment-form" style="display:none;">
         <div class="comment-stars-selector">
           Rate this game:
           <span class="comment-rating-stars"></span>
@@ -150,71 +129,68 @@
         <button class="comment-post-btn" type="submit" disabled>Post</button>
         <div class="comment-error"></div>
       </form>
+      <div class="comment-form-info" style="display:none;">Sign in to post a comment.</div>
       <div class="comments-list"></div>
     </div>
   </main>
   <script type="module">
-    // Firebase Setup
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, addDoc, collection, onSnapshot, updateDoc, serverTimestamp, query, orderBy, increment, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyADCVIINCBgvTBvClWqWI5o3SlVS47IJnw",
       authDomain: "fusioncya-cc20a.firebaseapp.com",
       projectId: "fusioncya-cc20a"
     };
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // Helper
     const $ = s => document.querySelector(s);
 
-    // --- Top star rating logic (for reference and for comment picker) ---
-    function makeStarPicker(container, value, cb) {
+    let game = null, GAMES = [];
+    let currentUser = null;
+    let likesData = {likes:0,dislikes:0,userLiked:false,userDisliked:false};
+    let userFavorites = [], userHistory = [];
+    let commentsUnsubscribe = null;
+    let lastCommentTime = 0, lastCommentText = "", lastCommentTimestamp = 0;
+    let gamePlayCount = 0;
+
+    let ratingData = {
+      average: 0,
+      count: 0,
+      yourRating: 0,
+      loading: false,
+      error: ""
+    };
+
+    // --- STAR PICKER LOGIC (shared for both top and comment stars) ---
+    function makeStarPicker(container, value, cb, disabled = false) {
       container.innerHTML = '';
       for (let i=1; i<=5; i++) {
         const s = document.createElement('span');
-        s.className = 'star' + (i <= value ? ' filled' : '');
+        s.className = 'star' + (i <= value ? ' filled' : '') + (disabled ? ' disabled' : '');
         s.textContent = '★';
-        s.addEventListener('mouseenter', () => {
-          Array.from(container.children).forEach((star, idx) => {
-            star.classList.toggle('filled', idx < i);
+        if (!disabled) {
+          s.addEventListener('mouseenter', () => {
+            Array.from(container.children).forEach((star, idx) => {
+              star.classList.toggle('filled', idx < i);
+            });
           });
-        });
-        s.addEventListener('mouseleave', () => {
-          Array.from(container.children).forEach((star, idx) => {
-            star.classList.toggle('filled', idx < value);
+          s.addEventListener('mouseleave', () => {
+            Array.from(container.children).forEach((star, idx) => {
+              star.classList.toggle('filled', idx < value);
+            });
           });
-        });
-        s.addEventListener('click', () => cb(i));
+          s.addEventListener('click', () => cb(i));
+        }
         container.appendChild(s);
       }
     }
 
-    // --- Top star logic (static demo, replace with your own top star logic if needed) ---
-    let topStarData = { average: 4.3, count: 17, total: 73 };
-    function renderOverallStars(avg, count, total) {
-      const stars = document.querySelector('.overall-stars');
-      const text = document.querySelector('.overall-rating-text');
-      stars.innerHTML = '';
-      if (count === 0) {
-        text.textContent = 'No ratings yet';
-        return;
-      }
-      let full = Math.floor(avg);
-      let half = avg - full >= 0.5 ? 1 : 0;
-      for (let i = 1; i <= 5; i++) {
-        const s = document.createElement('span');
-        s.className = "star";
-        s.innerHTML = i <= full ? "★" : (half && i === full + 1 ? "★" : "☆");
-        stars.appendChild(s);
-      }
-      text.textContent = `${avg.toFixed(1)}/5 (${count} ratings, ${total} total stars)`;
-    }
-    renderOverallStars(topStarData.average, topStarData.count, topStarData.total);
-
-    // --- Comment star picker (using same logic as top) ---
+    // --- COMMENT STAR PICKER LOGIC (uses makeStarPicker) ---
     let commentStarRating = 0;
     function renderCommentStarPicker() {
       const container = $('.comment-rating-stars');
@@ -223,25 +199,62 @@
         $('.star-value-preview').textContent = commentStarRating;
         renderCommentStarPicker();
         updateCommentPostBtn();
-      });
+      }, !currentUser);
       $('.star-value-preview').textContent = commentStarRating;
     }
-
     function updateCommentPostBtn() {
       const hasText = $('.comment-input').value.trim().length > 0;
       $('.comment-post-btn').disabled = !(hasText && commentStarRating > 0);
     }
 
-    // ---- Game info/demo dummy ----
-    let game = {
-      id: "testgame",
-      title: "Demo Game",
-      thumb: "https://via.placeholder.com/150x120?text=Game",
-      categories: ["Arcade"],
-      description: "A demo game description.",
-      url: "https://example.com"
-    };
+    function getGameId() {
+      const url = new URL(window.location.href);
+      return url.searchParams.get('id');
+    }
+
+    async function loadGameObject() {
+      try {
+        const resp = await fetch('game.json');
+        GAMES = await resp.json();
+        const gameId = getGameId();
+        game = GAMES.find(g => g.id === gameId);
+        if (!game) throw new Error("Game not found");
+      } catch {
+        game = {
+          id: getGameId(),
+          title: "Demo Game",
+          thumb: "https://via.placeholder.com/150x120?text=Game",
+          categories: ["Arcade"],
+          description: "A demo game description.",
+          url: "https://example.com"
+        };
+      }
+    }
+
+    function showAuthUI() {
+      if (currentUser) {
+        $(".auth-btn").style.display = "none";
+        $(".user-photo").src = currentUser.photoURL || "";
+        $(".user-photo").style.display = "";
+        $(".user-name").textContent = currentUser.displayName || "";
+        $(".user-name").style.display = "";
+        $(".logout-btn").style.display = "";
+        $(".comment-form").style.display = "";
+        $(".comment-form-info").style.display = "none";
+      } else {
+        $(".auth-btn").style.display = "";
+        $(".user-photo").style.display = "none";
+        $(".user-name").style.display = "none";
+        $(".logout-btn").style.display = "none";
+        $(".comment-form").style.display = "none";
+        $(".comment-form-info").style.display = "";
+      }
+      renderStars();
+      renderCommentStarPicker();
+    }
+
     function renderGame() {
+      document.title = game.title + " | Play Game";
       $(".game-title").textContent = game.title;
       $(".game-thumb").src = game.thumb;
       $(".game-desc").textContent = game.description || "";
@@ -256,19 +269,233 @@
       iframe.src = game.url;
       $(".game-iframe-wrap").appendChild(iframe);
     }
-    renderGame();
 
-    // ---- Comment logic ----
+    // --- RATING LOGIC with robust event management ---
+    function renderStars() {
+      const stars = $(".game-rating-stars");
+      if (!stars) {
+        return;
+      }
+      let fill = ratingData.yourRating ? ratingData.yourRating : Math.round(ratingData.average);
+      let canInteract = !!currentUser && !ratingData.loading;
+      makeStarPicker(stars, fill, submitRating, !canInteract);
+      $(".game-rating-summary").textContent = ratingData.count ? `${ratingData.average.toFixed(2)} / 5` : "Not rated";
+      $(".game-rating-count").textContent = ratingData.count === 1 ? "1 rating" : `${ratingData.count} ratings`;
+      $(".game-rating-yours").innerHTML = (ratingData.yourRating > 0)
+        ? `<i class='bx bx-user'></i> You rated: <span style="color:#ffd600;">${ratingData.yourRating} star${ratingData.yourRating > 1 ? "s" : ""}</span>`
+        : (currentUser ? "Not rated yet" : "Sign in to rate");
+      $(".game-rating-error").textContent = ratingData.error || "";
+    }
+
+    async function loadRatings() {
+      ratingData.loading = true;
+      ratingData.error = "";
+      ratingData.average = 0;
+      ratingData.count = 0;
+      ratingData.yourRating = 0;
+      try {
+        const q = collection(db, "games", game.id, "ratings");
+        const snap = await getDocs(q);
+        let total = 0, count = 0, your = 0;
+        snap.forEach(docSnap => {
+          const d = docSnap.data();
+          if (typeof d.rating === "number" && d.rating >= 1 && d.rating <= 5) {
+            total += d.rating;
+            count++;
+            if (currentUser && docSnap.id === currentUser.uid) your = d.rating;
+          }
+        });
+        ratingData.average = count ? total / count : 0;
+        ratingData.count = count;
+        ratingData.yourRating = your;
+      } catch (e) {
+        ratingData.error = "Failed to load ratings.";
+      }
+      ratingData.loading = false;
+      renderStars();
+    }
+
+    async function submitRating(rating) {
+      if (!currentUser) {
+        ratingData.error = "Sign in first!";
+        renderStars();
+        return;
+      }
+      if (!game || !game.id) {
+        ratingData.error = "Game not loaded!";
+        renderStars();
+        return;
+      }
+      if (rating < 1 || rating > 5) {
+        ratingData.error = "Invalid rating value: " + rating;
+        renderStars();
+        return;
+      }
+      ratingData.loading = true;
+      ratingData.error = "";
+      renderStars();
+      try {
+        const ref = doc(db, "games", game.id, "ratings", currentUser.uid);
+        await setDoc(ref, {
+          rating: rating,
+          updatedAt: serverTimestamp()
+        });
+        ratingData.yourRating = rating;
+        await loadRatings();
+      } catch (e) {
+        ratingData.error = "Failed to rate, try again. " + (e && e.message ? e.message : JSON.stringify(e));
+        renderStars();
+      }
+      ratingData.loading = false;
+      renderStars();
+    }
+
+    // Likes/Dislikes/Favorites/Play History/Comments (unchanged)
+    function userDocRef() { return currentUser ? doc(db, 'users', currentUser.uid) : null; }
+    async function loadUserData() {
+      if (!currentUser) return;
+      const docRef = userDocRef();
+      const docSnap = await getDoc(docRef);
+      userFavorites = [];
+      userHistory = [];
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        userFavorites = data.favorites || [];
+        userHistory = data.history || [];
+      }
+      renderActions();
+    }
+    async function toggleFavorite() {
+      if (!currentUser) return;
+      const idx = userFavorites.indexOf(game.id);
+      if (idx >= 0) userFavorites.splice(idx, 1);
+      else userFavorites.push(game.id);
+      await setDoc(userDocRef(), { favorites: userFavorites }, { merge: true });
+      renderActions();
+    }
+    async function addToHistory() {
+      if (!currentUser) return;
+      userHistory = userHistory.filter(h => h.id !== game.id);
+      userHistory.unshift({ id: game.id, playedAt: Date.now() });
+      userHistory = userHistory.slice(0, 20);
+      await setDoc(userDocRef(), { history: userHistory }, { merge: true });
+    }
+    async function incrementPlays() {
+      if (!game) return;
+      const ref = doc(db, 'gamePlays', game.id);
+      await setDoc(ref, {}, { merge: true });
+      await updateDoc(ref, { count: increment(1) });
+    }
+    async function getPlays() {
+      if (!game) return 0;
+      const ref = doc(db, 'gamePlays', game.id);
+      const d = await getDoc(ref);
+      return d.exists() && typeof d.data().count === "number" ? d.data().count : 0;
+    }
+    async function updatePlaysDisplay() {
+      gamePlayCount = await getPlays();
+      $(".game-plays").innerHTML = `<i class='bx bx-user'></i> ${gamePlayCount.toLocaleString()} play${gamePlayCount===1?"":"s"}`;
+    }
+    async function loadGameLikes() {
+      if (!game) return;
+      let d = await getDoc(doc(db, 'gameLikes', game.id));
+      likesData = {likes:0,dislikes:0,userLiked:false,userDisliked:false};
+      if (d.exists()) {
+        likesData.likes = d.data().likes || 0;
+        likesData.dislikes = d.data().dislikes || 0;
+        if (currentUser) {
+          const liked = d.data().likedUsers || [];
+          const disliked = d.data().dislikedUsers || [];
+          likesData.userLiked = liked.includes(currentUser.uid);
+          likesData.userDisliked = disliked.includes(currentUser.uid);
+        }
+      }
+      renderActions();
+    }
+    async function updateGameLike(likeType) {
+      if (!currentUser) return;
+      const ref = doc(db, 'gameLikes', game.id);
+      const d = await getDoc(ref);
+      let likedUsers = [], dislikedUsers = [];
+      let likes = 0, dislikes = 0;
+      if (d.exists()) {
+        likedUsers = d.data().likedUsers || [];
+        dislikedUsers = d.data().dislikedUsers || [];
+        likes = d.data().likes || 0;
+        dislikes = d.data().dislikes || 0;
+      }
+      likedUsers = likedUsers.filter(u => u !== currentUser.uid);
+      dislikedUsers = dislikedUsers.filter(u => u !== currentUser.uid);
+      if (likeType === 'like') likedUsers.push(currentUser.uid);
+      if (likeType === 'dislike') dislikedUsers.push(currentUser.uid);
+      likes = likedUsers.length;
+      dislikes = dislikedUsers.length;
+      await setDoc(ref, { likes, dislikes, likedUsers, dislikedUsers }, { merge: true });
+      await loadGameLikes();
+    }
+    function renderActions() {
+      $('.like-btn').classList.toggle('liked', likesData.userLiked);
+      $('.dislike-btn').classList.toggle('disliked', likesData.userDisliked);
+      $('.like-count').textContent = likesData.likes;
+      $('.dislike-count').textContent = likesData.dislikes;
+      $('.fav-btn').classList.toggle('favorited', userFavorites.includes(game.id));
+    }
+    // --- Comments ---
+    function setupComments() {
+      if (commentsUnsubscribe) commentsUnsubscribe();
+      renderCommentsList([]);
+      if (!game) return;
+      const q = query(collection(db, 'games', game.id, 'comments'), orderBy('createdAt', 'desc'));
+      commentsUnsubscribe = onSnapshot(q, snap => {
+        let comments = [];
+        snap.forEach(doc => {
+          comments.push({ id: doc.id, ...doc.data() });
+        });
+        renderCommentsList(comments);
+      });
+    }
+    async function postComment(text) {
+      if (!currentUser) return;
+      if (!game) return;
+      if (containsBadWord(text)) throw new Error("Inappropriate language detected.");
+      if (isSpam(text)) throw new Error("Please wait before posting again or avoid duplicate comments.");
+      await addDoc(collection(db, 'games', game.id, 'comments'), {
+        text,
+        stars: commentStarRating,
+        user: {
+          uid: currentUser.uid,
+          name: currentUser.displayName,
+          photo: currentUser.photoURL || "",
+        },
+        createdAt: serverTimestamp(),
+        likes: [],
+        deleted: false
+      });
+      lastCommentText = text.trim();
+      lastCommentTimestamp = Date.now();
+      lastCommentTime = Date.now();
+      commentStarRating = 0;
+      renderCommentStarPicker();
+      updateCommentPostBtn();
+    }
     function renderCommentsList(comments) {
       const list = $('.comments-list');
       list.innerHTML = '';
       if (!comments.length) {
-        list.innerHTML = `<div style="color:#888b9a;text-align:center;padding:2em;">No comments yet.</div>`;
+        list.innerHTML = `<div style="color:#888b9a;padding:1.4em;text-align:center;">No comments yet. Be the first to comment!</div>`;
         return;
       }
       comments.forEach(comment => {
+        if(comment.deleted) {
+          const div = document.createElement('div');
+          div.className = 'comment-deleted';
+          div.textContent = 'This comment was removed by a moderator.';
+          list.appendChild(div);
+          return;
+        }
         const div = document.createElement('div');
         div.className = 'comment';
+        const likedByMe = comment.likes && currentUser ? comment.likes.includes(currentUser.uid) : false;
         let starsHtml = '';
         if (typeof comment.stars === 'number' && comment.stars > 0) {
           for (let i=1; i<=5; i++) {
@@ -276,69 +503,130 @@
           }
         }
         div.innerHTML = `
-          <div class="stars">${starsHtml}</div>
-          <div class="text">${comment.text}</div>
-          <div class="date">${comment.createdAt && comment.createdAt.toDate ? comment.createdAt.toDate().toLocaleString() : ''}</div>
+          <img class="comment-avatar" src="${comment.user.photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(comment.user.name)}" alt="">
+          <div class="comment-main">
+            <span class="comment-user">${comment.user.name || 'Unknown'}</span>
+            <span class="comment-date">${comment.createdAt && comment.createdAt.toDate ? comment.createdAt.toDate().toLocaleString() : ''}</span>
+            <div class="stars">${starsHtml}</div>
+            <div class="comment-text">${escapeHTML(comment.text)}</div>
+            <div class="comment-actions">
+              <button class="comment-like-btn${likedByMe ? ' liked' : ''}" title="Like"><i class='bx bxs-like'></i></button>
+              <span class="comment-likes-count">${comment.likes ? comment.likes.length : 0}</span>
+            </div>
+          </div>
         `;
+        div.querySelector('.comment-like-btn').onclick = () => handleLikeComment(comment.id, likedByMe, comment.likes || []);
         list.appendChild(div);
       });
     }
-    // Firestore comments listener
-    const COMMENTS_COLLECTION = "games/testgame/comments";
-    const q = query(collection(db, COMMENTS_COLLECTION), orderBy("createdAt", "desc"));
-    onSnapshot(q, snap => {
-      const comments = [];
-      snap.forEach(doc => comments.push(doc.data()));
-      renderCommentsList(comments);
-    });
-
-    // Comment form events
-    $('.comment-input').addEventListener('input', updateCommentPostBtn);
-
-    $('.comment-form').onsubmit = async e => {
-      e.preventDefault();
-      const text = $('.comment-input').value.trim();
-      if (!text) return;
-      if (commentStarRating === 0) {
-        $('.comment-error').textContent = "Select a star rating.";
-        return;
+    async function handleLikeComment(commentId, likedByMe, likesArr) {
+      if (!currentUser) return;
+      const ref = doc(db, 'games', game.id, 'comments', commentId);
+      let newLikes = Array.isArray(likesArr) ? [...likesArr] : [];
+      if (likedByMe) {
+        newLikes = newLikes.filter(uid => uid !== currentUser.uid);
+      } else {
+        newLikes.push(currentUser.uid);
       }
-      try {
-        await addDoc(collection(db, COMMENTS_COLLECTION), {
-          text,
-          stars: commentStarRating,
-          createdAt: serverTimestamp()
-        });
-        commentStarRating = 0;
-        $('.comment-input').value = '';
-        $('.comment-error').textContent = '';
-        renderCommentStarPicker();
+      await updateDoc(ref, { likes: newLikes });
+    }
+    function containsBadWord(text) {
+      const BAD_WORDS = ['fuck','shit','bitch','cunt','nigger','fag','asshole','bastard','slut','dick','pussy','whore','faggot','cock','retard','cum','rape'];
+      const lower = text.toLowerCase();
+      return BAD_WORDS.some(word => lower.includes(word));
+    }
+    function isSpam(text) {
+      let now = Date.now();
+      if (text.trim() === lastCommentText && now - lastCommentTimestamp < 60*1000) return true;
+      if (now - lastCommentTime < 30*1000) return true;
+      return false;
+    }
+    function escapeHTML(str) {
+      return str.replace(/[<>&"'`]/g, c => ({
+        '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;','`':'&#96;'
+      })[c]);
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadGameObject();
+      renderGame();
+      showAuthUI();
+      await updatePlaysDisplay();
+      await loadRatings();
+      if (auth.currentUser) {
+        loadUserData();
+        loadGameLikes();
+        setupComments();
+      } else {
+        setupComments();
+      }
+      $('.play-btn').onclick = async () => {
+        addToHistory();
+        await incrementPlays();
+        updatePlaysDisplay();
+        const iframe = $('.game-iframe');
+        if (iframe) iframe.contentWindow.focus();
+      };
+      $('.auth-btn').onclick = () => {
+        const provider = new GoogleAuthProvider();
+        signInWithPopup(auth, provider).catch(err => alert(err.message));
+      };
+      $('.logout-btn').onclick = () => signOut(auth);
+      $('.fav-btn').onclick = () => toggleFavorite();
+      $('.like-btn').onclick = () => updateGameLike('like');
+      $('.dislike-btn').onclick = () => updateGameLike('dislike');
+      $('.fullscreen-btn').onclick = () => { window.open(game.url, '_blank').focus(); };
+      $('.game-controls-btn').onclick = () => {
+        const info = $('.game-controls-info');
+        info.style.display = info.style.display === 'none' ? '' : 'none';
+      };
+      $('.back-btn').onclick = () => window.location.href = 'games.html';
+      $('.comment-input').oninput = () => {
         updateCommentPostBtn();
-      } catch (e) {
-        $('.comment-error').textContent = "Failed to post comment: " + e.message;
-      }
-    };
-
-    // --- Other top actions (demo) ---
-    $(".fav-btn").onclick = () => $(".fav-btn").classList.toggle("favorited");
-    $(".like-btn").onclick = () => $(".like-btn").classList.toggle("liked");
-    $(".dislike-btn").onclick = () => $(".dislike-btn").classList.toggle("disliked");
-    $(".fullscreen-btn").onclick = () => window.open(game.url, '_blank').focus();
-    $(".back-btn").onclick = () => window.location.href = 'games.html';
-
-    // --- Auth (demo) ---
-    const provider = new GoogleAuthProvider();
-    $(".auth-btn").onclick = () => signInWithPopup(auth, provider).catch(err => alert(err.message));
-    $(".logout-btn").onclick = () => signOut(auth);
-
-    // Show/hide comment form for auth
-    onAuthStateChanged(auth, user => {
-      document.querySelector('.comment-form').style.display = user ? "" : "none";
+        $('.comment-error').textContent = '';
+      };
+      $('.comment-form').onsubmit = async e => {
+        e.preventDefault();
+        const text = $('.comment-input').value.trim();
+        if (!text) return;
+        if (containsBadWord(text)) {
+          $('.comment-error').textContent = "Please avoid inappropriate language.";
+          return;
+        }
+        if (isSpam(text)) {
+          $('.comment-error').textContent = "Please wait before posting again or avoid duplicate comments.";
+          return;
+        }
+        if (commentStarRating === 0) {
+          $('.comment-error').textContent = "Select a star rating.";
+          return;
+        }
+        $('.comment-post-btn').disabled = true;
+        try {
+          await postComment(text);
+          $('.comment-input').value = '';
+          $('.comment-error').textContent = '';
+        } catch (err) {
+          $('.comment-error').textContent = err.message || "Failed to post comment.";
+        }
+        $('.comment-post-btn').disabled = false;
+      };
+      renderCommentStarPicker();
     });
 
-    // --- Initial render for comment picker ---
-    renderCommentStarPicker();
-    updateCommentPostBtn();
+    onAuthStateChanged(auth, async user => {
+      currentUser = user;
+      showAuthUI();
+      await loadRatings();
+      if (user) {
+        loadUserData();
+        loadGameLikes();
+        setupComments();
+      } else {
+        setupComments();
+      }
+      renderCommentStarPicker();
+    });
   </script>
 </body>
 </html>
