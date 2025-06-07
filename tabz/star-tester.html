@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Star Picker Demo</title>
+  <style>
+    .star { font-size: 2em; color: #ffd600; opacity: 0.58; cursor: pointer; }
+    .star.filled { opacity: 1; }
+  </style>
+</head>
+<body>
+  <form id="comment-form">
+    <div>
+      Rate:
+      <span id="comment-stars"></span>
+    </div>
+    <textarea id="comment-input" placeholder="Type comment..."></textarea>
+    <button type="submit">Post</button>
+    <div id="comment-error" style="color:red;"></div>
+  </form>
+  <script>
+    let commentStarRating = 0;
+    window._commentStarRating = 0;
+
+    function renderCommentStarsSelector(hover=0) {
+      const starsWrap = document.getElementById('comment-stars');
+      starsWrap.innerHTML = '';
+      let fill = hover || commentStarRating;
+      for (let i=1; i<=5; i++) {
+        const s = document.createElement('span');
+        s.className = 'star' + (i <= fill ? ' filled' : '');
+        s.innerHTML = '★';
+        s.addEventListener('mouseenter', () => renderCommentStarsSelector(i));
+        s.addEventListener('mouseleave', () => renderCommentStarsSelector(0));
+        s.addEventListener('click', () => {
+          commentStarRating = i;
+          window._commentStarRating = i;
+          console.log('[star click] commentStarRating set to', commentStarRating);
+          renderCommentStarsSelector();
+        });
+        starsWrap.appendChild(s);
+      }
+    }
+    renderCommentStarsSelector();
+
+    document.getElementById('comment-form').onsubmit = e => {
+      e.preventDefault();
+      const text = document.getElementById('comment-input').value.trim();
+      console.log('[onsubmit] commentStarRating:', commentStarRating, window._commentStarRating);
+      if (!text) return;
+      if (commentStarRating === 0) {
+        document.getElementById('comment-error').textContent = "Select a star rating.";
+        return;
+      }
+      document.getElementById('comment-error').textContent = '';
+      alert('Posted comment: ' + text + ' with stars: ' + commentStarRating);
+      commentStarRating = 0;
+      window._commentStarRating = 0;
+      renderCommentStarsSelector();
+      document.getElementById('comment-input').value = '';
+    };
+  </script>
+</body>
+</html>
