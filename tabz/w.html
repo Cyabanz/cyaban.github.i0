@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Standalone Star Picker Test</title>
+  <style>
+    .star { font-size: 2.5em; color: #ffd600; opacity: 0.4; cursor: pointer; transition: opacity 0.14s, color 0.14s; }
+    .star.filled { opacity: 1; }
+    .star-value-preview { color: #90caf9; font-size: 1.1em; margin-left: 0.8em; }
+  </style>
+</head>
+<body>
+  <div>
+    <div>
+      Select stars: <span class="comment-stars"></span>
+      <span class="star-value-preview">0</span>
+    </div>
+  </div>
+  <script>
+    let commentStarRating = 0;
+    function renderCommentStarsSelector(hover=0) {
+      const starsWrap = document.querySelector('.comment-stars');
+      starsWrap.innerHTML = '';
+      let fill = hover || commentStarRating;
+      for (let i=1; i<=5; i++) {
+        const s = document.createElement('span');
+        s.className = 'star' + (i <= fill ? ' filled' : '');
+        s.textContent = '★';
+        s.addEventListener('mouseenter', () => renderCommentStarsSelector(i));
+        s.addEventListener('mouseleave', () => renderCommentStarsSelector(0));
+        s.addEventListener('click', () => {
+          commentStarRating = i;
+          document.querySelector('.star-value-preview').textContent = commentStarRating;
+          renderCommentStarsSelector();
+        });
+        starsWrap.appendChild(s);
+      }
+      document.querySelector('.star-value-preview').textContent = commentStarRating;
+    }
+    renderCommentStarsSelector();
+  </script>
+</body>
+</html>
